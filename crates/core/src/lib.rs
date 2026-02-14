@@ -6,4 +6,4 @@ pub use transcript::find_session_file;
 
 /// The prompt template used to generate specs from Claude Code sessions.
 /// Contains a `{transcript}` placeholder that gets replaced with the session JSONL content.
-pub const PROMPT_TEMPLATE: &str = include_str!("../../../prompt.md");
+pub const PROMPT_TEMPLATE: &str = include_str!("../prompt.md");

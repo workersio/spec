@@ -8,7 +8,20 @@ mod share;
 mod start;
 
 #[derive(Parser)]
-#[command(name = "workers-spec", about = "Share Claude Code sessions as replayable specs")]
+#[command(
+    name = "workers-spec",
+    about = "Share Claude Code sessions as replayable specs",
+    before_help = concat!(
+        "\n\n",
+        " ███████╗██████╗ ███████╗ ██████╗███████╗\n",
+        " ██╔════╝██╔══██╗██╔════╝██╔════╝██╔════╝\n",
+        " ███████╗██████╔╝█████╗  ██║     ███████╗\n",
+        " ╚════██║██╔═══╝ ██╔══╝  ██║     ╚════██║\n",
+        " ███████║██║     ███████╗╚██████╗███████║\n",
+        " ╚══════╝╚═╝     ╚══════╝ ╚═════╝╚══════╝\n",
+        "                          by workers.io\n",
+    )
+)]
 struct Cli {
     #[command(subcommand)]
     command: Commands,

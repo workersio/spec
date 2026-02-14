@@ -21,7 +21,7 @@ function getPlatformTarget() {
 
   switch (platform) {
     case "linux":
-      return `${resolvedArch}-unknown-linux-gnu`;
+      return `${resolvedArch}-unknown-linux-musl`;
     case "darwin":
       return `${resolvedArch}-apple-darwin`;
     default:

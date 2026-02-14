@@ -10,6 +10,16 @@ https://github.com/workersio/spec
 
 workers-spec converts Claude Code session transcripts into reusable, shareable specifications. A session JSONL file is fed to Claude with a prompt template (`prompt.md`) that distills the session into a structured spec with YAML frontmatter. The spec is then uploaded to an API server and can be fetched/replayed later.
 
+## Installation
+
+```bash
+# Via npm (downloads prebuilt binary + installs /share and /run slash commands)
+npm install -g github:workersio/spec
+
+# Or from source
+cargo install --path crates/cli
+```
+
 ## Build & Test Commands
 
 ```bash
@@ -69,6 +79,13 @@ Node.js distribution wrapper (`package.json`, `bin/`, `commands/`). `postinstall
 
 - Config file: `~/.config/workers-spec/config.toml` (stores `api_url`)
 - Env override: `WORKERS_SPEC_API_URL`
+
+### Docker
+
+```bash
+docker build -t workers-spec .
+docker run -p 3005:3005 -v specs-data:/data workers-spec
+```
 
 ### Spec Format
 

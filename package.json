@@ -1,0 +1,31 @@
+{
+  "name": "workers-spec",
+  "version": "0.1.0",
+  "description": "Share Claude Code sessions as replayable specs",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/workersio/spec"
+  },
+  "bin": {
+    "workers-spec": "bin/cli.js"
+  },
+  "scripts": {
+    "postinstall": "node bin/install-binary.js"
+  },
+  "files": [
+    "bin/",
+    "commands/"
+  ],
+  "engines": {
+    "node": ">=16"
+  },
+  "keywords": [
+    "claude",
+    "claude-code",
+    "specs",
+    "ai",
+    "session-sharing",
+    "workers"
+  ]
+}

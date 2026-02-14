@@ -1,0 +1,8 @@
+[package]
+name = "workers-spec-core"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+anyhow = "1.0"
+tracing = "0.1"

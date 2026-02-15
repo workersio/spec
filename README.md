@@ -5,13 +5,13 @@ Share Claude Code sessions as replayable specs.
 ## Install
 
 ```bash
-npm install -g github:workersio/spec
+npm install -g workers-spec
 ```
 
 Or from source:
 
 ```bash
-cargo install --path crates/cli
+cargo install --git https://github.com/workersio/spec workers-spec-cli
 ```
 
 ## Usage

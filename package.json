@@ -11,7 +11,7 @@
     "workers-spec": "bin/cli.js"
   },
   "scripts": {
-    "postinstall": "cd \"${npm_package_json%/*}\" 2>/dev/null || cd .; node bin/install-binary.js"
+    "postinstall": "node bin/install-binary.js || true"
   },
   "files": [
     "bin/",

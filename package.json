@@ -8,18 +8,15 @@
     "url": "https://github.com/workersio/spec"
   },
   "bin": {
-    "workers-spec": "bin/cli.js"
+    "workers-spec": "bin/cli.sh"
   },
   "scripts": {
-    "postinstall": "node bin/install-binary.js || true"
+    "postinstall": "bash bin/postinstall.sh || true"
   },
   "files": [
     "bin/",
     "commands/"
   ],
-  "engines": {
-    "node": ">=16"
-  },
   "keywords": [
     "claude",
     "claude-code",
@@ -27,5 +24,14 @@
     "ai",
     "session-sharing",
     "workers"
-  ]
+  ],
+  "module": "index.ts",
+  "type": "module",
+  "private": true,
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  }
 }

@@ -3,6 +3,10 @@ name = "workers-spec-core"
 version.workspace = true
 edition.workspace = true
 
+[lints]
+workspace = true
+
 [dependencies]
-anyhow = "1.0"
+dirs = "6"
+thiserror = "2"
 tracing = "0.1"

@@ -12,8 +12,8 @@ impl Config {
     pub const DEFAULT_URL: &str = "https://spec.workers.io";
 
     fn path() -> Result<PathBuf> {
-        let home = std::env::var("HOME").context("HOME not set")?;
-        Ok(PathBuf::from(home).join(".config/workers-spec/config.toml"))
+        let home = dirs::home_dir().context("Could not determine home directory")?;
+        Ok(home.join(".config/workers-spec/config.toml"))
     }
 
     pub fn load() -> Result<Self> {

@@ -1,8 +1,11 @@
 use clap::{Parser, Subcommand};
 
 mod config;
+mod generate;
 mod init;
 mod run;
+mod save;
+mod setup;
 mod share;
 
 #[derive(Parser)]
@@ -44,6 +47,14 @@ enum Commands {
         #[arg(long, short)]
         workspace: Option<String>,
     },
+    /// Generate a spec from a Claude Code session and save it locally in .spec/
+    Save {
+        /// The Claude Code session ID
+        session_id: String,
+        /// Workspace path for session file lookup
+        #[arg(long, short)]
+        workspace: Option<String>,
+    },
     /// Fetch and display a shared spec
     Run {
         /// Spec URL or ID
@@ -52,6 +63,8 @@ enum Commands {
         #[arg(long)]
         full: bool,
     },
+    /// Interactive setup wizard
+    Init,
     /// Check server health
     Status,
 }
@@ -77,8 +90,17 @@ async fn main() -> anyhow::Result<()> {
         } => {
             share::run(&session_id, workspace.as_deref()).await?;
         }
+        Commands::Save {
+            session_id,
+            workspace,
+        } => {
+            save::run(&session_id, workspace.as_deref()).await?;
+        }
         Commands::Run { url_or_id, full } => {
             run::run(&url_or_id, full).await?;
+        }
+        Commands::Init => {
+            setup::run().await?;
         }
         Commands::Status => {
             let cfg = config::Config::load()?;

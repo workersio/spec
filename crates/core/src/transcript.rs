@@ -1,4 +1,4 @@
-use anyhow::{Context, Result};
+use crate::SpecError;
 
 /// Locate the session JSONL file given a session ID and workspace path.
 ///
@@ -7,17 +7,18 @@ use anyhow::{Context, Result};
 ///
 /// If WORKSPACE_PATH resolves to a valid session, use it directly.
 /// Otherwise, search all project directories for the session file.
-pub fn find_session_file(session_id: &str, workspace_path: &str) -> Result<String> {
-    let home = std::env::var("HOME").context("HOME not set")?;
-    let projects_dir = format!("{}/.claude/projects", home);
-    let filename = format!("{}.jsonl", session_id);
+pub fn find_session_file(session_id: &str, workspace_path: &str) -> Result<String, SpecError> {
+    let home = dirs::home_dir().ok_or(SpecError::HomeNotFound)?;
+    let projects_dir = home.join(".claude/projects");
+    let projects_dir_str = projects_dir.to_string_lossy().to_string();
+    let filename = format!("{session_id}.jsonl");
 
     // Try WORKSPACE_PATH first (fast path for production)
     if let Ok(absolute) = std::fs::canonicalize(workspace_path) {
         let normalized = absolute.to_string_lossy().replace('/', "-");
-        let session_path = format!("{}/{}/{}", projects_dir, normalized, filename);
-        if std::path::Path::new(&session_path).exists() {
-            return Ok(session_path);
+        let session_path = projects_dir.join(&normalized).join(&filename);
+        if session_path.exists() {
+            return Ok(session_path.to_string_lossy().to_string());
         }
     }
 
@@ -33,9 +34,8 @@ pub fn find_session_file(session_id: &str, workspace_path: &str) -> Result<Strin
         }
     }
 
-    anyhow::bail!(
-        "Session file {}.jsonl not found in any project directory under {}",
-        session_id,
-        projects_dir
-    )
+    Err(SpecError::SessionNotFound {
+        session_id: session_id.to_string(),
+        projects_dir: projects_dir_str,
+    })
 }

@@ -36,21 +36,23 @@ pub async fn run(url_or_id: &str, full: bool) -> Result<()> {
     let config = Config::load()?;
     let (api_base, id) = parse_spec_input(url_or_id, &config.api_url);
 
-    let client = reqwest::Client::new();
+    let client = reqwest::Client::builder()
+        .timeout(std::time::Duration::from_secs(30))
+        .build()?;
     let resp = client
-        .get(format!("{}/api/specs/{}", api_base, id))
+        .get(format!("{api_base}/api/specs/{id}"))
         .send()
         .await
         .context("Failed to fetch spec from API")?;
 
     if resp.status() == reqwest::StatusCode::NOT_FOUND {
-        anyhow::bail!("Spec '{}' not found", id);
+        anyhow::bail!("Spec '{id}' not found");
     }
 
     if !resp.status().is_success() {
         let status = resp.status();
         let body = resp.text().await.unwrap_or_default();
-        anyhow::bail!("API returned {}: {}", status, body);
+        anyhow::bail!("API returned {status}: {body}");
     }
 
     let spec: SpecResponse = resp.json().await.context("Failed to parse spec response")?;
@@ -66,18 +68,18 @@ pub async fn run(url_or_id: &str, full: bool) -> Result<()> {
         println!("Steps: {}", spec.step_count);
 
         // Section headings
-        let headings: Vec<&str> = spec
+        let mut has_headings = false;
+        for heading in spec
             .content
             .lines()
             .filter(|l| l.starts_with("## "))
             .map(|l| l.trim_start_matches('#').trim())
-            .collect();
-
-        if !headings.is_empty() {
-            println!("\nSections:");
-            for h in &headings {
-                println!("  - {}", h);
+        {
+            if !has_headings {
+                println!("\nSections:");
+                has_headings = true;
             }
+            println!("  - {heading}");
         }
     }
 

@@ -14,7 +14,7 @@ workers-spec converts Claude Code session transcripts into reusable, shareable s
 
 ```bash
 # Via npm (downloads prebuilt binary + installs /share and /run slash commands)
-npm install -g @workersio/spec
+bun install -g @workersio/spec
 
 # Or from source
 cargo install --git https://github.com/workersio/spec workers-spec-cli

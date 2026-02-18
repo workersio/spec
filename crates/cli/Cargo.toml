@@ -3,6 +3,9 @@ name = "workers-spec-cli"
 version.workspace = true
 edition.workspace = true
 
+[lints]
+workspace = true
+
 [[bin]]
 name = "workers-spec"
 path = "src/main.rs"
@@ -10,11 +13,13 @@ path = "src/main.rs"
 [dependencies]
 workers-spec-core = { path = "../core" }
 clap = { version = "4", features = ["derive"] }
+dirs = "6"
 reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 toml = "0.8"
-tokio = { version = "1", features = ["full", "process"] }
+tokio = { version = "1", features = ["rt", "rt-multi-thread", "macros", "process", "fs", "time"] }
 anyhow = "1.0"
+cliclack = "0.3"
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }

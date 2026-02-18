@@ -115,9 +115,6 @@ async function main() {
   }
 
   console.log("\nReady! Use /share in Claude Code to share a session.");
-  console.log("\nNext steps:");
-  console.log("  workers-spec start     Start the local spec server");
-  console.log("  workers-spec status    Check server status");
 }
 
 main();

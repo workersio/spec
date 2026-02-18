@@ -22,13 +22,13 @@ pub fn run(server_url: Option<&str>, reset: bool) -> Result<()> {
         let is_default = config.api_url == Config::DEFAULT_URL;
         println!("Server URL: {}", config.api_url);
         if is_default {
-            println!("  (default — local server)");
+            println!("  (default)");
         } else {
-            println!("  (custom — remote server)");
+            println!("  (custom)");
         }
         println!("\nUsage:");
-        println!("  workers-spec config --server-url <url>   Set remote server");
-        println!("  workers-spec config --reset              Reset to local");
+        println!("  workers-spec config --server-url <url>   Set custom server");
+        println!("  workers-spec config --reset              Reset to default");
     }
 
     Ok(())

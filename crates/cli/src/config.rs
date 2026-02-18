@@ -9,7 +9,7 @@ pub struct Config {
 }
 
 impl Config {
-    pub const DEFAULT_URL: &str = "http://localhost:3005";
+    pub const DEFAULT_URL: &str = "https://specs.workers.io";
 
     fn path() -> Result<PathBuf> {
         let home = std::env::var("HOME").context("HOME not set")?;

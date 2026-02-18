@@ -3,9 +3,7 @@ use clap::{Parser, Subcommand};
 mod config;
 mod init;
 mod run;
-mod serve;
 mod share;
-mod start;
 
 #[derive(Parser)]
 #[command(
@@ -31,10 +29,10 @@ struct Cli {
 enum Commands {
     /// View or update server configuration
     Config {
-        /// Set the server URL (e.g. http://your-server:3005)
+        /// Set the server URL
         #[arg(long)]
         server_url: Option<String>,
-        /// Reset to default local server (http://localhost:3005)
+        /// Reset to default server
         #[arg(long)]
         reset: bool,
     },
@@ -54,41 +52,18 @@ enum Commands {
         #[arg(long)]
         full: bool,
     },
-    /// Start the spec server as a background daemon
-    Start {
-        /// Port to listen on
-        #[arg(long, default_value = "3005")]
-        port: u16,
-    },
-    /// Stop the running spec server
-    Stop,
-    /// Check if the spec server is running
+    /// Check server health
     Status,
-    /// Run the server in the foreground (used internally by start)
-    #[command(hide = true)]
-    Serve {
-        /// Port to listen on
-        #[arg(long, default_value = "3005")]
-        port: u16,
-        /// Path to SQLite database
-        #[arg(long)]
-        database_path: Option<String>,
-    },
 }
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     let cli = Cli::parse();
 
-    let log_level = match &cli.command {
-        Commands::Serve { .. } => tracing::Level::INFO,
-        _ => tracing::Level::WARN,
-    };
-
     tracing_subscriber::fmt()
         .with_env_filter(
             tracing_subscriber::EnvFilter::from_default_env()
-                .add_directive(log_level.into()),
+                .add_directive(tracing::Level::WARN.into()),
         )
         .init();
 
@@ -105,21 +80,17 @@ async fn main() -> anyhow::Result<()> {
         Commands::Run { url_or_id, full } => {
             run::run(&url_or_id, full).await?;
         }
-        Commands::Start { port } => {
-            start::start(port)?;
-        }
-        Commands::Stop => {
-            start::stop()?;
-        }
         Commands::Status => {
-            start::status().await?;
-        }
-        Commands::Serve { port, database_path } => {
-            let db_path = match database_path {
-                Some(p) => p,
-                None => start::database_path()?,
-            };
-            serve::run(port, &db_path).await?;
+            let cfg = config::Config::load()?;
+            println!("Server: {}", cfg.api_url);
+            let client = reqwest::Client::builder()
+                .timeout(std::time::Duration::from_secs(3))
+                .build()?;
+            match client.get(format!("{}/health", cfg.api_url)).send().await {
+                Ok(resp) if resp.status().is_success() => println!("Health: OK"),
+                Ok(resp) => println!("Health: server returned {}", resp.status()),
+                Err(_) => println!("Health: unreachable"),
+            }
         }
     }
 

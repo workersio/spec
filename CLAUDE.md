@@ -14,7 +14,7 @@ workers-spec converts Claude Code session transcripts into reusable, shareable s
 
 ```bash
 # Via npm (downloads prebuilt binary + installs /share and /run slash commands)
-npm install -g workers-spec
+npm install -g @workersio/spec
 
 # Or from source
 cargo install --git https://github.com/workersio/spec workers-spec-cli
@@ -52,40 +52,29 @@ cargo run -p workers-spec-cli -- <subcommand>
   - `config [--server-url <url>] [--reset]` — view/update server URL in `~/.config/workers-spec/config.toml`
   - `share <session_id> [-w workspace]` — reads session JSONL, spawns `claude -p` to generate spec, POSTs to API, prints URL
   - `run <url_or_id> [--full]` — fetches spec from API; preview mode shows title/summary/sections, `--full` prints raw content
-  - `start [--port <port>]` — starts the spec server as a background daemon
-  - `stop` — stops the running spec server
-  - `status` — checks if the spec server is running
-  - `serve` (hidden) — runs the Axum HTTP server in the foreground. Routes: `POST /api/specs`, `GET /api/specs/{id}`, `GET /health`. SQLite via `rusqlite`, `nanoid` for IDs.
+  - `status` — checks server health
 
 ### npm Package (root)
 
 Node.js distribution wrapper (`package.json`, `bin/`, `commands/`). `postinstall` downloads the Rust binary from GitHub releases. Also installs `/share` and `/run` as Claude Code slash commands into `~/.claude/commands/`.
+
+### Cloudflare Worker (backend)
+
+`worker/` — TypeScript Cloudflare Worker with D1 (serverless SQLite). Routes: `POST /api/specs`, `GET /api/specs/{id}`, `GET /health`. Deployed at `specs.workers.io`. Self-hostable via "Deploy to Cloudflare" button.
 
 ### Key Data Flow
 
 1. `share` command reads `~/.claude/projects/{normalized_cwd}/{session_id}.jsonl`
 2. Injects transcript into `prompt.md` template (replaces `{transcript}`)
 3. Spawns `claude -p` with the prompt to generate a structured spec
-4. Server parses frontmatter (title, description, tags) and stores in SQLite
+4. Worker parses frontmatter (title, description, tags) and stores in D1
 5. `run` command fetches spec by ID and either previews or outputs full content
-
-### Server Configuration (env vars)
-
-- `PORT` — listen port (default: 3005)
-- `DATABASE_PATH` — SQLite file path (default: `~/.local/share/workers-spec/workers-spec.db`)
-- `BASE_URL` — used to construct spec URLs in responses
 
 ### CLI Configuration
 
 - Config file: `~/.config/workers-spec/config.toml` (stores `api_url`)
+- Default server: `https://specs.workers.io`
 - Env override: `WORKERS_SPEC_API_URL`
-
-### Docker
-
-```bash
-docker build -t workers-spec .
-docker run -p 3005:3005 -v specs-data:/data workers-spec
-```
 
 ### Spec Format
 

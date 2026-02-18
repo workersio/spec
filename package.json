@@ -1,6 +1,6 @@
 {
   "name": "@workersio/spec",
-  "version": "0.1.3",
+  "version": "0.1.5",
   "description": "Share Claude Code sessions as replayable specs",
   "license": "MIT",
   "repository": {
@@ -24,14 +24,5 @@
     "ai",
     "session-sharing",
     "workers"
-  ],
-  "module": "index.ts",
-  "type": "module",
-  "private": true,
-  "devDependencies": {
-    "@types/bun": "latest"
-  },
-  "peerDependencies": {
-    "typescript": "^5"
-  }
+  ]
 }

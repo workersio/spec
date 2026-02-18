@@ -3,6 +3,8 @@ set -euo pipefail
 
 REPO="workersio/spec"
 BINARY_NAME="workers-spec"
+PERSISTENT_DIR="$HOME/.workers-spec/bin"
+PERSISTENT_BINARY="$PERSISTENT_DIR/$BINARY_NAME"
 
 # Resolve real path of this script (handles npm symlinks)
 resolve_path() {
@@ -29,12 +31,17 @@ SELF="$(resolve_path "$0")"
 PACKAGE_DIR="$(dirname "$(dirname "$SELF")")"
 VENDOR_BINARY="$PACKAGE_DIR/vendor/$BINARY_NAME"
 
-# 1. Check vendor dir
+# 1. Check persistent cache (~/.workers-spec/bin/)
+if [ -x "$PERSISTENT_BINARY" ]; then
+  exec "$PERSISTENT_BINARY" "$@"
+fi
+
+# 2. Check vendor dir (npm install -g)
 if [ -x "$VENDOR_BINARY" ]; then
   exec "$VENDOR_BINARY" "$@"
 fi
 
-# 2. Search PATH, skipping npm symlinks back to this script
+# 3. Search PATH, skipping npm symlinks back to this script
 IFS=':' read -ra DIRS <<< "${PATH:-}"
 for dir in "${DIRS[@]}"; do
   candidate="$dir/$BINARY_NAME"
@@ -46,7 +53,7 @@ for dir in "${DIRS[@]}"; do
   fi
 done
 
-# 3. Download from GitHub releases
+# 4. Download from GitHub releases → persistent cache
 get_target() {
   local os arch
   os="$(uname -s)"
@@ -63,6 +70,20 @@ get_target() {
     Darwin) echo "${arch}-apple-darwin" ;;
     *)      echo "Unsupported platform: $os" >&2; exit 1 ;;
   esac
+}
+
+ensure_path() {
+  local line='export PATH="$HOME/.workers-spec/bin:$PATH"'
+
+  for rc in "$HOME/.zshrc" "$HOME/.bashrc"; do
+    [ -f "$rc" ] || continue
+    # Skip if already present
+    grep -qF '.workers-spec/bin' "$rc" 2>/dev/null && continue
+    printf '\n# workers-spec\n%s\n' "$line" >> "$rc"
+  done
+
+  # Also export for the current session
+  export PATH="$PERSISTENT_DIR:$PATH"
 }
 
 target="$(get_target)"
@@ -95,10 +116,12 @@ curl -fsSL "$url" -o "$tmpfile" || {
   exit 1
 }
 
-mkdir -p "$PACKAGE_DIR/vendor"
-tar xzf "$tmpfile" -C "$PACKAGE_DIR/vendor"
-chmod 755 "$VENDOR_BINARY"
-echo "Installed $BINARY_NAME $version"
+mkdir -p "$PERSISTENT_DIR"
+tar xzf "$tmpfile" -C "$PERSISTENT_DIR"
+chmod 755 "$PERSISTENT_BINARY"
+echo "Installed $BINARY_NAME $version to $PERSISTENT_DIR"
+
+ensure_path
 echo
 
-exec "$VENDOR_BINARY" "$@"
+exec "$PERSISTENT_BINARY" "$@"

@@ -1,6 +1,6 @@
 use anyhow::{Context, Result};
 use std::process::Stdio;
-use tracing::{error, info};
+use tracing::error;
 use workers_spec_core::{find_session_file, PROMPT_TEMPLATE};
 
 use crate::config::Config;
@@ -10,7 +10,6 @@ pub async fn run(session_id: &str, workspace: Option<&str>) -> Result<()> {
     let workspace_path = workspace.unwrap_or(".");
 
     let session_file = find_session_file(session_id, workspace_path)?;
-    info!("Found session file: {}", session_file);
 
     let transcript = tokio::fs::read_to_string(&session_file)
         .await
@@ -41,8 +40,6 @@ pub async fn run(session_id: &str, workspace: Option<&str>) -> Result<()> {
     if spec_content.is_empty() {
         anyhow::bail!("Claude produced no output");
     }
-
-    info!("Generated spec: {} bytes", spec_content.len());
 
     let client = reqwest::Client::new();
     let resp = client

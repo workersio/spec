@@ -1,0 +1,5 @@
+{
+  "plugins": [
+    "github.com/workersio/spec/plugins/save-spec"
+  ]
+}

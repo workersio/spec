@@ -1,0 +1,53 @@
+#!/usr/bin/env node
+
+const { execFileSync } = require("child_process");
+const path = require("path");
+const os = require("os");
+
+const PLATFORMS = {
+  darwin: {
+    arm64: "@workersio/spec-darwin-arm64",
+    x64: "@workersio/spec-darwin-x64",
+  },
+  linux: {
+    x64: "@workersio/spec-linux-x64",
+    arm64: "@workersio/spec-linux-arm64",
+  },
+};
+
+const platform = os.platform();
+const arch = os.arch();
+
+const platformPackages = PLATFORMS[platform];
+if (!platformPackages) {
+  console.error(`Unsupported platform: ${platform}`);
+  process.exit(1);
+}
+
+const packageName = platformPackages[arch];
+if (!packageName) {
+  console.error(`Unsupported architecture: ${platform}-${arch}`);
+  process.exit(1);
+}
+
+let binaryPath;
+try {
+  const packageDir = path.dirname(require.resolve(`${packageName}/package.json`));
+  binaryPath = path.join(packageDir, "bin/spec");
+} catch {
+  console.error(
+    `Could not find the binary package ${packageName}.\n` +
+    `This usually means the optional dependency was not installed.\n` +
+    `Try reinstalling: npm install @workersio/spec`
+  );
+  process.exit(1);
+}
+
+try {
+  execFileSync(binaryPath, process.argv.slice(2), { stdio: "inherit" });
+} catch (e) {
+  if (e.status !== undefined) {
+    process.exit(e.status);
+  }
+  throw e;
+}

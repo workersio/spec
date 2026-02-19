@@ -1,25 +1,14 @@
 ---
-description: Save a session as a reusable agent (or fetch one from a URL)
-argument-hint: "[url-or-id]"
+description: Save this session as a reusable agent
 disable-model-invocation: true
-allowed-tools: Bash(curl *), Bash(jq *), Bash(mkdir *), Write(.claude/agents/*)
+allowed-tools: Bash(mkdir *), Write(.claude/agents/*)
 ---
-
-<!-- NOTE: Generation prompt duplicated in share/SKILL.md. Keep both in sync. -->
 
 # Save Session as Agent
 
-Generate a reusable agent file from the current conversation, or fetch one from a shared URL.
+Generate a reusable agent file from the current conversation and save it to `.claude/agents/`.
 
 ## Instructions
-
-Check `$ARGUMENTS`:
-- If **empty** → go to **Mode A** (generate from conversation)
-- If **a URL or ID** → go to **Mode B** (fetch from remote)
-
----
-
-## Mode A: Generate from Conversation
 
 ### Step 1: Generate the agent file
 
@@ -98,50 +87,4 @@ After generating the agent file content (starting with `---`):
 
 ### Step 3: Display the result
 
-Tell the user the agent was saved to `.claude/agents/{name}.md`. Let them know they can invoke it with `@{name}` in any conversation, or use `/spec:share` to upload and share it.
-
----
-
-## Mode B: Fetch from URL
-
-### Step 1: Parse the argument
-
-`$ARGUMENTS` is either:
-- A full URL like `https://spec.workers.io/s/abc123` — extract the ID (`abc123`) and use the URL's origin as the API base
-- A bare ID like `abc123` — use the default API base (see below)
-
-### Step 2: Fetch the spec
-
-```bash
-SPEC_API="${WORKERS_SPEC_API_URL:-https://spec.workers.io}"
-curl -s "${SPEC_API}/api/specs/${ID}" | jq -r '.content'
-```
-
-If the request fails or returns an error, inform the user and stop.
-
-### Step 3: Prepare the agent file
-
-The output from Step 2 is the raw agent/spec content (the `content` field already extracted via `jq`).
-
-Check the frontmatter format:
-- If it already has `name:` in the frontmatter → it's already an agent file, use as-is
-- If it has `title:` but no `name:` → it's a legacy spec format. Do a lightweight conversion:
-  1. Rename `title:` to `name:` (and slugify the value to kebab-case)
-  2. Remove the `tags:` line
-  3. Add `tools: Read, Glob, Grep, Bash, Write, Edit` after the description line
-  4. Add `model: sonnet` after the tools line
-
-### Step 4: Save the agent file
-
-1. Extract the `name` from the (possibly converted) frontmatter.
-
-2. Create the `.claude/agents/` directory if it doesn't exist:
-   ```bash
-   mkdir -p .claude/agents
-   ```
-
-3. Write the content to `.claude/agents/{name}.md` using the Write tool.
-
-### Step 5: Display the result
-
-Tell the user the agent was saved to `.claude/agents/{name}.md`. Let them know they can invoke it with `@{name}`.
+Tell the user the agent was saved to `.claude/agents/{name}.md`. Let them know they can invoke it with `@{name}` in any conversation. Since the agent lives in the repo, it's automatically shared with anyone who has access to the repository.

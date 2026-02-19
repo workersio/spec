@@ -1,0 +1,12 @@
+{
+  "name": "@workersio/spec-scripts",
+  "private": true,
+  "scripts": {
+    "release": "bun run scripts/release.ts",
+    "release:dry": "bun run scripts/release.ts --skip-publish"
+  },
+  "devDependencies": {
+    "bun-types": "^1.3.9",
+    "typescript": "^5.9.3"
+  }
+}

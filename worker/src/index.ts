@@ -34,6 +34,7 @@ function parseSpec(content: string): { title: string; description: string } {
 
   const frontmatter = afterFirst.slice(0, endIdx);
   let title = "";
+  let name = "";
   let description = "";
 
   for (const rawLine of frontmatter.split("\n")) {
@@ -41,15 +42,20 @@ function parseSpec(content: string): { title: string; description: string } {
     const titleVal = stripYamlField(line, "title");
     if (titleVal !== null) {
       title = titleVal;
-    } else {
-      const descVal = stripYamlField(line, "description");
-      if (descVal !== null) {
-        description = descVal;
-      }
+      continue;
+    }
+    const nameVal = stripYamlField(line, "name");
+    if (nameVal !== null) {
+      name = nameVal;
+      continue;
+    }
+    const descVal = stripYamlField(line, "description");
+    if (descVal !== null) {
+      description = descVal;
     }
   }
 
-  return { title, description };
+  return { title: title || name, description };
 }
 
 /** Extract value from a YAML field line like `title: "Some Title"` or `title: Some Title`. */

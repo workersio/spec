@@ -1,0 +1,14 @@
+{
+  "name": "workers.io",
+  "owner": {
+    "name": "workers.io",
+    "url": "https://workers.io"
+  },
+  "plugins": [
+    {
+      "name": "spec",
+      "source": "./plugins/spec",
+      "description": "Convert Claude Code sessions into reusable, shareable agents"
+    }
+  ]
+}

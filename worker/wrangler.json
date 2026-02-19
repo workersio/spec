@@ -1,5 +1,5 @@
 {
-  "name": "workers-spec",
+  "name": "spec",
   "main": "src/index.ts",
   "compatibility_date": "2026-02-17",
   "d1_databases": [

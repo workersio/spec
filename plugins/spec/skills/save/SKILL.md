@@ -2,8 +2,10 @@
 description: Save a session as a reusable agent (or fetch one from a URL)
 argument-hint: "[url-or-id]"
 disable-model-invocation: true
-allowed-tools: Bash(curl *), Bash(mkdir *)
+allowed-tools: Bash(curl *), Bash(jq *), Bash(mkdir *), Write(.claude/agents/*)
 ---
+
+<!-- NOTE: Generation prompt duplicated in share/SKILL.md. Keep both in sync. -->
 
 # Save Session as Agent
 
@@ -106,21 +108,20 @@ Tell the user the agent was saved to `.claude/agents/{name}.md`. Let them know t
 
 `$ARGUMENTS` is either:
 - A full URL like `https://spec.workers.io/s/abc123` — extract the ID (`abc123`) and use the URL's origin as the API base
-- A bare ID like `abc123` — use `${WORKERS_SPEC_API_URL:-https://spec.workers.io}` as the API base
+- A bare ID like `abc123` — use the default API base (see below)
 
 ### Step 2: Fetch the spec
 
 ```bash
-curl -s "${API_BASE}/api/specs/${ID}"
+SPEC_API="${WORKERS_SPEC_API_URL:-https://spec.workers.io}"
+curl -s "${SPEC_API}/api/specs/${ID}" | jq -r '.content'
 ```
-
-The response is JSON with a `content` field containing the full spec/agent content.
 
 If the request fails or returns an error, inform the user and stop.
 
 ### Step 3: Prepare the agent file
 
-Extract the `content` field from the JSON response.
+The output from Step 2 is the raw agent/spec content (the `content` field already extracted via `jq`).
 
 Check the frontmatter format:
 - If it already has `name:` in the frontmatter → it's already an agent file, use as-is

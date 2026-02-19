@@ -1,25 +1,22 @@
+import { Hono } from "hono";
+import { cors } from "hono/cors";
 import { nanoid } from "nanoid";
 
-export interface Env {
+type Bindings = {
   DB: D1Database;
-}
+};
+
+const app = new Hono<{ Bindings: Bindings }>();
 
 const MAX_CONTENT_SIZE = 1024 * 1024; // 1 MB
 
-const CORS_HEADERS: Record<string, string> = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type",
-  "Access-Control-Max-Age": "86400",
-};
+// --- Middleware ---
+
+app.use("*", cors());
 
 // --- Helpers ---
 
-function json(data: unknown, status = 200): Response {
-  return Response.json(data, { status, headers: CORS_HEADERS });
-}
-
-/** Parse YAML frontmatter from spec content. Matches Rust spec_parser.rs logic. */
+/** Parse YAML frontmatter from spec content. */
 function parseSpec(content: string): { title: string; description: string } {
   const trimmed = content.trimStart();
   if (!trimmed.startsWith("---")) {
@@ -71,7 +68,7 @@ function stripYamlField(line: string, field: string): string | null {
   return val;
 }
 
-/** Count numbered list items (e.g. "1. First step"). Matches Rust count_steps logic. */
+/** Count numbered list items (e.g. "1. First step"). */
 function countSteps(content: string): number {
   return content.split("\n").filter((l) => {
     const t = l.trim();
@@ -79,83 +76,78 @@ function countSteps(content: string): number {
   }).length;
 }
 
-// --- Worker ---
+// --- Routes ---
 
-export default {
-  async fetch(request: Request, env: Env): Promise<Response> {
-    const url = new URL(request.url);
-    const { pathname } = url;
+app.get("/health", (c) => {
+  return c.json({ status: "ok" });
+});
 
-    // CORS preflight
-    if (request.method === "OPTIONS") {
-      return new Response(null, { status: 204, headers: CORS_HEADERS });
-    }
+app.post("/api/specs", async (c) => {
+  const body = await c.req.json<{ content?: string; version?: string }>();
 
-    // GET /health
-    if (request.method === "GET" && pathname === "/health") {
-      return json({ status: "ok" });
-    }
+  const content = body.content ?? "";
+  if (!content) {
+    return c.json({ error: "content must not be empty" }, 400);
+  }
+  if (content.length > MAX_CONTENT_SIZE) {
+    return c.json(
+      { error: `content exceeds maximum size of ${MAX_CONTENT_SIZE} bytes` },
+      413
+    );
+  }
 
-    // POST /api/specs
-    if (request.method === "POST" && pathname === "/api/specs") {
-      let body: { content?: string; version?: string };
-      try {
-        body = await request.json();
-      } catch {
-        return json({ error: "Invalid JSON" }, 400);
-      }
+  const { title, description } = parseSpec(content);
+  const id = nanoid(21);
+  const stepCount = countSteps(content);
+  const version = body.version ?? "";
 
-      const content = body.content ?? "";
-      if (!content) {
-        return json({ error: "content must not be empty" }, 400);
-      }
-      if (content.length > MAX_CONTENT_SIZE) {
-        return json(
-          { error: `content exceeds maximum size of ${MAX_CONTENT_SIZE} bytes` },
-          413
-        );
-      }
+  await c.env.DB.prepare(
+    "INSERT INTO specs (id, content, title, summary, step_count, version) VALUES (?, ?, ?, ?, ?, ?)"
+  )
+    .bind(id, content, title, description, stepCount, version)
+    .run();
 
-      const { title, description } = parseSpec(content);
-      const id = nanoid(21);
-      const stepCount = countSteps(content);
-      const version = body.version ?? "";
+  const specUrl = `${new URL(c.req.url).origin}/s/${id}`;
+  return c.json({ id, url: specUrl }, 201);
+});
 
-      try {
-        await env.DB.prepare(
-          "INSERT INTO specs (id, content, title, summary, step_count, version) VALUES (?, ?, ?, ?, ?, ?)"
-        )
-          .bind(id, content, title, description, stepCount, version)
-          .run();
-      } catch {
-        return json({ error: "Failed to store spec" }, 500);
-      }
+app.get("/s/:id", async (c) => {
+  const id = c.req.param("id");
+  const row = await c.env.DB.prepare("SELECT content FROM specs WHERE id = ?")
+    .bind(id)
+    .first<{ content: string }>();
 
-      const specUrl = `${url.origin}/s/${id}`;
-      return json({ id, url: specUrl }, 201);
-    }
+  if (!row) {
+    return c.text("Not found\n", 404);
+  }
 
-    // GET /api/specs/:id
-    const specMatch = pathname.match(/^\/api\/specs\/([A-Za-z0-9_-]+)$/);
-    if (request.method === "GET" && specMatch) {
-      const id = specMatch[1];
-      let row;
-      try {
-        row = await env.DB.prepare(
-          "SELECT id, content, title, summary, step_count, version, created_at FROM specs WHERE id = ?"
-        )
-          .bind(id)
-          .first();
-      } catch {
-        return json({ error: "Database error" }, 500);
-      }
+  c.header("Content-Type", "text/markdown; charset=utf-8");
+  return c.body(row.content);
+});
 
-      if (!row) {
-        return json({ error: "spec not found" }, 404);
-      }
-      return json(row);
-    }
+app.get("/api/specs/:id", async (c) => {
+  const id = c.req.param("id");
+  const row = await c.env.DB.prepare(
+    "SELECT id, content, title, summary, step_count, version, created_at FROM specs WHERE id = ?"
+  )
+    .bind(id)
+    .first();
 
-    return json({ error: "not found" }, 404);
-  },
-} satisfies ExportedHandler<Env>;
+  if (!row) {
+    return c.json({ error: "spec not found" }, 404);
+  }
+
+  return c.json(row);
+});
+
+// --- Global error handler ---
+
+app.onError((err, c) => {
+  if (err instanceof SyntaxError) {
+    return c.json({ error: "Invalid JSON" }, 400);
+  }
+  console.error(err);
+  return c.json({ error: "Internal server error" }, 500);
+});
+
+export default app;

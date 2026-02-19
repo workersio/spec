@@ -4,6 +4,8 @@ disable-model-invocation: true
 allowed-tools: Bash(curl *), Bash(jq *), Write(/tmp/spec-upload-*)
 ---
 
+<!-- NOTE: Generation prompt duplicated in save/SKILL.md. Keep both in sync. -->
+
 # Share Session as Agent
 
 Generate a reusable agent file from the current conversation and upload it to the spec server.
@@ -76,15 +78,16 @@ You are an agent that <role description — what this agent does>.
 
 After generating the agent file content (starting with `---`):
 
-1. Write the agent file content to a temp file:
+1. Write the agent file content to a temp file using `$(date +%s)` as the timestamp:
    ```
-   /tmp/spec-upload-{timestamp}.md
+   /tmp/spec-upload-$(date +%s).md
    ```
 
 2. Upload using curl with proper JSON encoding:
    ```bash
-   jq -n --rawfile content /tmp/spec-upload-{timestamp}.md '{"content": $content}' | \
-     curl -s -X POST "${WORKERS_SPEC_API_URL:-https://spec.workers.io}/api/specs" \
+   SPEC_API="${WORKERS_SPEC_API_URL:-https://spec.workers.io}"
+   jq -n --rawfile content /tmp/spec-upload-*.md '{"content": $content}' | \
+     curl -s -X POST "${SPEC_API}/api/specs" \
        -H "Content-Type: application/json" -d @-
    ```
 
@@ -97,4 +100,19 @@ After generating the agent file content (starting with `---`):
 
 ### Step 3: Display the result
 
-Show the user the share URL. Suggest they can save it locally with `/spec:save <url>` to use it as an agent.
+Show the user a summary with:
+
+1. **Agent name** and **description** from the generated frontmatter
+2. The share URL prominently — formatted as a clickable link
+3. An import command reminder:
+   ```
+   /spec:save <the-share-url>
+   ```
+
+Example output format:
+
+> **my-agent-name** — A brief description of what it does
+>
+> **Shared:** https://spec.workers.io/s/abc123
+>
+> Import in another project: `/spec:save https://spec.workers.io/s/abc123`

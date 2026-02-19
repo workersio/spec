@@ -55,7 +55,7 @@ export async function packPlatform({
 
 export function publishArtifacts(artifacts: string[], npmTag: string) {
   for (const artifact of artifacts) {
-    const cmd = `npm publish "${artifact}" --tag ${npmTag}`;
+    const cmd = `npm publish "${artifact}" --tag ${npmTag} --access public`;
     console.log(`Executing: ${cmd}`);
     execSync(cmd, { stdio: "inherit" });
   }

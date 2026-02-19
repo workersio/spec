@@ -1,6 +1,7 @@
 import path from "node:path";
 import { readFileSync } from "node:fs";
 import { parseArgs } from "node:util";
+import { execSync } from "node:child_process";
 import { PLATFORMS } from "./platforms";
 import { packPlatform, publishArtifacts } from "./operations";
 
@@ -49,9 +50,16 @@ async function main() {
   console.log(`\nAll platforms packed. ${artifacts.length} artifacts created.`);
 
   if (!skipPublish) {
-    console.log("\nPublishing artifacts...");
+    console.log("\nPublishing platform artifacts...");
     publishArtifacts(artifacts, npmTag);
-    console.log("Published successfully.");
+
+    console.log("\nPublishing main shim package (@workersio/spec)...");
+    const shimDir = path.join(__dirname, "..", "spec");
+    const shimCmd = `npm publish "${shimDir}" --tag ${npmTag} --access public`;
+    console.log(`Executing: ${shimCmd}`);
+    execSync(shimCmd, { stdio: "inherit" });
+
+    console.log("All packages published successfully.");
   } else {
     console.log("\nSkipping publish (--skip-publish).");
   }

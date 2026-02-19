@@ -1,9 +1,15 @@
 {
-  "name": "save-spec",
+  "name": "spec",
   "version": "0.4.0",
   "description": "Convert Claude Code sessions into reusable agents",
-  "author": { "name": "workers.io" },
+  "author": {
+    "name": "workers.io"
+  },
   "repository": "https://github.com/workersio/spec",
   "license": "MIT",
-  "keywords": ["specs", "session-sharing", "workflows"]
+  "keywords": [
+    "specs",
+    "session-sharing",
+    "workflows"
+  ]
 }

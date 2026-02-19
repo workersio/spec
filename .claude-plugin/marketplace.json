@@ -6,8 +6,8 @@
   },
   "plugins": [
     {
-      "name": "save-spec",
-      "source": "./plugins/save-spec",
+      "name": "spec",
+      "source": "./plugins/spec",
       "description": "Convert Claude Code sessions into reusable agents"
     }
   ]

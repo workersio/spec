@@ -87,8 +87,8 @@ pub fn run() {
     }
 
     let path = installer::settings_path(&scope);
-    log::info(format!("Updated {}", path.display())).expect("Failed to show info");
+    log::info(format!("Enabled in {}", path.display())).expect("Failed to show info");
 
-    outro("Done! Your plugins are ready to use. Run `claude` to get started.")
+    outro("Done! Restart Claude Code to load your new plugins.")
         .expect("Failed to show outro");
 }

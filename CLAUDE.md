@@ -12,12 +12,12 @@ A collection of Claude Code plugins by workers.io. Each plugin is a self-contain
 
 ## Plugins
 
-### save-spec (`plugins/save-spec/`)
+### spec (`plugins/spec/`)
 
 Converts Claude Code conversations into reusable agents. Analyzes the current session and distills it into an agent file saved to `.claude/agents/{name}.md`, invocable via `@{name}`.
 
-- **Skill**: `skills/save/SKILL.md` (`/save-spec:save`)
-- **Manifest**: `plugins/save-spec/.claude-plugin/plugin.json`
+- **Skill**: `skills/save/SKILL.md` (`/spec:save`)
+- **Manifest**: `plugins/spec/.claude-plugin/plugin.json`
 
 The skill embeds the prompt template directly in SKILL.md. It runs inline in Claude Code -- no binary, no subprocess.
 

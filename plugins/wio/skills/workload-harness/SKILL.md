@@ -3,7 +3,7 @@ name: workload-harness
 description: Autonomous workload-harness loop for a connected repo. One session alternates producer and executor episodes under a mechanical dispatcher, turning product promises into adversarial workloads, running them via wio, and publishing official results to the status page through the exploration envelope. Invoke via /goal against a connected project; init mode scaffolds .workers/.
 metadata:
   author: workers.io
-  version: "0.6.0"
+  version: "0.1.1"
 ---
 
 # Workload Harness

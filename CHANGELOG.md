@@ -2,7 +2,12 @@
 
 All notable changes to `@workersio/skills` are tracked here.
 
-## 0.6.0
+## 0.1.1
+
+> Versioning policy: `0.1.x` is the internal iteration line — expect many
+> small bumps. `0.2.0` is reserved for the first release we share publicly.
+> (Iterations previously labeled 0.4.x/0.5.0 on the dev box collapse into
+> this line; run records pin skill identity by git sha, not version label.)
 
 - workload-harness: ship the product-agnostic workload library under the
   skill's `lib/` — `crashclock` (seed-swept fault timing), `durawatch`
@@ -20,8 +25,8 @@ All notable changes to `@workersio/skills` are tracked here.
 - workload-harness: **mapping-breadth floor** — every target module is inside
   an area's code loci or explicitly parked with a reason; gaps arm re-plan.
 - workload-harness: init copies `lib/` and `recipes/` into `.workers/`.
-- Sync wio plugin v0.5.0 from the dev box (workload-harness skill, critic
-  backlog audit) — previously unpushed.
+- Sync the workload-harness skill and critic backlog audit from the dev box
+  — previously unpushed.
 
 ## 0.1.0
 

@@ -1,6 +1,6 @@
 {
   "name": "wio",
-  "version": "0.1.0",
+  "version": "0.4.1",
   "description": "Testing workflow skill for high-value test discovery, strategy selection, focused implementation, realistic workload generation, strict review, and suite health diagnostics.",
   "author": {
     "name": "workers.io",

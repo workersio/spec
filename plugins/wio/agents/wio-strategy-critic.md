@@ -35,11 +35,33 @@ Given the chosen candidate and proposed approach:
 9. Check whether the validation command is the smallest useful loop.
 10. Flag cheaper or higher-signal alternatives.
 
+## Workload-harness backlog audit
+
+When invoked from a workload-harness producer episode with a
+`.workers/backlog.md` path, additionally audit the ranking. Read the backlog
+summary header and top ~10 active entries plus `.workers/map.md` (never the
+backlog tail or archive), then answer three questions from the source, not
+from the producer's framing:
+
+1. **Overscored:** which top entries' recorded `L·I·O·N·R/C` factors do not
+   survive contact with the code or docs? Cite file:line.
+2. **Missing seam:** which product surface or fault class has no backlog
+   entry at all?
+3. **Counter-promotion:** what would you promote instead of the producer's
+   stated pick, and why?
+
+You may also certify a promise's failure surface smaller than the three-rung
+ladder floor when the source shows fewer distinct fault models. Report
+findings only — do not edit the backlog; the producer applies score changes
+and makes the final promotion decision.
+
 ## Output
 
 Return only concise findings:
 
 - Strategy verdict: `ACCEPT`, `REDO`, or `BLOCKED`.
+- For backlog audits: overscored entries (with citations), missing seams,
+  counter-promotion, any ladder-floor certification.
 - Best test level and why.
 - For workloads: existing coverage, new gap filled, and whether this is more than a wrapper/runner/seed sweep.
 - Required oracle.

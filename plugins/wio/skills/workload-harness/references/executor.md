@@ -52,6 +52,29 @@ should never re-discover it.
    entry): distinct fault model, real oracle, sound approach? Fix a weak
    *approach* yourself; bounce a deficient *spec* (see Write scope).
 3. Build the **smallest** workload that exercises the attack.
+   - **The universal oracle plane is part of "smallest"** (SKILL.md §Workload
+     library). Non-negotiable defaults, cheap to carry, expensive to omit:
+     - *Liveness watchdog*: arm a global deadline (thread/alarm) that emits
+       `INVARIANT liveness_watchdog FAIL` and exits red if the workload body
+       wedges. A hang must become a red verdict, never a silent runtime
+       timeout — hang bugs are invisible to every other oracle.
+     - *Terminal-state sweep*: before the green path can PASS, every work
+       item the SUT accepted/acked must have reached a terminal state
+       (SUCCESS/ERROR/DLQ per the promise); a stranded-PENDING item is
+       `INVARIANT terminal_state FAIL`.
+     - *Acked-durability watch*: if the attack acks durable effects, record
+       them in a `lib/durawatch.py` manifest and re-observe on the delay
+       ladder — immediate asserts miss delayed erasure.
+     - *Fault timing through `lib/crashclock.py`*: kills, dependency
+       restarts, held locks arm at seed-derived points in a declared timing
+       space (`CLOCK` event lines), never at hand-tuned sleeps.
+     - *Async parity*: if the driven API has sync and async forms, drive
+       both (same oracle, both drivers, or a selector per named
+       exploration). A sync-only driver cannot intercept an async-only
+       defect; omitting the async side requires a recorded reason on the
+       entry.
+     The library lives at `.workers/lib/` (copied by init; if missing on an
+     older corpus, copy it from the plugin's `lib/` first).
    - **Invariant lines are mandatory, not optional.** Emit one per oracle
      clause on stdout — `INVARIANT <id> <name> PASS <summary>` on the green
      path, and the matching `FAIL` line before exiting red. The runtime

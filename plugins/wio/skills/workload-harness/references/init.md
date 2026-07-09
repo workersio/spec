@@ -29,6 +29,8 @@ first producer episode.
   areas/
   promises/
   workloads/
+  lib/          ← copied from the plugin skill's lib/ (see step 1a)
+  recipes/      ← copied from the plugin skill's references/recipes/
   runs/
   loop-state.md
   publish.py
@@ -38,6 +40,14 @@ first producer episode.
 it from the s2-workload fork — it walks `promises/*.md`, publishes every
 `status: done` exploration with key/command/depth read from the same
 frontmatter entry, and rewrites `published:` ids.
+
+1a. Copy the workload library and service recipes from the plugin into the
+   scaffold: the skill's `lib/*.py` (+ `lib/README.md`) → `.workers/lib/`,
+   and `references/recipes/` → `.workers/recipes/`. Copies, not symlinks —
+   the guest sees only the repo, so the library must be committed with it.
+   On an existing corpus, re-copying newer plugin versions over
+   `.workers/lib/` is safe (the library is append-only in spirit: workloads
+   pin behavior by seed and declared spaces, not by lib internals).
 
 2. `map.md` — the factual index header: target repo, pinned ref, wio project
    ID/branch, an empty areas table, an empty promoted-findings table. If the

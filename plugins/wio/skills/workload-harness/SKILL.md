@@ -62,7 +62,7 @@ mechanical — do not reorder, do not blend modes inside one episode.
 
 | # | Condition | Action |
 |---|-----------|--------|
-| 1 | Stop condition met — **primary: coverage exhausted** (no in-flight or ready work, no pending re-entry or trigger, and the backlog's top active score is below its header threshold); **safety rails:** loop/workload caps hit (defaults 100 loops / 250 workloads). A no-new-information streak is **never** a stop — it is the staleness trigger, row 4. | **Wrap up:** run `.workers/publish.py` (publishes every `status: done` exploration, rewrites `published:` ids), commit specs + evidence + bookkeeping, write the session summary into `loop-state.md`, report — **naming which stop fired**. "Coverage exhausted" is the goal state; a rail hit means coverage remains and the summary must say exactly what was left queued. |
+| 1 | Stop condition met — **primary: coverage exhausted** (no in-flight or ready work, no pending re-entry or trigger, and the backlog's top active score is below its header threshold); **safety rails:** loop/workload caps hit (defaults 100 loops / 250 workloads). A no-new-information streak is **never** a stop — it is the staleness trigger, row 4. **Aim discipline:** a session may not end by choice while any above-threshold backlog row is un-attacked and rails remain — a ranked seam the loop *named* and never fired at is the most expensive failure mode there is (post-mortems found runs that recorded a real bug's exact seam, rank-1 with file:line, then self-stopped with most of the budget unspent). An above-threshold row is producible work by definition; either attack it, or demote it with a recorded reason, before row 1 can fire. | **Wrap up:** run `.workers/publish.py` (publishes every `status: done` exploration, rewrites `published:` ids), commit specs + evidence + bookkeeping, write the session summary into `loop-state.md`, report — **naming which stop fired**. "Coverage exhausted" is the goal state; a rail hit means coverage remains and the summary must say exactly what was left queued, starting with any above-threshold backlog rows and their scores. |
 | 2 | `loop-state.md` names an in-flight unit | **Resume executor** on it — finish or block it before anything else. |
 | 3 | `loop-state.md` shows `re-entry: pending <exploration-key>` (set by the executor at every verdict) | **Producer re-entry** — inline, one decision, not an episode: replace the pending line with `re-entry: <exploration-key> → deepen\|switch\|stop — <one-line why>`, then **fold the verdict into backlog L** — reds/near-misses bump the corridor and its same-path siblings, repeated all-greens decay it ([references/producer.md](references/producer.md) §Verdict re-entry + §Score feedback). |
 | 4 | A re-plan trigger is set (**new target commits** — `target-head-sha ≠ last-scanned-sha` in `loop-state.md`; executor bounce-backs pending triage; critic-found coverage gap; **staleness** — the no-new-information streak reached K, default 5, tracked in `loop-state.md`) | **Producer episode** — triage first, then extend. **Diff-directed** (new commits): scan `git diff --name-only <last-scanned-sha>..<target-head-sha>`, map changed files to `[path:]` corridors, and run a **diff-directed episode** — re-rank the changed corridors up and **attach sweep budget** to them (dispatch/plan a depth-carrying sweep), leaving untouched-area corridors out even if they top the standing pool; then advance `last-scanned-sha` ([references/producer.md](references/producer.md) §Diff-directed episodes). **Staleness**: refresh the scout fan-out and take the critic's ranking audit before promoting, then reset the streak; the ranking audit folds **user exposure** into backlog L (issue-history-weighted prior, [references/producer.md](references/producer.md) §User-exposure) alongside any pending sweep feedback. Clear the trigger. |
@@ -85,6 +85,33 @@ Episode contracts:
 - Executor: [references/executor.md](references/executor.md)
 - Critic gates: [references/critics.md](references/critics.md)
 - Exploratory sweeps (later mode, not v1): [references/breaker-mode.md](references/breaker-mode.md)
+
+## Workload library and the universal oracle plane
+
+The skill ships a product-agnostic workload library ([lib/](lib/README.md)) and
+dependency-service recipes ([references/recipes/](references/recipes/README.md));
+init copies both into the repo as `.workers/lib/` and `.workers/recipes/` so
+workloads import locally and runs stay hermetic.
+
+Every workload carries the **universal oracle plane** on top of its bespoke
+oracles — these catch the symptom classes bespoke oracles are systematically
+blind to (graded post-mortems: everything counter-shaped was detectable while
+hangs, stranded states, and delayed erasure were invisible):
+
+- **Liveness watchdog** — a global deadline that converts a hang into
+  `INVARIANT liveness_watchdog FAIL`. A hang is a red, not a timeout artifact.
+- **Terminal-state sweep** — every accepted/acked work item must reach a
+  terminal state before exit; a stranded item is a FAIL, not a skipped assert.
+- **Acked-durability watch** (`lib/durawatch.py`) — whenever the product acks
+  durable effects, manifest them and re-observe on a delay ladder; immediate
+  asserts miss delayed erasure.
+- **Declared fault timing** (`lib/crashclock.py`) — kills/restarts/held locks
+  arm at seed-swept points in a declared timing space, never at magic sleeps.
+- **Async parity** — when the API under attack has sync and async forms, the
+  workload drives both (or the entry records why not); concurrency defects are
+  frequently async-only and sync-only drivers walk straight past them.
+
+Details and the per-step contract: [references/executor.md](references/executor.md).
 
 ## Publication model (drafts vs official)
 

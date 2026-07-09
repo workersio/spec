@@ -52,6 +52,23 @@ durable rows into `map.md` (citations preserved), candidates into
 existing entries at insert time** (a match updates that row's score and
 provenance; it never adds a sibling).
 
+**Mapping-breadth floor (mechanical, part of every map refresh).** Beats find
+what scouts look at; whole subsystems die by never being looked at — graded
+post-mortems found half the missed bugs lived in modules *no area ever named*
+(streams, patching, event-loop shutdown, config resolution). So after the
+scouts return, enumerate the target's modules mechanically (`ls` the source
+packages / top-level modules — a listing, not a reading) and reconcile: every
+module is either **inside some area's code loci** or **explicitly parked** in
+`map.md` with a one-line reason (`parked: docs-only`, `parked: vendored`,
+`parked: unreachable-in-guest — <recipe that would unlock it>`). A module in
+neither state is a coverage gap: arm the re-plan trigger (dispatcher row 4).
+Two floors fall out of the parked list: a `parked: unreachable-in-guest` row
+is a standing *infrastructure* candidate (check `references/recipes/` — a
+Postgres-only surface stops being unreachable the moment the recipe is
+vendored), and a config-resolution module is never parked by construction —
+a harness that hard-pins the config it tests bypasses the resolution seams
+where real config bugs live.
+
 Host mechanics: Claude Code — one message with several Task calls,
 `subagent_type: "wio:wio-candidate-scout"`, one per beat with a tailored
 brief. Codex — the `.codex/agents/` equivalent. No subagent support — run

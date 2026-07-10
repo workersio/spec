@@ -2,6 +2,23 @@
 
 All notable changes to `@workersio/skills` are tracked here.
 
+## 0.1.2
+
+- workload-harness: **self-contained subagent briefs** — scout and critic
+  briefs now ship inside the skill
+  (`references/briefs/{candidate-scout,strategy-critic,test-reviewer}.md`)
+  with the methodology they need embedded (distilled from the wio
+  references: workload-modeling, risk-based-testing, test-level-selection,
+  oracles/fixtures/doubles) and a hard confinement rule: a dispatched
+  subagent reads only the target working tree plus this skill's directory.
+- workload-harness: producer.md / critics.md / SKILL.md now dispatch generic
+  read-only subagents on the embedded briefs by default; the installed
+  `wio:wio-*` plugin agents remain an acceptable equivalent on normal plugin
+  installs only — from a standalone copy of the skill their definitions read
+  the sibling `wio` skill's reference library, i.e. outside the copy (the
+  lab row-3 taint, ledger DEC-017). The `wio` skill's own agents and
+  references are unchanged.
+
 ## 0.1.1
 
 > Versioning policy: `0.1.x` is the internal iteration line — expect many

@@ -69,10 +69,18 @@ vendored), and a config-resolution module is never parked by construction —
 a harness that hard-pins the config it tests bypasses the resolution seams
 where real config bugs live.
 
-Host mechanics: Claude Code — one message with several Task calls,
-`subagent_type: "wio:wio-candidate-scout"`, one per beat with a tailored
-brief. Codex — the `.codex/agents/` equivalent. No subagent support — run
-the beats yourself, serially, with the same briefs.
+Host mechanics: Claude Code — one message with several Task calls, one scout
+per beat. Each scout's prompt is this skill's **embedded brief**
+([briefs/candidate-scout.md](briefs/candidate-scout.md)) plus the beat's
+tailored charge (which beat, which paths, what the map already covers),
+dispatched on a generic read-only subagent (e.g. `general-purpose`). On a
+normal plugin install the installed `wio:wio-candidate-scout` agent is an
+acceptable equivalent — but **only** there: its definition reads the sibling
+`wio` skill's reference library, so from a standalone copy of this skill
+(vendored, sandboxed, confined) that dispatch reads outside the copy — use
+the embedded brief instead. Codex — the `.codex/agents/` equivalent, same
+rule. No subagent support — run the beats yourself, serially, with the same
+briefs.
 
 ## Backlog promotion (how every batch starts)
 

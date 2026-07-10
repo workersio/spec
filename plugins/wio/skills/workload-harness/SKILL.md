@@ -3,7 +3,7 @@ name: workload-harness
 description: Autonomous workload-harness loop for a connected repo. One session alternates producer and executor episodes under a mechanical dispatcher, turning product promises into adversarial workloads, running them via wio, and publishing official results to the status page through the exploration envelope. Invoke via /goal against a connected project; init mode scaffolds .workers/.
 metadata:
   author: workers.io
-  version: "0.1.1"
+  version: "0.1.2"
 ---
 
 # Workload Harness
@@ -183,6 +183,14 @@ Three mechanics keep long runs healthy:
 - **All subagents run foreground** — scouts and critics alike. Never
   dispatch background subagents: the dispatcher is serial and waits on the
   results anyway, and backgrounded subagents stalled the S2 loop.
+- **Subagents are briefed from this skill, never from installed plugins.**
+  Scout and critic briefs ship self-contained under `references/briefs/`;
+  dispatch them on generic read-only subagents, and a dispatched subagent
+  reads only the target working tree plus this skill's directory. The
+  installed `wio:wio-*` agents are an acceptable equivalent on a normal
+  plugin install only — from a standalone copy of this skill they reach
+  outside the copy (their definitions read the sibling `wio` skill's
+  reference library).
 - **Batch spec commits.** Official runs execute the prepared image at pushed
   HEAD, and each commit → `wio projects prepare` cycle costs ~60s+. Commit
   an episode's specs and workloads together and share one prepare cycle

@@ -77,18 +77,28 @@ run. Neither replaces the producer/executor loop — they admit or reject work.
 
 ## How to ask a critic
 
-The critics are **subagents**, not CLI verbs (there is no `wio critic`):
+The critics are **subagents**, not CLI verbs (there is no `wio critic`). Their
+briefs ship **inside this skill** and are self-contained —
+[briefs/strategy-critic.md](briefs/strategy-critic.md) and
+[briefs/test-reviewer.md](briefs/test-reviewer.md):
 
-- **Claude Code:** dispatch the Task tool with `subagent_type: "wio:wio-strategy-critic"`
-  (or `wio:wio-test-reviewer`). Read-only; it returns `ACCEPT | REDO | BLOCKED` (strategy) or
+- **Claude Code:** dispatch a generic read-only subagent (e.g.
+  `general-purpose`) whose prompt is the embedded brief plus the entry/diff
+  under judgment. It returns `ACCEPT | REDO | BLOCKED` (strategy) or
   `KEEP | REDO | REMOVE` (review) plus the required oracle and the falsification check.
   For the *ranking* question the return is an audit — overscored entries,
   missing seams, counter-promotion — not a verdict; a producer episode that
   promotes can ask the set and ranking questions in one dispatch. Critics
-  always run **foreground** (see the long-run notes in SKILL.md).
-- **Codex:** the `.codex/agents/` custom-agent equivalent.
-- **"use or emulate"** = spawn the subagent if your host supports it, otherwise run its
-  checklist inline yourself. **The main agent applies the final decision.**
+  always run **foreground** (see the long-run notes in SKILL.md). On a normal
+  plugin install, `subagent_type: "wio:wio-strategy-critic"` /
+  `"wio:wio-test-reviewer"` are acceptable equivalents — but **only** there:
+  those agents' definitions read the sibling `wio` skill's reference library,
+  so from a standalone copy of this skill that dispatch reads outside the
+  copy — use the embedded briefs instead.
+- **Codex:** the `.codex/agents/` custom-agent equivalent, same rule.
+- **"use or emulate"** = dispatch the embedded brief on a subagent if your host
+  supports it, otherwise run its checklist inline yourself. **The main agent
+  applies the final decision.**
 
 ## What a rejection costs — routing, not a stall
 

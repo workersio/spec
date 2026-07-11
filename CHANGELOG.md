@@ -2,6 +2,33 @@
 
 All notable changes to `@workersio/skills` are tracked here.
 
+## 0.1.3
+
+- workload-harness: **build-first doctrine** (the headline; graded-row
+  post-mortems: sessions self-stopped with ~95% of case budget unspent while
+  demoting corridors as "unreachable") — reach engineering is producible
+  work: a reachability-blocked corridor converts into an infrastructure
+  candidate scored by the weight it unlocks; demotion requires climbing the
+  infra-check ladder (in-process driver → dependency-fault shim → service
+  recipe/guest-binary inventory → in-process approximation) and recording
+  `infra-check:` on the row; the dispatcher's stop row refuses
+  coverage-exhausted while an infra-unlockable corridor stands
+  (producer.md §Build-first, SKILL.md row 1, critic briefs).
+- workload-harness: **prose rules become mechanical gates** — async parity
+  is now an executor done-gate and a test-reviewer REDO check (a sync-only
+  driver on a dual-form API needs a recorded `async:` reason); the
+  mapping-breadth floor must be written as a `floor: … / <n> orphans` line
+  in loop-state.md and row 1 requires `0 orphans`. Both rules existed as
+  prose and were skipped silently in graded runs.
+- workload-harness: **body-entry ledger** joins the universal oracle plane —
+  checkpointed steps replay when a body re-executes, so step-effect counts
+  are structurally blind to body re-execution; invocation-dedup oracles must
+  count body entries (executor.md, test-reviewer brief).
+- workload-harness: **dependency-fault shims** — in-process faults (transient
+  DB error, slow call, held lock) injected by wrapping the SUT's own
+  client/engine seam at crashclock-derived timing; the shim rung precedes any
+  reachability demotion (executor.md, SKILL.md oracle plane).
+
 ## 0.1.2
 
 - workload-harness: **self-contained subagent briefs** — scout and critic

@@ -40,6 +40,17 @@ property is progress. Check both sides of important boundaries:
 accepted/rejected, allowed/denied, enqueue/dequeue, retry/replay, dependency
 failure/recovery.
 
+**Step-effect counts do not prove body dedup.** Checkpointed steps replay
+when a body re-executes, so a workload offering per-step effect counts as
+its exactly-once / invocation-dedup oracle is structurally blind to body
+re-execution — require a body-entry ledger line (an effect recorded at body
+entry, outside any step) or return `REDO`.
+
+**Async parity is checked here.** If the driven API has sync and async forms
+and the workload drives only one with no recorded `async:` reason on the
+entry, return `REDO` — a sync-only driver cannot intercept an async-only
+defect.
+
 **The mechanism must survive setup.** Fixtures, data, doubles, and
 environment must preserve the real failure mechanism — a mock or setup
 shortcut that removes the risk under test voids the workload.

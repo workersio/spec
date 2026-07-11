@@ -3,7 +3,7 @@ name: workload-harness
 description: Autonomous workload-harness loop for a connected repo. One session alternates producer and executor episodes under a mechanical dispatcher, turning product promises into adversarial workloads, running them via wio, and publishing official results to the status page through the exploration envelope. Invoke via /goal against a connected project; init mode scaffolds .workers/.
 metadata:
   author: workers.io
-  version: "0.1.2"
+  version: "0.1.3"
 ---
 
 # Workload Harness
@@ -62,7 +62,7 @@ mechanical — do not reorder, do not blend modes inside one episode.
 
 | # | Condition | Action |
 |---|-----------|--------|
-| 1 | Stop condition met — **primary: coverage exhausted** (no in-flight or ready work, no pending re-entry or trigger, and the backlog's top active score is below its header threshold); **safety rails:** loop/workload caps hit (defaults 100 loops / 250 workloads). A no-new-information streak is **never** a stop — it is the staleness trigger, row 4. **Aim discipline:** a session may not end by choice while any above-threshold backlog row is un-attacked and rails remain — a ranked seam the loop *named* and never fired at is the most expensive failure mode there is (post-mortems found runs that recorded a real bug's exact seam, rank-1 with file:line, then self-stopped with most of the budget unspent). An above-threshold row is producible work by definition; either attack it, or demote it with a recorded reason, before row 1 can fire. | **Wrap up:** run `.workers/publish.py` (publishes every `status: done` exploration, rewrites `published:` ids), commit specs + evidence + bookkeeping, write the session summary into `loop-state.md`, report — **naming which stop fired**. "Coverage exhausted" is the goal state; a rail hit means coverage remains and the summary must say exactly what was left queued, starting with any above-threshold backlog rows and their scores. |
+| 1 | Stop condition met — **primary: coverage exhausted** (no in-flight or ready work, no pending re-entry or trigger, and the backlog's top active score is below its header threshold); **safety rails:** loop/workload caps hit (defaults 100 loops / 250 workloads). A no-new-information streak is **never** a stop — it is the staleness trigger, row 4. **Aim discipline:** a session may not end by choice while any above-threshold backlog row is un-attacked and rails remain — a ranked seam the loop *named* and never fired at is the most expensive failure mode there is (post-mortems found runs that recorded a real bug's exact seam, rank-1 with file:line, then self-stopped with most of the budget unspent). An above-threshold row is producible work by definition; either attack it, or demote it with a recorded reason, before row 1 can fire. **Build-first discipline:** a reachability demotion without a recorded `infra-check:` (what infrastructure was built or why building is out of reach — [references/producer.md](references/producer.md) §Build-first) does not count as resolved, and missing infrastructure that would unlock an above-threshold corridor is itself producible work — row 1 cannot fire over it. **Mapping floor:** row 1 also requires the latest `floor:` line in `loop-state.md` to read `0 orphans` (§Cartographer reconciliation) — an un-reconciled map is producible work by definition. | **Wrap up:** run `.workers/publish.py` (publishes every `status: done` exploration, rewrites `published:` ids), commit specs + evidence + bookkeeping, write the session summary into `loop-state.md`, report — **naming which stop fired**. "Coverage exhausted" is the goal state; a rail hit means coverage remains and the summary must say exactly what was left queued, starting with any above-threshold backlog rows and their scores. |
 | 2 | `loop-state.md` names an in-flight unit | **Resume executor** on it — finish or block it before anything else. |
 | 3 | `loop-state.md` shows `re-entry: pending <exploration-key>` (set by the executor at every verdict) | **Producer re-entry** — inline, one decision, not an episode: replace the pending line with `re-entry: <exploration-key> → deepen\|switch\|stop — <one-line why>`, then **fold the verdict into backlog L** — reds/near-misses bump the corridor and its same-path siblings, repeated all-greens decay it ([references/producer.md](references/producer.md) §Verdict re-entry + §Score feedback). |
 | 4 | A re-plan trigger is set (**new target commits** — `target-head-sha ≠ last-scanned-sha` in `loop-state.md`; executor bounce-backs pending triage; critic-found coverage gap; **staleness** — the no-new-information streak reached K, default 5, tracked in `loop-state.md`) | **Producer episode** — triage first, then extend. **Diff-directed** (new commits): scan `git diff --name-only <last-scanned-sha>..<target-head-sha>`, map changed files to `[path:]` corridors, and run a **diff-directed episode** — re-rank the changed corridors up and **attach sweep budget** to them (dispatch/plan a depth-carrying sweep), leaving untouched-area corridors out even if they top the standing pool; then advance `last-scanned-sha` ([references/producer.md](references/producer.md) §Diff-directed episodes). **Staleness**: refresh the scout fan-out and take the critic's ranking audit before promoting, then reset the streak; the ranking audit folds **user exposure** into backlog L (issue-history-weighted prior, [references/producer.md](references/producer.md) §User-exposure) alongside any pending sweep feedback. Clear the trigger. |
@@ -107,9 +107,21 @@ hangs, stranded states, and delayed erasure were invisible):
   asserts miss delayed erasure.
 - **Declared fault timing** (`lib/crashclock.py`) — kills/restarts/held locks
   arm at seed-swept points in a declared timing space, never at magic sleeps.
-- **Async parity** — when the API under attack has sync and async forms, the
-  workload drives both (or the entry records why not); concurrency defects are
-  frequently async-only and sync-only drivers walk straight past them.
+- **Async parity (a lint, not advice)** — when the API under attack has sync
+  and async forms, the workload drives both (or the entry carries a recorded
+  `async:` reason); concurrency defects are frequently async-only and
+  sync-only drivers walk straight past them. Graded post-mortems found this
+  rule skipped silently as prose, so it is now checked twice mechanically:
+  at the executor's done-gate and in the test-reviewer brief.
+- **Body-entry ledger** — every workflow/task body records one durable effect
+  line at BODY ENTRY, never inside a step: checkpointed steps *replay* on
+  re-execution, so step-effect counts are structurally blind to a re-run
+  body. Invocation-dedup and exactly-once oracles must count body entries.
+- **Dependency-fault shims** — faults that live inside the process (a
+  transient DB error, a slow call, a held lock) are injected by wrapping the
+  SUT's own client/engine seam in the workload, armed at `crashclock` timing.
+  A fault window is not unreachable just because no second process exists —
+  prefer a shim to a reachability demotion.
 
 Details and the per-step contract: [references/executor.md](references/executor.md).
 

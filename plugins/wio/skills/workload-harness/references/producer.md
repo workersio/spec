@@ -69,6 +69,15 @@ vendored), and a config-resolution module is never parked by construction —
 a harness that hard-pins the config it tests bypasses the resolution seams
 where real config bugs live.
 
+**The floor is a written line, not an intention.** End every map refresh by
+writing the reconciliation result into `loop-state.md` as
+`floor: <total> modules / <in-loci> in loci / <parked> parked / <n> orphans`.
+A nonzero orphan count arms the re-plan trigger, and the dispatcher's stop
+row refuses to fire until the latest floor line reads `0 orphans` — graded
+post-mortems found the floor skipped silently when it lived only as prose,
+and the skipped modules carried exactly the config/lifecycle seams the
+census says are bug-bearing.
+
 Host mechanics: Claude Code — one message with several Task calls, one scout
 per beat. Each scout's prompt is this skill's **embedded brief**
 ([briefs/candidate-scout.md](briefs/candidate-scout.md)) plus the beat's
@@ -81,6 +90,39 @@ acceptable equivalent — but **only** there: its definition reads the sibling
 the embedded brief instead. Codex — the `.codex/agents/` equivalent, same
 rule. No subagent support — run the beats yourself, serially, with the same
 briefs.
+
+## Build-first (reach engineering is producible work)
+
+Latent bugs are latent because they survived the target's own tests — they
+live disproportionately behind reach barriers: the async form nobody drives,
+the service nobody stands up, the fault nobody injects, the config seam every
+harness pins shut. **With such a corpus, reach engineering IS the search.**
+The loop therefore never reasons "this corridor is blocked — should I build?"
+Building the missing capability is the *default* next unit of work:
+
+- **A reachability-blocked corridor converts into an infrastructure
+  candidate, not a demotion.** Score it like any candidate — its I (impact)
+  is the summed weight of every corridor it unlocks, which routinely puts
+  infrastructure at the top of the backlog. A driver, a shim, a vendored
+  dependency tree, a service recipe, an oracle helper are all one-episode
+  builds with compounding payoff.
+- **The infra-check ladder, in order, before any demotion:** (1) an
+  in-process driver (async form, threads, the API nobody called); (2) a
+  dependency-fault shim (wrap the SUT's own client/engine seam, crashclock
+  timing); (3) a service recipe — check `references/recipes/` AND the guest
+  probe's binary inventory (a service whose binaries the probe found present
+  is one recipe away, not unreachable); (4) an in-process approximation of
+  the missing process model (destroy+relaunch, thread actors), recorded as
+  approximate; (5) only then demote, and the row's skip note MUST carry
+  `infra-check: <rungs tried/ruled out> — <why building is out of reach this
+  row>`. A reachability demotion without an `infra-check:` line is
+  unresolved work — the critic's ranking audit challenges it and the
+  dispatcher's stop row does not count it as resolved.
+- **Budget belongs to reach.** A session that self-stops with most of its
+  case budget unspent while reachability demotions stand has spent judgment
+  avoiding work the budget existed to fund. Rails are ceilings, not targets —
+  but unspent budget plus unbuilt unlocks is the signature of the demote-
+  instead-of-build failure mode, and the wrap-up summary must call it out.
 
 ## Backlog promotion (how every batch starts)
 

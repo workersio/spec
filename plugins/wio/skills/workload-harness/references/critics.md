@@ -35,8 +35,10 @@ One critic, asked at **three moments**:
   mis-fire; an `exposure:` bump whose cited confirmed-bug/churn counts do not
   match the issue-history evidence, or applied to a cold path (zero confirmed
   user bugs), is an over-bump; a **budget-plan** whose per-class split does not
-  match `census.md` (mix share, or the red-rate reweight) is a mis-allocation
-  — all are ranking findings. The audit is also
+  match `census.md` (mix share, or the red-rate reweight) is a mis-allocation;
+  a **reachability demotion with no `infra-check:` trail** (producer.md
+  §Build-first) is unresolved work wearing a skip note — all are ranking
+  findings. The audit is also
   where the exposure fold is *applied* if a staleness episode routed here: read
   the issue-history evidence, fold exposure into L per §User-exposure, then
   challenge the result.

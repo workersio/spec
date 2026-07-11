@@ -55,6 +55,18 @@ duplicate/replayed actions, stale state, boundary data, permission/tenant
 edges, malformed-but-valid input, concurrency/order changes, dependency
 faults.
 
+**Async parity.** When the driven surface has sync and async forms, the
+strategy must say how both are driven or record why the async side is
+omitted — a sync-only driver cannot intercept an async-only defect, and an
+unexamined async form is a missing fault model.
+
+**Build-first.** A candidate demoted or skipped for reachability must carry
+an `infra-check:` trail showing the ladder was climbed (in-process driver →
+fault shim → service recipe/guest binaries → in-process approximation)
+before demotion. A bare "unreachable in guest" with no trail is unresolved
+work, not a resolution — challenge it and propose the infrastructure
+candidate it should have become.
+
 **Smallest useful loop.** The validation command should be the cheapest run
 that can still go red for the named bug; flag cheaper or higher-signal
 alternatives.
@@ -70,7 +82,9 @@ alternatives.
      `sibling-inherit` across a `[path:]` tag that does not match the red
      corridor's path, an `exposure:` bump whose cited confirmed-bug/churn
      counts do not match the issue-history evidence, a budget plan whose
-     per-class split does not match `census.md`.
+     per-class split does not match `census.md`, and any reachability
+     demotion missing its `infra-check:` trail (build-first: missing
+     infrastructure is producible work, not a skip reason).
    - **Missing seam:** which product surface or fault class has no backlog
      entry at all?
    - **Counter-promotion:** what would you promote instead of the producer's

@@ -68,11 +68,21 @@ should never re-discover it.
      - *Fault timing through `lib/crashclock.py`*: kills, dependency
        restarts, held locks arm at seed-derived points in a declared timing
        space (`CLOCK` event lines), never at hand-tuned sleeps.
-     - *Async parity*: if the driven API has sync and async forms, drive
-       both (same oracle, both drivers, or a selector per named
-       exploration). A sync-only driver cannot intercept an async-only
-       defect; omitting the async side requires a recorded reason on the
-       entry.
+     - *Async parity — a done-gate, not advice*: if the driven API has sync
+       and async forms, drive both (same oracle, both drivers, or a selector
+       per named exploration). A sync-only driver cannot intercept an
+       async-only defect. Before setting `status: done`, CHECK the driven
+       surface for an async form (grep the SUT's public API); if one exists
+       and the workload has no async driver, the entry is not done until it
+       either gains one or carries a recorded `async: <reason>` — and the
+       test-reviewer gate checks the same thing.
+     - *Body-entry ledger*: every workflow/task body writes one durable
+       effect line at BODY ENTRY, never inside a step. Checkpointed steps
+       *replay* when a body re-executes, so per-step effect counts are
+       structurally blind to body re-execution — an invocation-dedup or
+       exactly-once oracle that counts only step effects proves nothing
+       about the body. Count body entries for dedup; count step effects for
+       step-level exactly-once. Carry both.
      The library lives at `.workers/lib/` (copied by init; if missing on an
      older corpus, copy it from the plugin's `lib/` first).
    - **Invariant lines are mandatory, not optional.** Emit one per oracle
@@ -85,6 +95,15 @@ should never re-discover it.
      SIGKILL, SIGSTOP/SIGCONT, restart — are the workload's own subprocess
      calls. wio fault models are for what the workload can't do itself
      (network shaping, disk faults).
+   - **Dependency-fault shims for in-process faults.** A transient DB error,
+     a slow dependency call, a held lock, a partial response — inject these
+     by wrapping the SUT's own client/engine seam inside the workload (a
+     monkeypatched connection, an adapter that raises once), armed at
+     `crashclock`-derived timing so the fault point is seed-swept, never
+     hand-placed. A fault window is not unreachable because no second
+     process exists; the shim rung of the build-first ladder
+     ([producer.md](producer.md) §Build-first) comes before any
+     reachability demotion.
    - **The SUT's own CLI is a convenience client, not an oracle transport.**
      Client CLIs batch, dedup, and colorize (s2's prints acks to stderr,
      deduped per linger batch). Any oracle needing per-operation precision

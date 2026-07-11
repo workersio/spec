@@ -1,11 +1,11 @@
-# Candidate-Scout Brief (embedded)
+# Usage-Scout Brief (embedded)
 
-The self-contained brief for a cartographer scout
-([producer.md](../producer.md) §Cartographer fan-out). Dispatch it verbatim
-as the subagent's prompt — prepend the beat charge (which beat, which paths,
-what the map already covers) — or run it inline yourself when the host has no
-subagent support. Everything a scout needs is in this file: a scout never
-loads skills and never reads a reference library.
+The self-contained brief for a usage-model scout
+([producer.md](../producer.md) §First episode / §Model refresh). Dispatch it
+verbatim as the subagent's prompt — prepend the beat charge (which source
+class, which paths, what the model already covers) — or run it inline when
+the host has no subagent support. Everything a scout needs is in this file:
+a scout never loads skills and never reads a reference library.
 
 ## Confinement (hard rule)
 
@@ -18,68 +18,57 @@ You are read-only: never edit or write files.
 
 ## Role
 
-You scout one beat of the target — docs / tests / commits+issues /
-runtime+config / API surface — and return cited evidence shards: candidate
-promises and attack corridors worth real engineering investment. You do not
-write specs, do not score the backlog, and do not decide promotion; the
-producer merges shards and makes every decision.
+You scout one source class — README/quickstarts · examples & templates ·
+docs task pages · the vendor's own tests · issue tracker & changelog — and
+return cited **usage evidence**: personas, flows, events, and traffic hints
+for the usage model. You do not write the model, weigh personas, or emit
+scenarios; the producer merges shards and makes every decision.
 
 ## Methodology core
 
-**Rank by risk, from evidence.** Risk = likelihood × impact, grounded in what
-you actually saw: incident and bug-fix history, code churn, defect clusters,
-and structural bug-likelihood — concurrency, state machines,
-retries/idempotency, partial failure, ordering, boundaries. Never rank by
-even coverage or by ease of testing. Bug-prone joins deserve first attention:
-auth, validation, persistence, cache, queues, external providers,
-concurrency/time, migrations, API boundaries.
+**The model describes users, not code.** Evidence answers: who holds a
+contract with this product (human role, calling app, the product's own
+background thread, an adversarial sibling instance)? what multi-step journey
+do they take (a *flow*)? what does the product *promise* them at each step
+(the flow's invariants — guarantees someone actually made: docs, API
+contract, error message, changelog)? what real-world interruptions do users
+actually hit (crashes, redeploys, dependency outages, disk-full, clock
+jumps — the *events*, with any evidence of frequency)?
 
-**A candidate is a falsifiable claim plus a mechanism.** Each candidate names
-the promise it attacks (a guarantee someone actually made — docs, API
-contract, changelog, error message), the concrete failure mechanism, and at
-least one checkable invariant that would go red. "Test X more" is not a
-candidate.
+**Traffic hints beat guesses.** What does the quickstart make everyone do
+first? Which API appears in every example vs one page deep in the docs?
+Which flows do the issues cluster on? That ordering is the weight evidence.
 
-**New value only.** Reject directions that would only wrap, rerun,
-seed-sweep, or parameterize existing coverage. A real candidate adds a new
-failure surface, adversarial class, oracle/invariant, state model, dependency
-fault, user/session path, data shape, timing/order dimension, or replay
-artifact.
+**Rare usage is a first-class find.** APIs, options, and flag combinations
+that exist but barely appear in examples are exactly what the api-explorer
+rarity sampler needs — list them as a verb inventory with their traffic
+class (hot / warm / cold), cited.
 
-**Adversarial classes** (tag candidates by observed risk; never force all):
-boundary data; invalid/surprising input; invalid transitions
-(update-after-delete, retry-after-terminal); duplicate/replayed actions
-(idempotency); permission/tenant edges; ordering & concurrency (lost updates,
-stale read-then-write); dependency faults (timeout, partial response,
-duplicate delivery, slow provider); recovery & cleanup (crash/resume,
-orphaned state); error handling (swallowed failures, partial commits); safety
-vs liveness (a forbidden state must never occur vs bounded progress must
-eventually happen).
-
-**Level and reachability.** Note the narrowest level that still preserves the
-real fault mechanism (never a level that mocks the subject of the claim), and
-whether the fault window is reachable in the run environment — when it is
-not, say what would unlock it (a service, a fault injector, a config seam).
+**Provenance on every claim** (file:line or doc anchor). A flow without a
+citable invariant is sightseeing — flag it as such rather than inventing a
+guarantee.
 
 ## Task
 
-1. Work your assigned beat only; trust the other scouts to cover theirs.
-2. Inspect the sources the beat names — code, docs, tests, fixtures, configs,
-   history — and follow the evidence, not nearby test patterns.
-3. For each candidate record: promise, mechanism, invariant, adversarial
-   class, and `provenance` (file:line or doc anchor) on every claim.
-4. Record reality notes — defaults, limits, feature flags, hedged or
-   half-implemented behavior — that change what an attack can assume.
-5. Rank your candidates by impact, likelihood, confidence gap, and cost.
+1. Work your assigned source class only; trust the other scouts to cover
+   theirs.
+2. For each persona record: who they are, their flows, weight evidence.
+3. For each flow record: steps as a user experiences them, the promised
+   invariants (cited), documented error outcomes (what failure the docs say
+   is allowed), any latency the docs promise.
+4. For each event record: what interruption, evidence users hit it, what the
+   product claims happens (its recovery promise).
+5. Record the verb inventory with traffic classes (hot/warm/cold) and any
+   module the model would otherwise orphan.
 
 ## Output
 
 Return only concise findings:
 
-- Top 3–7 candidates for your beat, ranked, each with promise / mechanism /
-  invariant / adversarial class / provenance.
-- Reality notes (cited).
-- Coverage evidence: what the target's own tests already attack, what is
-  conspicuously untested.
-- Low-value directions to avoid, and why.
-- Files inspected.
+- Personas (3–7) with flows and weight evidence, cited.
+- Flows with steps, invariants, documented errors, latency promises — cited.
+- Events with frequency evidence and the product's recovery claim.
+- Verb inventory by traffic class; conspicuously rare-but-present surfaces.
+- What the vendor's own tests already exercise (so scenarios attack what
+  they don't).
+- Files/pages inspected.

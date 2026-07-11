@@ -1,198 +1,92 @@
-# Executor Episode
+# Executor episodes — run one scenario; crystallize reds
 
-You are in executor mode. You own the *verifiable* space: build a workload
-that genuinely runs and attacks one named exploration, yielding a replayable
-invariant result. The unit contract is locus-independent — the same episode
-runs inline today and in a subagent later, so keep its inputs and outputs
-exactly as specified here.
+The executor owns flow-driver code, run evidence, and the mechanical result
+fields of exactly **one** scenario per episode. It never edits the usage
+model — a model gap bounces the scenario back (`status: blocked`, `reason:`
+in the prose, row-4 trigger).
 
-Your reward is **red, not green**. You are trying to *falsify* the promise. A
-green run is weak evidence; a red run is the win.
+## The episode, step by step
 
-## Unit contract
+1. **Pick** the next `status: ready` scenario (lowest rung first per flow;
+   a flow's L0 before its L1). Mark it in-flight in `journal.md`
+   (`status: running` line), one at a time.
+2. **Drivers exist?** Every flow key in the scenario must have a driver in
+   `flows/flows_<target>.py` (`check.py` G2). Missing driver = write it now:
+   the flow's steps from the model prose, acks/denials into `ctx.ledger`,
+   documented errors declared in `documented`, latency bounds in `bounds`,
+   `ctx.step(label)` at every point where another actor's interleaving could
+   matter. Drivers are product-specific; the spine is not — never fork
+   `lib/` code into a driver.
+3. **Probe** (one seed, tiny): `<runner> .workers/lib/run_scenario.py
+   .workers/scenarios/<key>.md --seed 1` locally first when possible, then as
+   a depth-1 wio draft. Setup-blocks (exit 44) are infra work, not verdicts —
+   fix the recipe/build, or bounce with the block recorded.
+4. **Red-proof — before any trusted green** (G5): a depth-1 draft run with
+   `--redproof` appended to the command. `run_scenario` picks one oracle
+   channel by seed and corrupts its *observation channel only*; the run must
+   end `ORACLE_SELFTEST PASS` (exit 0 — the planted violation was caught).
+   Record the run id in `redproof:`. An `ORACLE_SELFTEST FAIL` means the
+   oracle is dead: fix the oracle, never proceed to depth on a dead oracle.
+5. **The sweep**: `wio simulate create <project> --command "<runner>
+   .workers/lib/run_scenario.py .workers/scenarios/<key>.md" --depth <depth>`
+   (no `--exploration` — this lane is draft-only). Poll `wio workloads ls`;
+   triage failures by their `SEED`/`PLAN`/`INVARIANT` lines
+   (`wio workloads logs <id>`).
+6. **Verdict** (write the mechanical fields):
+   - Any run with an `INVARIANT … FAIL` line → `result: finding`,
+     `replay: {run: <id>, seed: <n>}`, `status: done`. Row 3 crystallizes
+     next cycle — do not start another scenario first.
+   - All green (with red-proof recorded) → `result: green`, `status: done`.
+   - VOIDs → `result: void` + one shot at fixing vacuity (depth too shallow,
+     event never fired, flows recorded nothing) before `done`.
+   - Infrastructure wall → `status: blocked` + reason.
+7. **Evidence** in the scenario prose: run ids, red seed(s), one-line
+   analysis. Append the episode line to `journal.md`, run `check.py` (must
+   exit 0), commit the episode's files together (one prepare cycle per
+   batch, not per file).
 
-- **In:** one entry (`status: ready`) — its promise file, area context,
-  linked prior evidence, and the executor playbook
-  (`.workers/runs/executor-notes.md` if present: environment quirks, setup
-  traps, replay recipes learned by earlier episodes).
-- **Out:** the entry `done` with `result` green / finding / blocked, evidence
-  written, mechanical fields updated, `loop-state.md` updated, control
-  returned to the dispatcher. One unit per episode; never two.
+Discipline carried from v1, verbatim: reward RED; a red is an emitted
+`INVARIANT <id> <name> FAIL` line, never a bare nonzero exit; setup failures
+are not findings; never weaken an oracle to make a scenario pass; when the
+API has sync and async forms the driver exercises both or the scenario prose
+records an `async:` reason.
 
-## Write scope
+## Crystallize (dispatcher row 3)
 
-May write: `.workers/workloads/**`, `.workers/runs/*.md`, focused
-`.workers/build.sh` / `builds/*` fixes when setup blocks the selected unit,
-and the entry's mechanical fields (`status`, `result`, `reason`, `replay`,
-`published`).
+A raw composite red is a *discovery*, not yet a finding. Crystallizing makes
+it minimal, attributable, and replayable:
 
-Must **not** rewrite the promise, claim, adversarial model, fault dimensions,
-oracle definition, or curated finding/regression prose. If the spec is
-deficient (no real oracle, wrong fault model, missing setup), set
-`result: blocked` with a precise `reason` and yield — the producer triages it
-on the next re-plan. Never invent the missing strategy; never wait.
+1. **Shrink**: `scenario_gen.shrink` walks candidate smaller plans (drop
+   actors → drop flows → shorten ops → lower depth). Re-run each candidate
+   (draft, pinned `--seed`); keep the smallest still-red shape. Record the
+   shrink path in the finding.
+2. **Re-confirm**: one fresh draft run of the minimal shape; its run id +
+   seed become `replay:`.
+3. **Test-reviewer gate** ([critics.md](critics.md)): real invariant
+   violation or oracle bug? user-meaningful? story updated to the minimal
+   shape?
+4. **Write `findings/<key>-<n>.md`** (scenario-format.md §findings):
+   severity by the interception-weight scale, minimized shape, replay
+   recipe, evidence. `status: held` — filing is the human's decision, never
+   the loop's.
+5. If the same underlying bug already has a finding, extend that file
+   (additional witness) instead of minting a duplicate.
 
-## First contact: the probe run
+## Writing drivers well (the craft notes)
 
-Before writing any workload for a project you haven't run on, spend one
-draft run on a probe: `sh -c 'uname -a; for t in curl wget jq python3
-busybox nc; do command -v $t || echo MISSING:$t; done; <sut> --version'`.
-Guest reality shapes the workload design (proven on S2: python3 present,
-no curl/jq, `/workspace` read-only so all mutable state goes under `/tmp`,
-stdout is the only evidence channel, exit code is the verdict signal).
-Record what you learn as reality notes in `map.md` — the next episode
-should never re-discover it.
-
-## Execution loop
-
-1. Read the promise file, the entry, area context, linked evidence, and the
-   playbook. Restate in your notes: the claim, fault dimensions, build
-   profile, oracle, replay plan.
-2. Light strategy-critic confirmation (the producer already gated this
-   entry): distinct fault model, real oracle, sound approach? Fix a weak
-   *approach* yourself; bounce a deficient *spec* (see Write scope).
-3. Build the **smallest** workload that exercises the attack.
-   - **The universal oracle plane is part of "smallest"** (SKILL.md §Workload
-     library). Non-negotiable defaults, cheap to carry, expensive to omit:
-     - *Liveness watchdog*: arm a global deadline (thread/alarm) that emits
-       `INVARIANT liveness_watchdog FAIL` and exits red if the workload body
-       wedges. A hang must become a red verdict, never a silent runtime
-       timeout — hang bugs are invisible to every other oracle.
-     - *Terminal-state sweep*: before the green path can PASS, every work
-       item the SUT accepted/acked must have reached a terminal state
-       (SUCCESS/ERROR/DLQ per the promise); a stranded-PENDING item is
-       `INVARIANT terminal_state FAIL`.
-     - *Acked-durability watch*: if the attack acks durable effects, record
-       them in a `lib/durawatch.py` manifest and re-observe on the delay
-       ladder — immediate asserts miss delayed erasure.
-     - *Fault timing through `lib/crashclock.py`*: kills, dependency
-       restarts, held locks arm at seed-derived points in a declared timing
-       space (`CLOCK` event lines), never at hand-tuned sleeps.
-     - *Async parity — a done-gate, not advice*: if the driven API has sync
-       and async forms, drive both (same oracle, both drivers, or a selector
-       per named exploration). A sync-only driver cannot intercept an
-       async-only defect. Before setting `status: done`, CHECK the driven
-       surface for an async form (grep the SUT's public API); if one exists
-       and the workload has no async driver, the entry is not done until it
-       either gains one or carries a recorded `async: <reason>` — and the
-       test-reviewer gate checks the same thing.
-     - *Body-entry ledger*: every workflow/task body writes one durable
-       effect line at BODY ENTRY, never inside a step. Checkpointed steps
-       *replay* when a body re-executes, so per-step effect counts are
-       structurally blind to body re-execution — an invocation-dedup or
-       exactly-once oracle that counts only step effects proves nothing
-       about the body. Count body entries for dedup; count step effects for
-       step-level exactly-once. Carry both.
-     The library lives at `.workers/lib/` (copied by init; if missing on an
-     older corpus, copy it from the plugin's `lib/` first).
-   - **Invariant lines are mandatory, not optional.** Emit one per oracle
-     clause on stdout — `INVARIANT <id> <name> PASS <summary>` on the green
-     path, and the matching `FAIL` line before exiting red. The runtime
-     parses exactly this format into the page's invariant panel; a workload
-     that only prints prose and exits nonzero shows "No invariants found".
-     A promise is normally several invariants, not one.
-   - **The workload owns the SUT lifecycle.** Process-level faults — start,
-     SIGKILL, SIGSTOP/SIGCONT, restart — are the workload's own subprocess
-     calls. wio fault models are for what the workload can't do itself
-     (network shaping, disk faults).
-   - **Dependency-fault shims for in-process faults.** A transient DB error,
-     a slow dependency call, a held lock, a partial response — inject these
-     by wrapping the SUT's own client/engine seam inside the workload (a
-     monkeypatched connection, an adapter that raises once), armed at
-     `crashclock`-derived timing so the fault point is seed-swept, never
-     hand-placed. A fault window is not unreachable because no second
-     process exists; the shim rung of the build-first ladder
-     ([producer.md](producer.md) §Build-first) comes before any
-     reachability demotion.
-   - **The SUT's own CLI is a convenience client, not an oracle transport.**
-     Client CLIs batch, dedup, and colorize (s2's prints acks to stderr,
-     deduped per linger batch). Any oracle needing per-operation precision
-     speaks the raw protocol: one request = one ack = one manifest line,
-     written only after the response is fully read.
-   - **Seed:** no seed env var reaches the guest, and there is no `--seed`
-     at create-time — the batch draws seeds sequentially `1..depth`, so the
-     same depth runs the identical seed set every time and a higher depth is
-     a strict superset. Derive the workload's own seed from `/dev/urandom`
-     (deterministic per run in the sim environment) and print it first thing
-     — that value is the replay key. The seed drives the schedule, but there
-     is no schedule control beyond it (no PCT, no mutate-near-seed); to
-     search more interleavings, vary the workload (barriers + seeded
-     permutations) or raise depth, not re-run the same batch.
-   - **Build the oracle self-test in from the start:** an env flag (e.g.
-     `ORACLE_SELFTEST=1`) that corrupts the comparison once — drops an
-     acked record, flips a byte — so the oracle's red path can be proven.
-4. **Draft-iterate** until the workload has its shape:
-   `wio simulate create <project> --command "<runner> <path>" --workload-file <path> --faults <models> --depth <n>`
-   — an unnamed exploration, so nothing shows on the page (verified: drafts
-   are invisible by construction; iterate freely, reds here are free).
-   Replay a specific hit with `wio workloads rerun <id>` (same seed, same
-   fault). Reality note: until worker-side inject delivery ships, the
-   `--workload-file` value is not delivered into the guest on prod — fall
-   back to commit → `wio projects prepare` → run (~60s per cycle).
-5. **Prove the oracle can go red before trusting any green.** One draft run
-   with the self-test flag must FAIL the run. "Diff passed" means nothing
-   until the diff has caught a planted loss. This is a gate: no official
-   green publishes without a recorded red-proof draft.
-6. Judge from evidence: `wio simulate status` for verdicts,
-   `wio workloads logs <id>` for stdout and the INVARIANT lines. Classify
-   honestly — setup failures and harness bugs are not product findings.
-   **A red is an emitted invariant FAIL, not a nonzero exit.**
-   `hasInvariantViolation` and the reds-only listing
-   (`wio workloads ls --violations`) fire ONLY on emitted `INVARIANT … FAIL`
-   results; an exit-1 with no invariant lines shows as `failed`, which is a
-   crash/setup outcome, not a violation. Never trust `--state failed` as a
-   red — open the run and read the invariant lines.
-7. Test-reviewer gate on the final workload + evidence: KEEP / REDO / REMOVE.
-   Does this genuinely attack the promise, or is it happy-path /
-   status-200 / coverage-only? See
-   [critics.md](critics.md).
-8. **Official run** — publication:
-   - Official runs execute the prepared image at the pushed HEAD: commit
-     the workload + spec first, `wio projects prepare`, poll until
-     `preparation.currentImage.commitSha` matches HEAD (the server rejects
-     with `project_image_missing` otherwise). Batch commits where you can —
-     one prepare cycle should serve every unit whose files are already
-     final, never one prepare per entry (SKILL.md §Long-run operating
-     notes).
-   - Finding: replay the exact hit through its **run id**
-     (`wio workloads rerun <run-id>` / `wio workloads investigate`) — there
-     is no `--seed` to re-derive it at create-time. The official
-     replay-confirmation is the create carrying `--exploration <key>` at the
-     recorded depth (same sequential seed set), whose evidence is the
-     rerun-confirmed hit. (If a `--seed` control-plane flag later ships, pin
-     it explicitly; until then run ids are the only pin.)
-   - Green (survived the attack after an honest sweep): official run with
-     `--exploration <key>` at full depth.
-   - If publication is unavailable, set `published: pending` and let
-     wrap-up re-fire it (idempotent).
-9. Record: fill `replay` (run ID, case, seed), set `status: done` and
-   `result`, write `.workers/runs/<exploration-key>.md` (raw command, target
-   commit, seeds, artifacts, invariant results, interpretation). Append any
-   new environment/setup lesson to the playbook.
-10. Update `loop-state.md` (clear in-flight, bump counters, record the
-    verdict line and set `re-entry: pending <exploration-key>` — the
-    dispatcher routes the producer's one-line re-entry next; set a re-plan
-    trigger if you bounced the unit or found something that changes the map)
-    and yield to the dispatcher. Judging whether the run "added new
-    information" is the re-entry's job, not yours.
-
-## Workload quality gate
-
-- One workload file may implement multiple named explorations when the
-  promise file names that file and the entries share setup, state model, and
-  oracle family — add a selector/case inside the named file rather than a new
-  file.
-- New workload file only for a different dependency/build profile, promise,
-  state model, oracle family, or replay command shape.
-- Never one file per seed. A wrapper or seed sweep is not a new workload.
-- Do not silently change the promise, area, or entry. Do not weaken the
-  oracle to make the workload pass. Findings require replayable invariant
-  evidence.
-
-## Interrupted work
-
-If you are resumed on an in-flight unit (dispatcher row 2), reconstruct from
-files — the entry, your run notes so far, `loop-state.md` — and finish or
-block it. Never restart from scratch if evidence of prior progress exists,
-and never leave a unit half-attacked without either a verdict or a `blocked`
-reason.
+- The ledger is the oracle. Every SUT call that *tells the actor something*
+  ends in `ctx.ledger.acked(...)` or `ctx.ledger.denied(...)`; every
+  end-of-flow verification re-reads the world into `ctx.ledger.observe(...)`.
+  A driver that only performs actions and never records is VOID by
+  construction — the floor is doing its job.
+- Durability claims ride `lib/durawatch.py` (manifest + delay-ladder
+  re-observation), not immediate asserts.
+- Events belong to the *scenario* (armed by the spine via `EVENTS`), not
+  hardcoded into drivers. A driver must survive an event landing between any
+  two of its steps — that is the point.
+- In-process seams (a TS/JS SDK surface, an engine hook) get a thin JS driver
+  file invoked by the Python driver; declared in the model as `js:<path>`
+  (G2 checks the file exists). The Python spine still owns seeds, clocks,
+  ledger, and INVARIANT lines.
+- Keep `modules:` current (G8): a new driver that touches a previously
+  orphaned module updates its `covered-by:` in the same commit.

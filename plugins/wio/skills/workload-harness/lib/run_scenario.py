@@ -358,7 +358,17 @@ def _run_actors(plan, flowmod, sut, ledgers, errors, clock, opclock, root) -> di
             actor_errors[a.actor_id] = exc
         return actor_errors
 
-    inter = interleave.Interleaving(plan.seed)
+    # The scheduler's per-step timeout must be subordinate to the liveness
+    # watchdog, never a second tighter clock: under a virtual-time sandbox a
+    # single legitimate step (an enqueue drained by a polling worker, a slow
+    # boot) can cost minutes of virtual time, and the 30s library default
+    # false-reds it as "blocked at barrier". WIO_STEP_TIMEOUT_S overrides;
+    # otherwise inherit the watchdog budget (true hangs still convert via the
+    # watchdog and the runtime's wall-clock timeout).
+    step_timeout = float(
+        os.environ.get("WIO_STEP_TIMEOUT_S", os.environ.get("WIO_WATCHDOG_S", "240"))
+    )
+    inter = interleave.Interleaving(plan.seed, step_timeout_s=step_timeout)
 
     def make_body(actor):
         def body(ictx):

@@ -9,7 +9,7 @@
       "name": "wio",
       "source": "./plugins/wio",
       "description": "Testing workflow skill for high-value test discovery, strategy selection, focused test implementation, realistic workload generation, strict test review, and suite health diagnostics.",
-      "version": "0.1.0",
+      "version": "0.1.3",
       "author": {
         "name": "workers.io"
       },

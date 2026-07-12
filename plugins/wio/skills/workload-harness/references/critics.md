@@ -19,6 +19,14 @@ Two audits, one brief ([briefs/strategy-critic.md](briefs/strategy-critic.md)):
 3. Are the weights self-flattering? (Do they concentrate mass where the
    harness is already strong, or where users actually are? Do citations
    support the numbers?)
+4. **Refute every park.** For each `parked:`/`park:` reason in the model
+   (modules, surfaces, events, flow modalities): is it an **environment
+   fact** (this genuinely cannot run here — cite what fails) or a
+   **self-imposed frame** (a belief about what the harness "is for")? Name
+   the concrete experiment that would disprove the reason; if one exists and
+   is affordable, the park is REFUTED and must be un-parked into candidate
+   work. Survivors are reported per-park so the producer can stamp
+   ` [audited eN]` on the reason — an unaudited park blocks stop.
 
 **Set audit** (every row-6 batch):
 1. Distinct situations, or re-skins? (Five casts of the same one flow is one

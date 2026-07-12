@@ -47,9 +47,18 @@ in the prose, row-4 trigger).
 
 Discipline carried from v1, verbatim: reward RED; a red is an emitted
 `INVARIANT <id> <name> FAIL` line, never a bare nonzero exit; setup failures
-are not findings; never weaken an oracle to make a scenario pass; when the
-API has sync and async forms the driver exercises both or the scenario prose
-records an `async:` reason.
+are not findings; never weaken an oracle to make a scenario pass.
+
+**Modality is load-bearing (G10).** The scenario's `modality:` names which
+API variant the drivers must exercise — `ctx.modality` carries it into every
+driver (`sync` | `async` | `threaded`). A driver drives the *declared*
+variant: for `async`, the flow's steps call the product's async surface (the
+driver may own a private event loop per actor); for `threaded`, the actor
+calls the sync surface from worker threads it spawns. Silently running the
+sync path under an `async` scenario is oracle fraud — if the driver cannot
+honor the declared modality, bounce the scenario (`status: blocked`, model
+gap) rather than fake it. The red-proof and all oracle channels are
+modality-agnostic; only the calls into the SUT change.
 
 ## Crystallize (dispatcher row 3)
 

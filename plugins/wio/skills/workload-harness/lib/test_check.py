@@ -39,14 +39,32 @@ actor-model: process-parallel
 personas:
   checkout-shopper: {weight: 0.6, flows: [pay, browse], citation: "readme quickstart"}
   ops-admin: {weight: 0.1, flows: [pay], citation: "docs/ops"}
+  api-explorer: {weight: 0.05, flows: []}
+  contract-abuser: {weight: 0.05, flows: []}
 flows:
-  pay: {invariants: [charged-exactly-once], citation: "docs: pay"}
-  browse: {invariants: [listing-consistent], citation: "docs: browse"}
+  pay:
+    invariants: [charged-exactly-once]
+    citation: "docs: pay"
+    modalities:
+      sync: plan
+      async: "park: only sync client documented [audited e1]"
+      threaded: "park: no threaded usage in docs [audited e1]"
+  browse:
+    invariants: [listing-consistent]
+    citation: "docs: browse"
+    modalities:
+      sync: plan
+      async: "park: only sync client documented [audited e1]"
+      threaded: "park: no threaded usage in docs [audited e1]"
 events:
   crash-restart: {amplification: 20, citation: recovery}
 modules:
   - {name: core, covered-by: [pay, browse]}
-  - {name: cli, parked: "no runtime surface"}
+  - {name: cli, parked: "no runtime surface [audited e1]"}
+surfaces:
+  - {name: "shop.pay()", covered-by: [pay]}
+  - {name: "shop.browse()", covered-by: [browse]}
+  - {name: "shop.admin", parked: "no sim-reachable surface [audited e1]"}
 ---
 usage model prose
 """
@@ -78,6 +96,8 @@ JOURNAL = """## config
 
 target: shop
 seed-root: 0
+api-floor-share: 0.3
+event-min-amp: 10
 
 ## log
 """
@@ -99,13 +119,16 @@ CANDIDATES = """# Candidates
 
 def scenario(key, *, rung="L0", cast="{checkout-shopper: 1}", flows="[pay]",
              invariants="[charged-exactly-once]", depth=20, status="done",
-             result="green", redproof="run-abc", extra=""):
+             result="green", redproof="run-abc", modality="sync", source="usage",
+             extra=""):
     return f"""---
 key: {key}
 rung: {rung}
 cast: {cast}
 flows: {flows}
 invariants: {invariants}
+modality: {modality}
+source: {source}
 depth: {depth}
 status: {status}
 result: {result}
@@ -125,7 +148,10 @@ def write(path, text):
 
 
 def build_valid(root):
-    """A fully-valid small tree covering both model flows with done+green scenarios."""
+    """A fully-valid small tree: both flows done+green, plus the misuse/api-floor
+    scenario that also exercises the amplified event -- so every v0.1.5 stop gate
+    (modality parity, census, api-floor share, event coverage, misuse floor,
+    park audit) is clear and --status prints row 1."""
     write(os.path.join(root, "usage-model.md"), MODEL)
     write(os.path.join(root, "flows", "flows_shop.py"), FLOWS_PY)
     write(os.path.join(root, "journal.md"), JOURNAL)
@@ -136,6 +162,11 @@ def build_valid(root):
     write(os.path.join(root, "scenarios", "browse-basic.md"),
           scenario("browse-basic", flows="[browse]", invariants="[listing-consistent]",
                    redproof="run-browse"))
+    write(os.path.join(root, "scenarios", "abuse-pay.md"),
+          scenario("abuse-pay", cast="{contract-abuser: 1}", flows="[pay]",
+                   invariants="[charged-exactly-once]", redproof="run-abuse",
+                   source="api-floor",
+                   extra="event: {key: crash-restart, at: crashclock}\n"))
     return root
 
 
@@ -151,7 +182,7 @@ def fresh(builder=build_valid):
 d = fresh()
 code, out = run("--root", d)
 ok("valid-clean-exit0", code == 0, out)
-ok("valid-clean-summary", "CHECK OK (2 scenarios, 2 flows)" in out, out)
+ok("valid-clean-summary", "CHECK OK (3 scenarios, 2 flows)" in out, out)
 ok("valid-no-gfail", "FAIL" not in out, out)
 shutil.rmtree(d)
 
@@ -238,8 +269,35 @@ finding prose
 # G8: module entry with neither covered-by nor parked
 expect_gfail("g8", 8, lambda d: write(
     os.path.join(d, "usage-model.md"),
-    MODEL.replace('  - {name: cli, parked: "no runtime surface"}',
+    MODEL.replace('  - {name: cli, parked: "no runtime surface [audited e1]"}',
                   "  - {name: cli}")))
+
+# G10: flow with no modalities declaration
+expect_gfail("g10-flow-modalities", 10, lambda d: write(
+    os.path.join(d, "usage-model.md"),
+    MODEL.replace("""    modalities:
+      sync: plan
+      async: "park: only sync client documented [audited e1]"
+      threaded: "park: no threaded usage in docs [audited e1]"
+events:""", "events:")))
+
+# G10: done scenario with an unknown modality value
+expect_gfail("g10-scenario-modality", 10, lambda d: write(
+    os.path.join(d, "scenarios", "pay-basic.md"),
+    scenario("pay-basic", flows="[pay]", invariants="[charged-exactly-once]",
+             redproof="run-pay", modality="psychic")))
+
+# G10: done scenario with an unknown source value
+expect_gfail("g10-scenario-source", 10, lambda d: write(
+    os.path.join(d, "scenarios", "pay-basic.md"),
+    scenario("pay-basic", flows="[pay]", invariants="[charged-exactly-once]",
+             redproof="run-pay", source="vibes")))
+
+# G11: surface entry with neither covered-by nor parked
+expect_gfail("g11", 11, lambda d: write(
+    os.path.join(d, "usage-model.md"),
+    MODEL.replace('  - {name: "shop.admin", parked: "no sim-reachable surface [audited e1]"}',
+                  '  - {name: "shop.admin"}')))
 
 # G9: unparseable scenario frontmatter
 expect_gfail("g9-parse", 9, lambda d: write(
@@ -254,10 +312,60 @@ expect_gfail("g9-journal", 9, lambda d: write(
 # --------------------------------------------------------------------------- #
 # --status rows
 # --------------------------------------------------------------------------- #
-# Row 1: the complete valid tree
+# Row 1: the complete valid tree — all stop gates clear
 d = fresh()
 code, out = run("--root", d, "--status")
 ok("status-row1", code == 0 and "STATUS row=1" in out, out)
+ok("status-row1-no-blockers", "STOP-BLOCKERS (0): none" in out, out)
+shutil.rmtree(d)
+
+# Blocker: misuse floor — removing the contract-abuser scenario blocks stop
+d = fresh()
+os.remove(os.path.join(d, "scenarios", "abuse-pay.md"))
+code, out = run("--root", d, "--status")
+ok("blocker-misuse-no-row1", "STATUS row=1" not in out, out)
+ok("blocker-misuse-named", "misuse:" in out, out)
+ok("blocker-event-named", "event: 'crash-restart'" in out, out)
+ok("blocker-apifloor-named", "api-floor:" in out, out)
+shutil.rmtree(d)
+
+# Blocker: modality parity — flipping a planned modality's done scenario away
+d = fresh()
+write(os.path.join(d, "usage-model.md"),
+      MODEL.replace('''  browse:
+    invariants: [listing-consistent]
+    citation: "docs: browse"
+    modalities:
+      sync: plan
+      async: "park: only sync client documented [audited e1]"''',
+                    '''  browse:
+    invariants: [listing-consistent]
+    citation: "docs: browse"
+    modalities:
+      sync: plan
+      async: plan'''))
+code, out = run("--root", d, "--status")
+ok("blocker-modality-no-row1", "STATUS row=1" not in out, out)
+ok("blocker-modality-named", "modality: flow 'browse' async planned" in out, out)
+shutil.rmtree(d)
+
+# Blocker: park audit — a park without the [audited eN] tag blocks stop
+d = fresh()
+write(os.path.join(d, "usage-model.md"),
+      MODEL.replace('parked: "no runtime surface [audited e1]"',
+                    'parked: "no runtime surface"'))
+code, out = run("--root", d, "--status")
+ok("blocker-parkaudit-no-row1", "STATUS row=1" not in out, out)
+ok("blocker-parkaudit-named", "park-audit:" in out, out)
+shutil.rmtree(d)
+
+# Blocker: census — removing surfaces: entirely blocks stop
+d = fresh()
+model_nosurf = MODEL[:MODEL.index("surfaces:")] + "---\nusage model prose\n"
+write(os.path.join(d, "usage-model.md"), model_nosurf)
+code, out = run("--root", d, "--status")
+ok("blocker-census-no-row1", "STATUS row=1" not in out, out)
+ok("blocker-census-named", "census:" in out, out)
 shutil.rmtree(d)
 
 # Row 5: a ready scenario (backlog >=5 rows, no refresh trigger)

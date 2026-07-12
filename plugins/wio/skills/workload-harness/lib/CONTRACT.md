@@ -20,6 +20,8 @@ cast: {checkout-shopper: 3, ops-admin: 1}   # persona -> actor count
 flows: [pay, cancel-mid-run]                # flow keys from the usage model
 event: {key: crash-restart, at: crashclock} # optional; omit for no event
 invariants: [charged-exactly-once, order-terminal]  # inherited from flows
+modality: sync                              # sync | async | threaded -> ctx.modality
+source: usage                               # usage | api-floor sampler provenance
 depth: 50                                   # seeds for wio simulate create
 status: planned | ready | done
 result: null | green | finding | void | blocked
@@ -174,6 +176,8 @@ Behavior, in order:
    FlowCtx passed to run():
    ```python
    ctx.actor_id; ctx.persona; ctx.rng          # per-actor seeded_rng
+   ctx.modality # sync | async | threaded — the API variant this scenario declares;
+                # the driver MUST exercise that variant or the run is oracle fraud
    ctx.ledger   # PersonaLedger for this actor
    ctx.errors   # shared ErrorContract
    ctx.clock    # shared WallClock

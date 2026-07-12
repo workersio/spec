@@ -20,7 +20,8 @@ never overwrites.
    - `candidates.md` — the `<!-- emit:begin/end -->` markers +
      `threshold: 40` + an empty table;
    - `journal.md` — `## config` (rails: `max-loops: 100`, `max-runs: 250`,
-     `staleness-k: 5`, `api-floor-share: 0.3`) + `## log` with one init line.
+     `staleness-k: 5`, `api-floor-share: 0.3` (binding, G-status),
+     `event-min-amp: 10`) + `## log` with one init line.
 4. **build.sh**: if the repo has no `.workers/build.sh`, create the stub
    that exits 0; a real SUT vendor/venv build is target work (the dbos
    corpus's build.sh is the reference shape).

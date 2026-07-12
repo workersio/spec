@@ -3,7 +3,7 @@ name: workload-harness
 description: Autonomous usage-first workload-harness loop for a connected repo. One session alternates producer episodes (maintain the usage model, emit scenario batches) and executor episodes (run one scenario, red-proof its oracles, record the verdict) under a mechanical dispatcher, running scenarios via wio. Greenfield v2 — scenarios only; no promises, areas, or backlog. Invoke via /goal against a connected project; init mode scaffolds .workers/.
 metadata:
   author: workers.io
-  version: "0.1.4"
+  version: "0.1.5"
 ---
 
 # Workload Harness (usage-first)
@@ -30,13 +30,21 @@ Invocation:
    `.workers/check.py`. Non-deterministic judgment (what the product is *for*,
    which situation matters next, is this red a real bug) lives here. Never
    freeze judgment into a verb.
-2. **Usage first.** Generation starts from how the product is *used* — personas
-   × flows × real-world events — not from code seams. Rare bugs come from
-   **importance sampling**: a realistic operation carrier with rare events and
-   rare usage deliberately amplified (declared `amplification:` factors, the
-   `api-explorer` rarity persona), never from uniform randomness and never
-   from corridor enumeration. The usage model is the spec; the scenario is the
-   test; the story is the user-facing sentence.
+2. **Usage first — with rare usage enforced, not advised.** Generation starts
+   from how the product is *used* — personas × flows × real-world events — not
+   from code seams. Rare bugs come from **importance sampling**: a realistic
+   operation carrier with rare events and rare usage deliberately amplified,
+   never from uniform randomness and never from corridor enumeration. Traffic
+   weighting aims the mass; the **six stop gates** stop it collapsing onto the
+   product's hardened core: every flow covers its documented **modalities**
+   (sync/async/threaded) or parks each with a cited, critic-audited reason;
+   the **documented-surface census** (finer than modules) must have zero
+   orphans; the `api-explorer` rarity persona's **api-floor share is binding**;
+   every amplified **event** must actually fire in a done scenario; the
+   **`contract-abuser` misuse persona** (invalid spec, wrong-context call,
+   double-call, pathological ids, non-serializable args) must have fired,
+   riding the error-contract oracle. The usage model is the spec; the scenario
+   is the test; the story is the user-facing sentence.
 
 ## Vocabulary (pin it)
 
@@ -62,7 +70,7 @@ row. Mechanical — do not reorder, do not blend modes inside one episode.
 
 | # | Condition | Action |
 |---|-----------|--------|
-| 1 | Stop — **primary: model exhausted** (every model flow at its ladder target or parked with reason; top candidate score below the header threshold; no un-crystallized red; `check.py` clean **including G8: zero module orphans**) — or safety rails hit (defaults 100 loops / 250 runs). A no-new-red streak is never a stop; it is the model-refresh trigger, row 4. | **Wrap up:** commit specs + evidence, append the session summary to `journal.md`, report — naming which stop fired. A rail hit must say exactly what was left: ready scenarios, un-run candidates and their scores, un-crystallized reds. |
+| 1 | Stop — **primary: model exhausted AND gates clear** (every model flow at its ladder target or parked with reason; top candidate score below the header threshold; no un-crystallized red; `check.py` clean including G8/G11; **`check.py --status` prints `STOP-BLOCKERS (0)`** — the six stop gates: modality parity, surface census, api-floor share, event coverage, misuse floor, park audit) — or safety rails hit (defaults 100 loops / 250 runs). A no-new-red streak is never a stop; it is the model-refresh trigger, row 4. An open STOP-BLOCKER is not a stop reason — it is the *work list*: aim the next episodes at exactly the named blockers. | **Wrap up:** commit specs + evidence, append the session summary to `journal.md`, report — naming which stop fired. A rail hit must say exactly what was left: ready scenarios, un-run candidates and their scores, un-crystallized reds, open stop-blockers. |
 | 2 | A scenario is in-flight (`status: running` in `journal.md`) | **Resume executor** on it — finish or block it before anything else. |
 | 3 | An un-crystallized **RED** exists (`result: finding` with no `findings/` file) | **Crystallize** ([references/executor.md](references/executor.md) §Crystallize): minimize via `scenario_gen.shrink` (drop actors → flows → ops → depth), re-confirm red at the shrunk shape, test-reviewer gate, write `findings/<key>.md` with the replay recipe. Reds never queue behind new work. |
 | 4 | Model-refresh trigger: candidates thin (<5 above threshold), staleness (no new red in K=5 episodes), or an executor bounced a scenario on a model gap | **Producer episode** — refresh the usage model: scout fan-out (foreground, read-only) over docs/examples/issues for unmodeled personas, flows, events; re-rank candidates; strategy-critic model audit before promoting. Clear the trigger. |

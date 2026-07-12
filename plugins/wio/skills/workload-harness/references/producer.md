@@ -21,10 +21,29 @@ without a citation.
   applications, the product's *own* background threads (a recovery sweeper, a
   compactor), and adversarial siblings (a second instance racing the first).
   `weight:` is op-mix share — when no traffic data exists, reason it from the
-  docs' emphasis and say so in the citation (G6).
+  docs' emphasis and say so in the citation (G6). Two **builtin personas**
+  (citation-exempt) must be declared in every model: `api-explorer` (the
+  rarity sampler) and `contract-abuser` (the misuse persona: invalid spec,
+  call-in-wrong-context, double-call, pathological identifiers,
+  non-serializable arguments — its reds ride the error-contract oracle: the
+  *promised* failure or a finding). The misuse floor is a stop gate: at
+  least one done scenario must cast `contract-abuser`.
 - **Flows** are named multi-step journeys with the product's *claims* attached
   as `invariants:`. A flow without an invariant is sightseeing, not a test
   (G3). Steps live in the flow driver; the model only declares meaning.
+  Every flow declares its **`modalities:`** — for each of `sync`, `async`,
+  `threaded`: `plan` (a done scenario in that modality is owed before stop)
+  or `"park: <usage citation>"` (G10). A park reason must be an *environment
+  or documentation fact* ("no async client is documented"), never a frame
+  about the harness ("the sim drives the sync surface") — strategy-critic
+  audits every park (below).
+- **Surfaces** (G11, stop gate): the **documented-surface census**. Enumerate
+  every API surface the docs/README/exports actually teach — decorators,
+  client classes, methods, CLI verbs — at *documented-callable* granularity
+  (modules are too coarse: a whole feature can hide inside one "covered"
+  module file). Each surface gets `covered-by:` flow(s), a builtin persona,
+  or `parked: <reason>`. A used surface with no flow is an orphan and blocks
+  stop — that is the point.
 - **Events** are real-world interruptions (crash-restart, dependency outage,
   disk-full, redeploy, clock jump) with declared `amplification:` — how much
   more often than real life the sampler lands them (importance sampling made
@@ -49,9 +68,14 @@ sources, one table:
 - `usage` — traffic-weighted: hot flows, realistic casts, events at their
   amplified rates. The front door; most rows.
 - `api-floor` — rarity-weighted: the `api-explorer` persona walking
-  inverse-traffic verb sequences (`scenario_gen.api_explorer_seq`), G8-orphan
-  modules first. The corridor instinct, kept as a *sampler*, never a second
-  structure (~30% of the mix by default; tune in `journal.md` config).
+  inverse-traffic verb sequences (`scenario_gen.api_explorer_seq`) and the
+  `contract-abuser` persona abusing contracts, G8-orphan modules and
+  G11-orphan surfaces first. The corridor instinct, kept as a *sampler*,
+  never a second structure. **The share is binding** (`api-floor-share:` in
+  `journal.md` config, default 0.3): `check.py --status` blocks the row-1
+  stop while done api-floor scenarios sit under share × done total. "Needs a
+  new flow" is work, never a skip — every scenario carries `source: usage`
+  or `source: api-floor` so the ledger is mechanical.
 
 Rank interactions above solos once L0/L1 floors exist: the bugs that survive
 a vendor's own suite live where flows *interact* (L2) and where events land
@@ -66,6 +90,15 @@ re-skins of one? Then `check.py` must exit 0 — the batch does not count until
 the compile is clean. Promote each used candidate row out of the table.
 
 Rules of thumb:
+- **Spend against the blockers first.** `check.py --status` prints the open
+  STOP-BLOCKERS (unfinished flow×modality pairs, census orphans, api-floor
+  deficit, unfired amplified events, missing misuse floor, unaudited parks).
+  Those are pre-ranked work — a batch that ignores an open blocker to add
+  another scenario on an already-covered flow×modality is misspent budget.
+- Every modeled event with real amplification must *fire*: an event worth
+  declaring (amp ≥ `event-min-amp`, default 10) with zero done scenarios
+  blocks stop. Budget events across the mix — not everything on the single
+  most-cited one.
 - L0s are the cheap mandatory floor — but they exist to make L2/L3 reds
   attributable, not as the goal. Get every unparked flow to L0/L1, then spend
   the budget on interactions.
@@ -85,3 +118,14 @@ fan-out on the weak spot, adjust personas/flows/events/weights, re-rank
 candidates, critic-audit, clear the trigger, append the decision to
 `journal.md`. Never silently re-weight — the audit line says what changed and
 why.
+
+## Park audit (every park, before it can permit a stop)
+
+A park is a claim that testing something is impossible or worthless — the
+most dangerous sentence in the corpus. Every park (`parked:` on a module,
+surface, or event; `"park: …"` on a flow modality) must survive a
+**strategy-critic refutation attempt** ([critics.md](critics.md)): the critic
+tries to *disprove* the reason. Survivors get ` [audited eN]` appended to the
+reason string (N = the auditing episode); `check.py --status` blocks stop on
+any park without the tag. A refuted park is un-parked and becomes candidate
+work in the same episode.

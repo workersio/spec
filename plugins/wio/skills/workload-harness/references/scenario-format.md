@@ -1,6 +1,6 @@
 # Scenario format — the frozen contract (.workers/ v2)
 
-This file is the authoring contract. `check.py` (rules G1–G9) is its
+This file is the authoring contract. `check.py` (rules G1–G11) is its
 mechanical enforcement; `lib/CONTRACT.md` is the runtime-facing twin. A
 format change is real only when this file, `check.py`, and the tree change in
 the same commit.
@@ -38,22 +38,38 @@ personas:                           # any contract-holding actor: human role, ap
     weight: 0.6                     # op-mix share; MUST carry a citation (G6)
     flows: [pay, browse]
     citation: "README quickstart + examples/ dir"
-  api-explorer:                     # the rarity sampler — inverse-traffic weights
-    weight: 0.05                    # over the same verb inventory; G8 orphans feed it
-    flows: []
-    citation: builtin
+  api-explorer:                     # BUILTIN: the rarity sampler — inverse-traffic
+    weight: 0.05                    # weights over the verb inventory; G8/G11
+    flows: []                       # orphans feed it (citation-exempt)
+  contract-abuser:                  # BUILTIN: the misuse persona — invalid spec,
+    weight: 0.05                    # wrong-context call, double-call, pathological
+    flows: []                       # ids, non-serializable args (citation-exempt);
+                                    # >=1 done scenario casting it gates stop
 flows:
   pay:
     invariants: [charged-exactly-once, order-terminal]   # the claims (G3)
     citation: "docs/checkout.md"
+    modalities:                     # G10: each of sync/async/threaded is either
+      sync: plan                    # 'plan' (a done scenario in that modality
+      async: plan                   # gates stop) or 'park: <usage citation>'
+      threaded: "park: no threaded usage documented [audited e2]"
 events:
   crash-restart:
-    amplification: 20               # how much rarer-than-life this is amplified (G6)
+    amplification: 20               # how much rarer-than-life this is amplified (G6);
     citation: "recovery is the product's core promise"
+                                    # amp >= event-min-amp (config, default 10) with
+                                    # zero done scenarios blocks stop; park an event
+                                    # with parked: "<reason> [audited eN]"
 modules:                            # the usage-native module floor (G8)
   - {name: core/_core.py, covered-by: [pay, browse]}
-  - {name: cli, parked: "no runtime surface reachable in sim"}
+  - {name: cli, parked: "no runtime surface reachable in sim [audited e1]"}
   - {name: _admin_server.py, covered-by: api-explorer}
+surfaces:                           # G11: the documented-API census — every surface
+  - {name: "Shop.pay()", covered-by: [pay]}   # the docs/README/exports teach, at
+  - {name: "Shop.stream_orders()", covered-by: [browse]}   # callable granularity;
+  - {name: "shop admin CLI", parked: "ops-only, no sim surface [audited e1]"}
+                                    # an orphan surface blocks stop (finer than G8 —
+                                    # a feature can hide inside a "covered" module)
 ---
 prose: how this product is actually used, with evidence; persona narratives;
 what the weights mean; what was deliberately left out.
@@ -86,6 +102,10 @@ cast: {checkout-shopper: 3, ops-admin: 1}
 flows: [pay, cancel-mid-run]
 event: {key: crash-restart, at: crashclock}      # optional
 invariants: [charged-exactly-once, order-terminal]  # from the flows (G3)
+modality: sync                           # sync | async | threaded (G10) — which API
+                                         # variant the drivers exercise (ctx.modality)
+source: usage                            # usage | api-floor (G10) — which sampler
+                                         # emitted it; the api-floor share is binding
 depth: 50                                # seeds for wio simulate create
 status: planned | ready | done           # ready requires G4 completeness
 result: null | green | finding | void | blocked
@@ -139,7 +159,9 @@ evidence: INVARIANT lines, the shrink path, what the bug is, suspected seam.
 ## journal.md
 
 Starts with a `## config` section (rails: max loops, max runs, staleness K,
-candidate threshold), then an append-only `## log` of episode lines:
+candidate threshold, `api-floor-share:` — binding, default 0.3 — and
+`event-min-amp:` — the amplification at which a modeled event must fire
+before stop, default 10), then an append-only `## log` of episode lines:
 
 ```
 - 2026-07-11T10:00Z e12 executor shoppers-vs-cancel L2 depth=50 -> RED seed=17 (finding)

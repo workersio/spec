@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 """check.py -- the strict format compiler for the .workers/ v2 tree.
 
-Enforces rules G1-G9 from CONTRACT.md over a `.workers/` tree, and derives the
-dispatcher-v2 status row (--status) or rewrites the generated block of
-candidates.md (--emit). Python 3.12 stdlib only; no third-party YAML.
+Enforces rules G1-G11 from CONTRACT.md over a `.workers/` tree, and derives
+the dispatcher-v2 status row plus the v0.1.5 stop-blockers (--status) or
+rewrites the generated block of candidates.md (--emit). Python 3.12 stdlib
+only; no third-party YAML.
 
 This file ships as lib/check.py and is copied to `.workers/check.py` at init.
 It imports frontmatter from the lib/ next to the .workers root (the directory
@@ -32,7 +33,15 @@ for _cand in (os.path.join(_SCRIPT_DIR, "lib"), _SCRIPT_DIR):
 import frontmatter as fm  # noqa: E402
 
 API_EXPLORER = "api-explorer"
+CONTRACT_ABUSER = "contract-abuser"
+BUILTIN_PERSONAS = (API_EXPLORER, CONTRACT_ABUSER)
 RUNGS = ("L0", "L1", "L2", "L3", "L4")
+MODALITIES = ("sync", "async", "threaded")
+SOURCES = ("usage", "api-floor")
+PARK_PREFIX = "park:"
+AUDIT_TAG = "[audited"
+DEFAULT_API_FLOOR_SHARE = 0.3
+DEFAULT_EVENT_MIN_AMP = 10
 EMIT_BEGIN = "<!-- emit:begin -->"
 EMIT_END = "<!-- emit:end -->"
 
@@ -131,36 +140,70 @@ def parse_flows_module(source: str):
 
 
 # --------------------------------------------------------------------------- #
-# G8 helper (shared with --status orphan count)
+# G8/G11 helper (shared with --status orphan counts)
 # --------------------------------------------------------------------------- #
-def check_modules(modules, model_flow_keys):
-    """Return (errors, orphan_count). errors are detail strings."""
+def check_covermap(entries, model_flow_keys, label):
+    """Return (errors, orphan_count) for a covered-by/parked entry list
+    (modules G8, surfaces G11). errors are detail strings."""
     errors = []
     orphans = 0
-    for entry in modules or []:
+    for entry in entries or []:
         if not isinstance(entry, dict):
-            errors.append(f"module entry is not a mapping: {entry!r}")
+            errors.append(f"{label} entry is not a mapping: {entry!r}")
             orphans += 1
             continue
         name = entry.get("name", "?")
         cb = entry.get("covered-by")
         parked = entry.get("parked")
         if cb is None and parked is None:
-            errors.append(f"module {name!r} has neither covered-by nor parked")
+            errors.append(f"{label} {name!r} has neither covered-by nor parked")
             orphans += 1
             continue
         if cb is not None:
             if isinstance(cb, list):
                 for fk in cb:
                     if fk not in model_flow_keys:
-                        errors.append(f"module {name!r} covered-by flow {fk!r} not in model")
+                        errors.append(f"{label} {name!r} covered-by flow {fk!r} not in model")
                         orphans += 1
-            elif cb == API_EXPLORER:
+            elif cb in BUILTIN_PERSONAS:
                 pass
             elif cb not in model_flow_keys:
-                errors.append(f"module {name!r} covered-by flow {cb!r} not in model")
+                errors.append(f"{label} {name!r} covered-by flow {cb!r} not in model")
                 orphans += 1
     return errors, orphans
+
+
+def check_modules(modules, model_flow_keys):
+    return check_covermap(modules, model_flow_keys, "module")
+
+
+# --------------------------------------------------------------------------- #
+# journal config (## config section: `key: value` lines)
+# --------------------------------------------------------------------------- #
+def journal_config(root: str) -> dict:
+    text = _read(os.path.join(root, "journal.md"))
+    if text is None:
+        return {}
+    cfg: dict = {}
+    in_config = False
+    for ln in text.splitlines():
+        if ln.startswith("## "):
+            in_config = ln.strip() == "## config"
+            continue
+        if not in_config:
+            continue
+        s = ln.strip().lstrip("- ").strip()
+        if ":" in s:
+            k, _, v = s.partition(":")
+            cfg[k.strip()] = v.strip()
+    return cfg
+
+
+def _cfg_float(cfg, key, default):
+    try:
+        return float(cfg.get(key, default))
+    except (TypeError, ValueError):
+        return default
 
 
 # --------------------------------------------------------------------------- #
@@ -268,10 +311,12 @@ def run_check(root: str):
             if inv not in covered:
                 err(3, rel, f"invariant {inv!r} not provided by any of the scenario's flows")
 
-    # ---- G4: ready|done requires cast, flows, depth, story, invariants ----
+    # ---- G4: ready|done requires cast, flows, depth, story, invariants,
+    # ----     modality, source ----
     for rel, meta in good_scen:
         if meta.get("status") in ("ready", "done"):
-            for field in ("cast", "flows", "depth", "story", "invariants"):
+            for field in ("cast", "flows", "depth", "story", "invariants",
+                          "modality", "source"):
                 if not _present(meta.get(field)):
                     err(4, rel, f"status {meta.get('status')} requires non-empty {field!r}")
 
@@ -283,7 +328,7 @@ def run_check(root: str):
 
     # ---- G6: persona citations; event amplification + citation ----
     for pname, pdata in personas.items():
-        if pname == API_EXPLORER:
+        if pname in BUILTIN_PERSONAS:
             continue
         cit = pdata.get("citation") if isinstance(pdata, dict) else None
         if not _present(cit):
@@ -322,6 +367,49 @@ def run_check(root: str):
     for detail in check_modules(modules, model_flow_keys)[0]:
         err(8, "usage-model.md", detail)
 
+    # ---- G10: sampling axes -- flow modalities declared; scenario
+    # ----      modality/source values valid ----
+    for fk, fv in flows.items():
+        if fk in model_js_flows:
+            continue
+        mods = fv.get("modalities") if isinstance(fv, dict) else None
+        if not isinstance(mods, dict) or not mods:
+            err(10, "usage-model.md",
+                f"flow {fk!r} declares no modalities: (each of {'/'.join(MODALITIES)} "
+                f"must be 'plan' or 'park: <reason>')")
+            continue
+        for m in MODALITIES:
+            v = mods.get(m)
+            if v is None:
+                err(10, "usage-model.md", f"flow {fk!r} modality {m!r} undeclared")
+            elif v == "plan":
+                pass
+            elif isinstance(v, str) and v.startswith(PARK_PREFIX):
+                if len(v[len(PARK_PREFIX):].strip()) < 4:
+                    err(10, "usage-model.md",
+                        f"flow {fk!r} modality {m!r} park has no reason")
+            else:
+                err(10, "usage-model.md",
+                    f"flow {fk!r} modality {m!r} must be 'plan' or 'park: <reason>', "
+                    f"got {v!r}")
+        for m in mods:
+            if m not in MODALITIES:
+                err(10, "usage-model.md", f"flow {fk!r} unknown modality {m!r}")
+    for rel, meta in good_scen:
+        if meta.get("status") not in ("ready", "done"):
+            continue
+        mod = meta.get("modality")
+        if mod is not None and mod not in MODALITIES:
+            err(10, rel, f"modality {mod!r} not one of {MODALITIES}")
+        src = meta.get("source")
+        if src is not None and src not in SOURCES:
+            err(10, rel, f"source {src!r} not one of {SOURCES}")
+
+    # ---- G11: documented-surface census entries well-formed ----
+    surfaces = model.get("surfaces") or []
+    for detail in check_covermap(surfaces, model_flow_keys, "surface")[0]:
+        err(11, "usage-model.md", detail)
+
     # ---- G9: journal.md exists with a ## config line ----
     journal_path = os.path.join(root, "journal.md")
     jtext = _read(journal_path)
@@ -352,8 +440,103 @@ def _journal_has_trigger(root: str) -> bool:
     return any(ln.strip().startswith("trigger: model-refresh") for ln in text.splitlines())
 
 
+def stop_blockers(root: str, model: dict, smetas: list) -> list[str]:
+    """The v0.1.5 stop gates. Row 1 (stop) cannot fire while any blocker
+    holds; --status prints them so episodes aim at exactly what is open.
+    All computed from done scenarios + the model — no memory, no judgment."""
+    cfg = journal_config(root)
+    flows = model.get("flows") or {}
+    events = model.get("events") or {}
+    modules = model.get("modules") or []
+    surfaces = model.get("surfaces") or []
+    model_flow_keys = set(flows.keys())
+    js_flows = {
+        fk for fk, fv in flows.items()
+        if isinstance(fv, str) and fv.startswith("js:")
+    }
+    done = [m for m in smetas if m.get("status") == "done"]
+    blockers: list[str] = []
+
+    # (1) modality parity: every planned flow x modality has a done scenario
+    for fk, fv in flows.items():
+        if fk in js_flows or not isinstance(fv, dict):
+            continue
+        mods = fv.get("modalities")
+        mods = mods if isinstance(mods, dict) else {"sync": "plan"}
+        for m in MODALITIES:
+            if mods.get(m) != "plan":
+                continue
+            hit = any(
+                fk in (d.get("flows") or []) and (d.get("modality") or "sync") == m
+                for d in done
+            )
+            if not hit:
+                blockers.append(f"modality: flow {fk!r} {m} planned, no done scenario")
+
+    # (2) documented-surface census: non-empty and zero orphans
+    if not surfaces:
+        blockers.append("census: usage-model.md has no surfaces: (documented-API census)")
+    else:
+        n_orph = check_covermap(surfaces, model_flow_keys, "surface")[1]
+        if n_orph:
+            blockers.append(f"census: {n_orph} surface orphan(s) (no covered-by/parked)")
+
+    # (3) api-floor share is binding, not advisory
+    share = _cfg_float(cfg, "api-floor-share", DEFAULT_API_FLOOR_SHARE)
+    if done:
+        af = sum(1 for d in done if d.get("source") == "api-floor")
+        if af < share * len(done):
+            blockers.append(
+                f"api-floor: {af}/{len(done)} done scenarios (share {share} binding)")
+
+    # (4) event coverage: modeled amplified events must be exercised
+    min_amp = _cfg_float(cfg, "event-min-amp", DEFAULT_EVENT_MIN_AMP)
+    for ename, edata in events.items():
+        if not isinstance(edata, dict):
+            continue
+        if _present(edata.get("parked")):
+            continue
+        try:
+            amp = float(edata.get("amplification") or 0)
+        except (TypeError, ValueError):
+            amp = 0
+        if amp < min_amp:
+            continue
+        hit = any(
+            isinstance(d.get("event"), dict) and d["event"].get("key") == ename
+            for d in done
+        )
+        if not hit:
+            blockers.append(f"event: {ename!r} (amp {amp:g}) has no done scenario")
+
+    # (5) misuse floor: the contract-abuser persona must have fired
+    if model_flow_keys:
+        hit = any(CONTRACT_ABUSER in (d.get("cast") or {}) for d in done)
+        if not hit:
+            blockers.append(f"misuse: no done scenario casts {CONTRACT_ABUSER!r}")
+
+    # (6) park audit: every park carries the strategy-critic audit tag
+    def _park_audited(where, reason):
+        if isinstance(reason, str) and AUDIT_TAG not in reason:
+            blockers.append(f"park-audit: {where} park lacks '{AUDIT_TAG} eN]' tag")
+
+    for entry in list(modules) + list(surfaces):
+        if isinstance(entry, dict) and _present(entry.get("parked")):
+            _park_audited(f"{entry.get('name', '?')!r}", entry.get("parked"))
+    for fk, fv in flows.items():
+        if isinstance(fv, dict) and isinstance(fv.get("modalities"), dict):
+            for m, v in fv["modalities"].items():
+                if isinstance(v, str) and v.startswith(PARK_PREFIX):
+                    _park_audited(f"flow {fk!r} modality {m}", v)
+    for ename, edata in events.items():
+        if isinstance(edata, dict) and _present(edata.get("parked")):
+            _park_audited(f"event {ename!r}", edata.get("parked"))
+
+    return blockers
+
+
 def compute_status(root: str):
-    """Return (row, reason). Rows evaluated 1..6, first match wins."""
+    """Return (row, reason, blockers). Rows evaluated 1..6, first match wins."""
     model, _ = load_model(root)
     flows = model.get("flows") or {}
     modules = model.get("modules") or []
@@ -377,19 +560,23 @@ def compute_status(root: str):
 
     _, orphans = check_modules(modules, model_flow_keys)
     all_flows_done = bool(model_flow_keys) and all(flow_done(fk) for fk in model_flow_keys)
+    blockers = stop_blockers(root, model, smetas)
 
-    # Row 1 (stop) is checked first, but only fires when its full condition holds.
-    if not ready and not running and not uncryst and all_flows_done and orphans == 0:
-        return 1, "stop: all model flows done, no pending findings, modules covered"
+    # Row 1 (stop) is checked first, but only fires when its full condition holds
+    # AND every v0.1.5 stop gate is clear.
+    if (not ready and not running and not uncryst and all_flows_done
+            and orphans == 0 and not blockers):
+        return 1, "stop: flows done, findings clear, modules covered, gates clear", blockers
     if running:
-        return 2, f"in-flight: scenario {running[0].get('key')!r} running"
+        return 2, f"in-flight: scenario {running[0].get('key')!r} running", blockers
     if uncryst:
-        return 3, f"crystallize: finding for scenario {uncryst[0].get('key')!r} not written"
+        return (3, f"crystallize: finding for scenario {uncryst[0].get('key')!r} not written",
+                blockers)
     if _candidate_backlog_rows(root) < 5 or _journal_has_trigger(root):
-        return 4, "model-refresh: candidate backlog thin or trigger set"
+        return 4, "model-refresh: candidate backlog thin or trigger set", blockers
     if ready:
-        return 5, f"run: scenario {ready[0].get('key')!r} ready"
-    return 6, "emit: propose a new batch of candidates"
+        return 5, f"run: scenario {ready[0].get('key')!r} ready", blockers
+    return 6, "emit: propose a new batch of candidates", blockers
 
 
 # --------------------------------------------------------------------------- #
@@ -467,8 +654,17 @@ def main(argv=None) -> int:
     if args.emit:
         run_emit(root)
     if args.status:
-        row, reason = compute_status(root)
+        row, reason, blockers = compute_status(root)
         print(f"STATUS row={row} {reason}")
+        if blockers:
+            shown = blockers[:10]
+            print(f"STOP-BLOCKERS ({len(blockers)}):")
+            for b in shown:
+                print(f"  - {b}")
+            if len(blockers) > len(shown):
+                print(f"  ... and {len(blockers) - len(shown)} more")
+        else:
+            print("STOP-BLOCKERS (0): none")
     if args.emit or args.status:
         return 0
 

@@ -287,9 +287,11 @@ class FlowCtx:
     and the ``step`` barrier. ``step`` ticks the op clock (global event timing) and, in
     a multi-actor plan, blocks on interleave's scheduler; inline it is a pure tick."""
 
-    def __init__(self, actor, sut, ledger, errors, clock, rng, opclock, barrier=None):
+    def __init__(self, actor, sut, ledger, errors, clock, rng, opclock, barrier=None,
+                 modality="sync"):
         self.actor_id = actor.actor_id
         self.persona = actor.persona
+        self.modality = modality  # sync | async | threaded — the API variant to drive
         self.rng = rng
         self.ledger = ledger
         self.errors = errors
@@ -340,7 +342,8 @@ def _load_flow_module(root: Path, target: str):
 # Actor execution
 # ---------------------------------------------------------------------------
 
-def _run_actors(plan, flowmod, sut, ledgers, errors, clock, opclock, root) -> dict:
+def _run_actors(plan, flowmod, sut, ledgers, errors, clock, opclock, root,
+                modality="sync") -> dict:
     """Run the plan's actors, returning ``{actor_id: exception}`` for any that raised."""
     FLOWS = flowmod.FLOWS
     actor_errors: dict = {}
@@ -350,7 +353,8 @@ def _run_actors(plan, flowmod, sut, ledgers, errors, clock, opclock, root) -> di
 
     if len(plan.actors) == 1:
         a = plan.actors[0]
-        ctx = FlowCtx(a, sut, ledgers[a.actor_id], errors, clock, _rng(a), opclock)
+        ctx = FlowCtx(a, sut, ledgers[a.actor_id], errors, clock, _rng(a), opclock,
+                      modality=modality)
         try:
             for fkey in a.flow_seq:
                 FLOWS[fkey]().run(ctx)
@@ -373,7 +377,7 @@ def _run_actors(plan, flowmod, sut, ledgers, errors, clock, opclock, root) -> di
     def make_body(actor):
         def body(ictx):
             ctx = FlowCtx(actor, sut, ledgers[actor.actor_id], errors, clock,
-                          _rng(actor), opclock, barrier=ictx.step)
+                          _rng(actor), opclock, barrier=ictx.step, modality=modality)
             for fkey in actor.flow_seq:
                 FLOWS[fkey]().run(ctx)
         return body
@@ -503,7 +507,8 @@ def main(argv=None) -> int:
         opclock = OpClock(plan.event, getattr(flowmod, "EVENTS", {}), sut)
 
         actor_errors = _run_actors(plan, flowmod, sut, ledgers, errors, clock,
-                                   opclock, root_seed)
+                                   opclock, root_seed,
+                                   modality=str(meta.get("modality") or "sync"))
         _disarm_watchdog()
 
         ledgers_list = list(ledgers.values())

@@ -22,7 +22,7 @@ records the decision.
 
 ## Model audit (usage-model.md)
 
-Answer all three, concretely, with citations from the target repo:
+Answer all four, concretely, with citations from the target repo:
 
 1. **Is this how the product is really used?** Reconstruct the most common
    real user journey from the README/examples yourself, then check the model
@@ -37,9 +37,22 @@ Answer all three, concretely, with citations from the target repo:
    harness is already comfortable rather than where users are; flag
    citations that do not actually support the number.
 
-Also verify the `modules:` floor honestly: parked reasons that are really
-"hard to test" are not reasons; rare-but-reachable surfaces belong to
-api-explorer, not parking.
+4. **Refute every park.** For each `parked:`/`park:` reason anywhere in the
+   model (modules, surfaces, events, flow modalities): decide whether it is
+   an **environment fact** (this genuinely cannot run here — the reason
+   cites what fails) or a **self-imposed frame** (a belief about what the
+   harness "is for" — e.g. "the sim drives the sync surface"). For each
+   park, name the concrete cheap experiment that would disprove the reason.
+   If one exists and is affordable, output `PARK REFUTED: <where> — <the
+   experiment>`; otherwise `PARK SURVIVES: <where>`. The producer stamps
+   survivors ` [audited eN]`; refuted parks must be un-parked into work.
+
+Also verify the `modules:` and `surfaces:` floors honestly: parked reasons
+that are really "hard to test" are not reasons; rare-but-reachable surfaces
+belong to api-explorer, not parking. The surface census must cover what the
+docs *teach*, at callable granularity — flag any documented feature class
+(e.g. a streaming/iterator API, a secondary decorator) absent from both
+`surfaces:` and the flow set.
 
 ## Set audit (a batch of scenarios/*.md)
 

@@ -54,6 +54,20 @@ without a citation.
   the stop row. Orphans that no realistic flow touches feed the
   `api-explorer` rarity persona instead of being forgotten.
 
+- **Attention map (v0.2, run at model time and every refresh).** Once the
+  surface census exists, write `.workers/attention-surfaces.json`
+  (`[{name, tokens, files}]` — tokens chosen for regex distinctiveness,
+  `_async` twins listed explicitly) and run the probe:
+
+  ```
+  python3 .workers/lib/attention.py --repo <SUT checkout> \
+      --surfaces .workers/attention-surfaces.json \
+      [--issues <frozen issue snapshot>] --cells > .workers/attention.md
+  ```
+
+  Commit the output. It is deterministic — an auditor re-running it must get
+  identical bytes — and it is a *prioritizer*, never a coverage claim.
+
 Gate before the model is trusted: **strategy-critic model audit**
 ([critics.md](critics.md)) — is this how the product is really used? which
 persona/flow/event is missing? are the weights self-flattering?
@@ -80,6 +94,22 @@ sources, one table:
 Rank interactions above solos once L0/L1 floors exist: the bugs that survive
 a vendor's own suite live where flows *interact* (L2) and where events land
 mid-flow (L3).
+
+**The frontier rule (v0.2 — how depth is spent after the floors).** The
+lattice is census surface × modality × mechanism × event; the six gates are
+its mandatory floors. Every candidate row beyond the floors names the lattice
+**cell** it attacks (note column), and the queue is ordered by the attention
+map: highest-weight *uncovered* cell first — a cell users plausibly hit that
+the vendor's suite never exercises **this way** outranks another solo on a
+hammered cell. Two standing riders:
+- **Coupling pairs:** flows that share state (same tables/columns/keys —
+  statically visible in the drivers' verbs) are candidate L2 interactions;
+  prioritize pairs whose *joint* cell is untested even when each solo is.
+- **Depth escalation:** a cell that produced a near-miss (VOID that almost
+  witnessed, an event that fired but found nothing at depth N) earns one
+  escalated re-visit (higher depth / +1 rung) before the frontier moves on.
+There is no "model exhausted" while high-weight uncovered cells remain —
+budget rails, not saturation feelings, end the search.
 
 ## Batch emission (row 6)
 

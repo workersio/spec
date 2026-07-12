@@ -3,7 +3,7 @@ name: workload-harness
 description: Autonomous usage-first workload-harness loop for a connected repo. One session alternates producer episodes (maintain the usage model, emit scenario batches) and executor episodes (run one scenario, red-proof its oracles, record the verdict) under a mechanical dispatcher, running scenarios via wio. Greenfield v2 — scenarios only; no promises, areas, or backlog. Invoke via /goal against a connected project; init mode scaffolds .workers/.
 metadata:
   author: workers.io
-  version: "0.1.5"
+  version: "0.1.6"
 ---
 
 # Workload Harness (usage-first)
@@ -45,6 +45,17 @@ Invocation:
    double-call, pathological ids, non-serializable args) must have fired,
    riding the error-contract oracle. The usage model is the spec; the scenario
    is the test; the story is the user-facing sentence.
+3. **The lattice and the frontier (v0.2).** The search space is the product's
+   **cell lattice**: census surface × modality × mechanism
+   (nominal/race/recovery/retry/limit/misuse) × event. The gates are its
+   *floors*; depth beyond the floors is spent by **attention inversion**:
+   `lib/attention.py` computes five mechanical counts per surface from the
+   repo itself and ranks cells by
+   `realness × 1/(1 + vendor-test situations in that cell)` — aim where users
+   are and the vendor's suite is not. The probe is deterministic and
+   auditable (identical re-runs); its output is a *prioritizer*, never a
+   coverage claim. usage gives realness · the lattice gives completeness ·
+   attention-inversion gives priority — the scenario stays the unit.
 
 ## Vocabulary (pin it)
 

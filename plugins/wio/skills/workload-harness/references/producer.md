@@ -92,9 +92,19 @@ the compile is clean. Promote each used candidate row out of the table.
 Rules of thumb:
 - **Spend against the blockers first.** `check.py --status` prints the open
   STOP-BLOCKERS (unfinished flow×modality pairs, census orphans, api-floor
-  deficit, unfired amplified events, missing misuse floor, unaudited parks).
+  deficit, unfired amplified events, missing misuse floor, unaudited parks,
+  aim-debt: mapped oracle'd flows baselined green but never attacked).
   Those are pre-ranked work — a batch that ignores an open blocker to add
   another scenario on an already-covered flow×modality is misspent budget.
+- **The aim-debt gate.** While any `aim-debt:` blocker is open, do not emit a
+  new baseline/green-control scenario on a flow×modality that already has a
+  done green there — a green run of a promise nobody has tried to break is not
+  coverage. Rank the batch by `(mapped AND oracle-exists AND not-yet-aimed)`:
+  aim the budget at the named flows, which draws the L1-cap / L3-event surplus
+  into the under-served L2 flow-interaction attacks that catch the bugs a
+  vendor's own suite misses. First-baseline-per-flow×modality (owed by
+  modality parity for attribution) is still permitted; it is *additional*
+  green controls that the gate holds back.
 - Every modeled event with real amplification must *fire*: an event worth
   declaring (amp ≥ `event-min-amp`, default 10) with zero done scenarios
   blocks stop. Budget events across the mix — not everything on the single

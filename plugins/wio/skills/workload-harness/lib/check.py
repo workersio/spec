@@ -2,7 +2,8 @@
 """check.py -- the strict format compiler for the .workers/ v2 tree.
 
 Enforces rules G1-G11 from CONTRACT.md over a `.workers/` tree, and derives
-the dispatcher-v2 status row plus the v0.1.5 stop-blockers (--status) or
+the dispatcher-v2 status row plus the stop-blockers (v0.1.5 six + v0.1.6
+aim-debt) (--status) or
 rewrites the generated block of candidates.md (--emit). Python 3.12 stdlib
 only; no third-party YAML.
 
@@ -441,9 +442,10 @@ def _journal_has_trigger(root: str) -> bool:
 
 
 def stop_blockers(root: str, model: dict, smetas: list) -> list[str]:
-    """The v0.1.5 stop gates. Row 1 (stop) cannot fire while any blocker
-    holds; --status prints them so episodes aim at exactly what is open.
-    All computed from done scenarios + the model — no memory, no judgment."""
+    """The stop gates (v0.1.5 six + the v0.1.6 aim-debt gate). Row 1 (stop)
+    cannot fire while any blocker holds; --status prints them so episodes aim
+    at exactly what is open. All computed from done scenarios + the model —
+    no memory, no judgment."""
     cfg = journal_config(root)
     flows = model.get("flows") or {}
     events = model.get("events") or {}
@@ -531,6 +533,35 @@ def stop_blockers(root: str, model: dict, smetas: list) -> list[str]:
     for ename, edata in events.items():
         if isinstance(edata, dict) and _present(edata.get("parked")):
             _park_audited(f"event {ename!r}", edata.get("parked"))
+
+    # (7) aim-debt gate: a mapped surface whose covering flow carries a live
+    #     oracle, and which has been baselined green but never attacked. An
+    #     un-falsified promise is not coverage — the producer owes an attacking
+    #     scenario (L1+) before spending budget on another baseline/green
+    #     control. This ranks the next episode onto (mapped AND oracle-exists
+    #     AND not-yet-aimed); the natural draw-down for an interaction surface
+    #     is an L2. Computed from done scenarios + the model — no judgment.
+    attack_rungs = tuple(r for r in RUNGS if r != "L0")
+    mapped_oracle_flows: set = set()
+    for entry in surfaces:
+        if not isinstance(entry, dict) or _present(entry.get("parked")):
+            continue
+        cb = entry.get("covered-by")
+        for fk in (cb if isinstance(cb, list) else [cb]):
+            fv = flows.get(fk)
+            if (isinstance(fk, str) and fk not in js_flows
+                    and isinstance(fv, dict) and fv.get("invariants")):
+                mapped_oracle_flows.add(fk)
+    for fk in sorted(mapped_oracle_flows):
+        baselined = any(
+            fk in (d.get("flows") or []) and d.get("rung") == "L0" for d in done)
+        attacked = any(
+            fk in (d.get("flows") or []) and d.get("rung") in attack_rungs
+            for d in done)
+        if baselined and not attacked:
+            blockers.append(
+                f"aim-debt: flow {fk!r} baselined green, no attacking scenario "
+                f"(L1+ owed before a new baseline)")
 
     return blockers
 

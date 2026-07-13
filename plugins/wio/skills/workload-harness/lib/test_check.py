@@ -148,10 +148,13 @@ def write(path, text):
 
 
 def build_valid(root):
-    """A fully-valid small tree: both flows done+green, plus the misuse/api-floor
-    scenario that also exercises the amplified event -- so every v0.1.5 stop gate
-    (modality parity, census, api-floor share, event coverage, misuse floor,
-    park audit) is clear and --status prints row 1."""
+    """A fully-valid small tree: both flows L0-baselined + green, plus the
+    misuse/api-floor scenario that ALSO attacks both flows at L2 (a flow
+    interaction) while exercising the amplified event -- so every stop gate
+    (v0.1.5 six: modality parity, census, api-floor share, event coverage,
+    misuse floor, park audit; and the v0.1.6 aim-debt gate: every mapped
+    oracle'd flow is attacked past its baseline) is clear and --status prints
+    row 1."""
     write(os.path.join(root, "usage-model.md"), MODEL)
     write(os.path.join(root, "flows", "flows_shop.py"), FLOWS_PY)
     write(os.path.join(root, "journal.md"), JOURNAL)
@@ -163,9 +166,10 @@ def build_valid(root):
           scenario("browse-basic", flows="[browse]", invariants="[listing-consistent]",
                    redproof="run-browse"))
     write(os.path.join(root, "scenarios", "abuse-pay.md"),
-          scenario("abuse-pay", cast="{contract-abuser: 1}", flows="[pay]",
-                   invariants="[charged-exactly-once]", redproof="run-abuse",
-                   source="api-floor",
+          scenario("abuse-pay", rung="L2", cast="{contract-abuser: 1}",
+                   flows="[pay, browse]",
+                   invariants="[charged-exactly-once, listing-consistent]",
+                   redproof="run-abuse", source="api-floor",
                    extra="event: {key: crash-restart, at: crashclock}\n"))
     return root
 
@@ -366,6 +370,20 @@ write(os.path.join(d, "usage-model.md"), model_nosurf)
 code, out = run("--root", d, "--status")
 ok("blocker-census-no-row1", "STATUS row=1" not in out, out)
 ok("blocker-census-named", "census:" in out, out)
+shutil.rmtree(d)
+
+# Blocker: aim-debt — a mapped, oracle'd flow baselined green but never
+# attacked. Demoting the L2 attacker back to an L0 baseline leaves pay and
+# browse with only green controls, so the gate owes an attack on each.
+d = fresh()
+write(os.path.join(d, "scenarios", "abuse-pay.md"),
+      scenario("abuse-pay", rung="L0", cast="{contract-abuser: 1}",
+               flows="[pay]", invariants="[charged-exactly-once]",
+               redproof="run-abuse", source="api-floor",
+               extra="event: {key: crash-restart, at: crashclock}\n"))
+code, out = run("--root", d, "--status")
+ok("blocker-aimdebt-no-row1", "STATUS row=1" not in out, out)
+ok("blocker-aimdebt-named", "aim-debt:" in out, out)
 shutil.rmtree(d)
 
 # Row 5: a ready scenario (backlog >=5 rows, no refresh trigger)

@@ -3,7 +3,7 @@ name: workload-harness
 description: Autonomous usage-first workload-harness loop for a connected repo. One session alternates producer episodes (maintain the usage model, emit scenario batches) and executor episodes (run one scenario, red-proof its oracles, record the verdict) under a mechanical dispatcher, running scenarios via wio. Greenfield v2 — scenarios only; no promises, areas, or backlog. Invoke via /goal against a connected project; init mode scaffolds .workers/.
 metadata:
   author: workers.io
-  version: "0.1.7"
+  version: "0.1.8"
 ---
 
 # Workload Harness (usage-first)
@@ -35,7 +35,7 @@ Invocation:
    from code seams. Rare bugs come from **importance sampling**: a realistic
    operation carrier with rare events and rare usage deliberately amplified,
    never from uniform randomness and never from corridor enumeration. Traffic
-   weighting aims the mass; the **seven stop gates** stop it collapsing onto the
+   weighting aims the mass; the **eight stop gates** stop it collapsing onto the
    product's hardened core: every flow covers its documented **modalities**
    (sync/async/threaded) or parks each with a cited, critic-audited reason;
    the **documented-surface census** (finer than modules) must have zero
@@ -46,8 +46,13 @@ Invocation:
    riding the error-contract oracle; and the **aim-debt gate** — every mapped
    surface whose flow carries a live oracle, once baselined green, owes an
    *attacking* scenario (L1+) before budget goes to another baseline (an
-   un-falsified promise is not coverage). The usage model is the spec; the
-   scenario is the test; the story is the user-facing sentence.
+   un-falsified promise is not coverage); and the **anti-monoculture breadth
+   floor** — a brake that composes with aim-debt: no single cluster (flow) may
+   be *deepened* (carry a 2nd/3rd attacker) until ≥K distinct flows each carry
+   ≥1 attacker, and a per-cluster episode-budget cap bounds how far one cluster
+   may absorb (breadth before depth-collapse; K is bounded by the attackable
+   universe). The usage model is the spec; the scenario is the test; the story
+   is the user-facing sentence.
 3. **The lattice and the frontier (v0.2).** The search space is the product's
    **cell lattice**: census surface × modality × mechanism
    (nominal/race/recovery/retry/limit/misuse) × event. The gates are its
@@ -84,7 +89,7 @@ row. Mechanical — do not reorder, do not blend modes inside one episode.
 
 | # | Condition | Action |
 |---|-----------|--------|
-| 1 | Stop — **primary: model exhausted AND gates clear** (every model flow at its ladder target or parked with reason; top candidate score below the header threshold; no un-crystallized red; `check.py` clean including G8/G11; **`check.py --status` prints `STOP-BLOCKERS (0)`** — the seven stop gates: modality parity, surface census, api-floor share, event coverage, misuse floor, park audit, aim-debt) — or safety rails hit (defaults 100 loops / 250 runs). A no-new-red streak is never a stop; it is the model-refresh trigger, row 4. An open STOP-BLOCKER is not a stop reason — it is the *work list*: aim the next episodes at exactly the named blockers. | **Wrap up:** commit specs + evidence, append the session summary to `journal.md`, report — naming which stop fired. A rail hit must say exactly what was left: ready scenarios, un-run candidates and their scores, un-crystallized reds, open stop-blockers. |
+| 1 | Stop — **primary: model exhausted AND gates clear** (every model flow at its ladder target or parked with reason; top candidate score below the header threshold; no un-crystallized red; `check.py` clean including G8/G11; **`check.py --status` prints `STOP-BLOCKERS (0)`** — the eight stop gates: modality parity, surface census, api-floor share, event coverage, misuse floor, park audit, aim-debt, anti-monoculture breadth floor) — or safety rails hit (defaults 100 loops / 250 runs). A no-new-red streak is never a stop; it is the model-refresh trigger, row 4. An open STOP-BLOCKER is not a stop reason — it is the *work list*: aim the next episodes at exactly the named blockers. | **Wrap up:** commit specs + evidence, append the session summary to `journal.md`, report — naming which stop fired. A rail hit must say exactly what was left: ready scenarios, un-run candidates and their scores, un-crystallized reds, open stop-blockers. |
 | 2 | A scenario is in-flight (`status: running` in `journal.md`) | **Resume executor** on it — finish or block it before anything else. |
 | 3 | An un-crystallized **RED** exists (`result: finding` with no `findings/` file) | **Crystallize** ([references/executor.md](references/executor.md) §Crystallize): minimize via `scenario_gen.shrink` (drop actors → flows → ops → depth), re-confirm red at the shrunk shape, test-reviewer gate, write `findings/<key>.md` with the replay recipe. Reds never queue behind new work. |
 | 4 | Model-refresh trigger: candidates thin (<5 above threshold), staleness (no new red in K=5 episodes), or an executor bounced a scenario on a model gap | **Producer episode** — refresh the usage model: scout fan-out (foreground, read-only) over docs/examples/issues for unmodeled personas, flows, events; re-rank candidates; strategy-critic model audit before promoting. Clear the trigger. |
@@ -169,6 +174,12 @@ after running) exist to stop the drift toward useless passing tests.
   executor owns flow-driver code, run evidence, and the mechanical result
   fields. Executors never rewrite the model — a model gap bounces the
   scenario back with a `reason` (row 4 trigger).
+- **Breadth before depth-collapse.** The producer spreads the first attacker
+  across distinct flows before deepening any one cluster: don't sink the whole
+  budget into a single flow's fight while other mapped flows sit un-attacked.
+  The anti-monoculture stop gate makes this mechanical — a cluster that gets a
+  2nd/3rd attacker before ≥K distinct flows carry one (or past the per-cluster
+  cap) opens a blocker naming the over-deepened flow.
 - `check.py` is the format: any format change lands in the same commit as the
   `check.py` change that enforces it, or the change didn't happen.
 - Every scenario has a `story:` a non-engineer can read — legibility is a

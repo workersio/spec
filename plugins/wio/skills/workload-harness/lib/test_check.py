@@ -386,6 +386,42 @@ ok("blocker-aimdebt-no-row1", "STATUS row=1" not in out, out)
 ok("blocker-aimdebt-named", "aim-debt:" in out, out)
 shutil.rmtree(d)
 
+# Blocker: anti-monoculture breadth floor — one cluster deepened (2 attackers
+# on pay) while breadth < K distinct flows attacked (browse never attacked).
+# Replacing the single both-flows L2 with two pay-only L1 attackers collapses
+# the whole attacking budget onto one cluster.
+d = fresh()
+os.remove(os.path.join(d, "scenarios", "abuse-pay.md"))
+write(os.path.join(d, "scenarios", "abuse-pay-1.md"),
+      scenario("abuse-pay-1", rung="L1", cast="{contract-abuser: 1}",
+               flows="[pay]", invariants="[charged-exactly-once]",
+               redproof="run-abuse1", source="api-floor",
+               extra="event: {key: crash-restart, at: crashclock}\n"))
+write(os.path.join(d, "scenarios", "abuse-pay-2.md"),
+      scenario("abuse-pay-2", rung="L1", cast="{contract-abuser: 1}",
+               flows="[pay]", invariants="[charged-exactly-once]",
+               redproof="run-abuse2", source="api-floor"))
+code, out = run("--root", d, "--status")
+ok("blocker-antimono-no-row1", "STATUS row=1" not in out, out)
+ok("blocker-antimono-named", "anti-monoculture: flow 'pay' deepened" in out, out)
+shutil.rmtree(d)
+
+# Blocker: per-cluster episode budget cap — even at full breadth, one flow
+# cannot absorb more than the cap. Setting cluster-attack-cap: 1 in journal
+# config means the L2 that attacks both flows keeps each at exactly 1 (clear),
+# so we add a 2nd pay attacker to push pay over the cap while browse stays at 1.
+d = fresh()
+write(os.path.join(d, "journal.md"),
+      JOURNAL.replace("event-min-amp: 10",
+                      "event-min-amp: 10\ncluster-attack-cap: 1"))
+write(os.path.join(d, "scenarios", "deepen-pay.md"),
+      scenario("deepen-pay", rung="L1", cast="{contract-abuser: 1}",
+               flows="[pay]", invariants="[charged-exactly-once]",
+               redproof="run-deepen", source="api-floor"))
+code, out = run("--root", d, "--status")
+ok("blocker-clusterbudget-named", "cluster-budget: flow 'pay'" in out, out)
+shutil.rmtree(d)
+
 # Row 5: a ready scenario (backlog >=5 rows, no refresh trigger)
 d = fresh()
 write(os.path.join(d, "scenarios", "browse-basic.md"),

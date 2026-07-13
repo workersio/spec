@@ -3,7 +3,7 @@
 
 Enforces rules G1-G11 from CONTRACT.md over a `.workers/` tree, and derives
 the dispatcher-v2 status row plus the stop-blockers (v0.1.5 six + v0.1.6
-aim-debt) (--status) or
+aim-debt + v0.1.8 anti-monoculture breadth floor) (--status) or
 rewrites the generated block of candidates.md (--emit). Python 3.12 stdlib
 only; no third-party YAML.
 
@@ -43,6 +43,8 @@ PARK_PREFIX = "park:"
 AUDIT_TAG = "[audited"
 DEFAULT_API_FLOOR_SHARE = 0.3
 DEFAULT_EVENT_MIN_AMP = 10
+DEFAULT_CLUSTER_BREADTH = 3
+DEFAULT_CLUSTER_CAP = 3
 EMIT_BEGIN = "<!-- emit:begin -->"
 EMIT_END = "<!-- emit:end -->"
 
@@ -442,10 +444,11 @@ def _journal_has_trigger(root: str) -> bool:
 
 
 def stop_blockers(root: str, model: dict, smetas: list) -> list[str]:
-    """The stop gates (v0.1.5 six + the v0.1.6 aim-debt gate). Row 1 (stop)
-    cannot fire while any blocker holds; --status prints them so episodes aim
-    at exactly what is open. All computed from done scenarios + the model —
-    no memory, no judgment."""
+    """The stop gates (v0.1.5 six + the v0.1.6 aim-debt gate + the v0.1.8
+    anti-monoculture breadth floor). Row 1 (stop) cannot fire while any
+    blocker holds; --status prints them so episodes aim at exactly what is
+    open. All computed from done scenarios + the model — no memory, no
+    judgment."""
     cfg = journal_config(root)
     flows = model.get("flows") or {}
     events = model.get("events") or {}
@@ -562,6 +565,42 @@ def stop_blockers(root: str, model: dict, smetas: list) -> list[str]:
             blockers.append(
                 f"aim-debt: flow {fk!r} baselined green, no attacking scenario "
                 f"(L1+ owed before a new baseline)")
+
+    # (8) anti-monoculture breadth floor before depth-collapse. A BRAKE that
+    #     composes with the aim-debt gate (7): aim-debt owes the *first*
+    #     attacker on each flow; this caps how far ONE flow may be deepened
+    #     before breadth is spread. A "cluster" is a flow (subsystem); an
+    #     "attacking" scenario is a done scenario at rung L1+ on that flow.
+    #     Breadth-before-depth: no cluster may be DEEPENED (carry a 2nd+
+    #     attacking scenario) until >=K distinct clusters each carry >=1
+    #     attacker; and a per-cluster episode budget caps total attackers per
+    #     cluster. K is bounded by the attackable universe (mapped, oracle'd
+    #     flows) so a small repo is never blocked by an unreachable floor.
+    #     Pure function of done scenarios + the flow lattice — no memory, no
+    #     judgment, no attention/realness scoring (that deeper change is held).
+    attack_counts: dict[str, int] = {}
+    for d in done:
+        if d.get("rung") in attack_rungs:
+            for fk in (d.get("flows") or []):
+                if isinstance(fk, str) and fk not in js_flows:
+                    attack_counts[fk] = attack_counts.get(fk, 0) + 1
+    breadth = sum(1 for n in attack_counts.values() if n >= 1)
+    attackable = len(mapped_oracle_flows)
+    k_floor = int(min(
+        _cfg_float(cfg, "cluster-breadth-floor", DEFAULT_CLUSTER_BREADTH),
+        attackable))
+    cap = _cfg_float(cfg, "cluster-attack-cap", DEFAULT_CLUSTER_CAP)
+    for fk in sorted(attack_counts):
+        n = attack_counts[fk]
+        if n >= 2 and breadth < k_floor:
+            blockers.append(
+                f"anti-monoculture: flow {fk!r} deepened ({n} attackers) but "
+                f"only {breadth}/{k_floor} distinct clusters attacked "
+                f"(spread breadth before depth)")
+        if cap and n > cap:
+            blockers.append(
+                f"cluster-budget: flow {fk!r} has {n} attacking scenarios "
+                f"(per-cluster cap {cap:g})")
 
     return blockers
 

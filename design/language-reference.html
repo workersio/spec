@@ -112,6 +112,10 @@
 
 <div class="table-scroll"><table>
   <tr><th>Term</th><th>Meaning</th></tr>
+  <tr><td><strong>North star</strong></td><td>the one grading metric the whole method is judged by: <strong>severity-weighted interception rate</strong> — of the real bugs in a corpus, the fraction the harness maps → aims → oracle-catches → confirms, weighted by §13's severity (data-loss 4 … cosmetic 0). Every graded row and the PROMOTE audit score against it.</td></tr>
+  <tr><td><strong>Fleet</strong></td><td>workers.io's own continuously-running set of real OSS targets (DBOS, Turso, …), each a <em>lane</em> in self-ratified mode (🏛 F2). Findings flow to maintainers as issues; maintainer responses are the fleet's ground-truth channel; testbeds are minted from fleet targets.</td></tr>
+  <tr><td><strong>Factory</strong></td><td>the automated build/experiment runner: one sandboxed job per unit of work, a <em>gate</em> (a check script) declaring done — never the worker — with bounded retries (🛠️ E4). Replaces the lab's manual loop.</td></tr>
+  <tr><td><strong>F1 · F2 · F3</strong></td><td>the three lifecycle-contract blocks (the "F-series"): <strong>F1</strong> = migration/compatibility boundary (c-migration), <strong>F2</strong> = review-gates &amp; ratification modes (c-review-gates), <strong>F3</strong> = draft→official publication, gate-published never executed (c-lifecycle). All in 🏛 Part I/II.</td></tr>
   <tr><td><strong>Persona</strong></td><td>a contract-holding human or system role</td></tr>
   <tr><td><strong>Flow</strong></td><td>a goal-oriented journey with ≥1 invariant — a goal, never a subsystem/event/modality/mechanism</td></tr>
   <tr><td><strong>Invariant</strong></td><td>a falsifiable product claim</td></tr>

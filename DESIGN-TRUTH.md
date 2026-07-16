@@ -26,7 +26,7 @@ Reading order: ⚗️ why → 🏛 what & experienced-as → 📖 reference → 
 - 🔬 The search surfaces (six experiment surfaces × eval suites in the
   codebase; the lab decomposed; carries c-search-surfaces):
   https://claude.ai/code/artifact/089f4233-ed58-45f4-ba44-8bdc294f8c25
-- 📜 Decisions (the queue + contract-block index ONLY — six owed cards block
+- 📜 Decisions (the queue + contract-block index ONLY — six owed cards RATIFIED 2026-07-16 as DEC-028; they gated
   Phase 0, five parked cards carry triggers; content lives in the blocks;
   events live in the wiki interception-ledger):
   https://claude.ai/code/artifact/f5abbeac-699a-4006-93a8-9a7a92109c6d

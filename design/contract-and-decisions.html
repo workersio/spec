@@ -45,6 +45,7 @@
     border-radius: 99px; padding: 0.12rem 0.55rem; margin-left: auto; white-space: nowrap; }
   .chip.call { background: var(--hold-soft); color: var(--hold); border: 1px solid var(--hold); }
   .chip.park { background: var(--panel); color: var(--muted); border: 1px solid var(--muted); }
+  .chip.dec { background: var(--ok-soft, var(--panel)); color: var(--ok, #2e7d4f); border: 1px solid var(--ok, #2e7d4f); }
 
   table { border-collapse: collapse; width: 100%; margin: 0 0 1.3rem;
     font-family: system-ui, sans-serif; font-size: 0.83rem; }
@@ -73,24 +74,24 @@
   <p>The <strong>interception-ledger</strong> (wiki) is the statute book: append-only DEC events. The <strong>docs</strong> are the codified current law: normative rules live inline as <strong>CONTRACT blocks</strong> in the doc they impact (📖 the spec · 🏛 the product book · 🛠️ the plan · 🔬 the search surfaces), and a contract block wins over any prose, anywhere. This page is only the queue of open cards and the block index below. A card, once ruled, dissolves into its block (stamped with the DEC number) and a ledger row — cards are a queue, not storage. <em>The pre-2026-07-16 ratification page (13 full cards + normative reference) is preserved in this URL's version history; its content now lives in the blocks below.</em></p>
 </div>
 
-<h2><span class="num">1</span>Owed — blocks the build; a plain "approved" per card takes the block as written</h2>
+<h2><span class="num">1</span>Ratified 2026-07-16 — DEC-028, "approved as recommended", all six cards as written</h2>
 
-<div class="dec"><div class="d-head"><span class="d-num">05</span><span class="d-title">Minimum mandatory breadth</span><span class="chip call">your call</span></div>
+<div class="dec"><div class="d-head"><span class="d-num">05</span><span class="d-title">Minimum mandatory breadth</span><span class="chip dec">DEC-028</span></div>
 <div class="d-body">Full text: <a href="https://claude.ai/code/artifact/5f600e91-8e0c-4039-be4f-4c996ccbdc28#c-floors">c-floors, 📖 §6c</a>. The floors that make row-6's failure modes structurally impossible; all Stage-A gates, never score inputs.</div></div>
 
-<div class="dec"><div class="d-head"><span class="d-num">06</span><span class="d-title">Budget policy &amp; stop semantics</span><span class="chip call">your call</span></div>
+<div class="dec"><div class="d-head"><span class="d-num">06</span><span class="d-title">Budget policy &amp; stop semantics</span><span class="chip dec">DEC-028</span></div>
 <div class="d-body">Full text: <a href="https://claude.ai/code/artifact/5f600e91-8e0c-4039-be4f-4c996ccbdc28#c-budget-stop">c-budget-stop, 📖 §6c</a>. 60/25/15 lanes; stops = budget-exhausted or zero-debt only; exhaustion is computed, never felt.</div></div>
 
-<div class="dec"><div class="d-head"><span class="d-num">11</span><span class="d-title">Smallest prototype &amp; its bar</span><span class="chip call">your call</span></div>
+<div class="dec"><div class="d-head"><span class="d-num">11</span><span class="d-title">Smallest prototype &amp; its bar</span><span class="chip dec">DEC-028</span></div>
 <div class="d-body">Full text: <a href="https://claude.ai/code/artifact/8636168f-a7c6-42ea-8a6e-44e9904298a8#c-prototype-bar">c-prototype-bar, 🛠️ Goal 1</a>. The Goal-1 baseline bar: five cheap criteria + loop-completes + every 🔬 suite prints a number; fail = thesis broken for dollars, stop and rethink.</div></div>
 
-<div class="dec"><div class="d-head"><span class="d-num">12</span><span class="d-title">Openness boundary: language public, search private</span><span class="chip call">your call</span></div>
+<div class="dec"><div class="d-head"><span class="d-num">12</span><span class="d-title">Openness boundary: language public, search private</span><span class="chip dec">DEC-028</span></div>
 <div class="d-body">Full text: <a href="https://claude.ai/code/artifact/5f152ab6-7e22-4a5e-9dbf-d56f89b40ee9#c-openness">c-openness, 🏛 Part I</a>. Amended 2026-07-16 (supersedes the 07-15 open-extension packaging); ship the verifier, keep the generator; trust rails = pinned docs + locally-runnable validator vs the public spec + <code>explain</code>; spec public, ALL code private (SDK packages excepted by packaging nature).</div></div>
 
-<div class="dec"><div class="d-head"><span class="d-num">F2-mode</span><span class="d-title">Ratification is a mode: self-ratified fleet lanes</span><span class="chip call">your call</span></div>
+<div class="dec"><div class="d-head"><span class="d-num">F2-mode</span><span class="d-title">Ratification is a mode: self-ratified fleet lanes</span><span class="chip dec">DEC-028</span></div>
 <div class="d-body">Full text: <a href="https://claude.ai/code/artifact/5f152ab6-7e22-4a5e-9dbf-d56f89b40ee9#c-review-gates">c-review-gates, 🏛 Part I</a>. Added 2026-07-16 from your direction ("no human intervention; I don't know what is correct in test repos"): critic gates substitute, holds queue non-blocking, maintainer-send stays human.</div></div>
 
-<div class="dec"><div class="d-head"><span class="d-num">LAB</span><span class="d-title">The lab decomposes into evals in the codebase</span><span class="chip call">your call</span></div>
+<div class="dec"><div class="d-head"><span class="d-num">LAB</span><span class="d-title">The lab decomposes into evals in the codebase</span><span class="chip dec">DEC-028</span></div>
 <div class="d-body">Full text: <a href="https://claude.ai/code/artifact/089f4233-ed58-45f4-ba44-8bdc294f8c25#c-search-surfaces">c-search-surfaces, 🔬</a>. Supersedes DEC-025's row loop as the iteration engine: six surfaces × blessed eval suites in <code>formal/harness/evals/</code>; blind-draft job = the one remaining blinded instrument; held-out key outside the repo, PROMOTE-only; rows retire only after the scoreboard covers what they measured.</div></div>
 
 <h2><span class="num">2</span>Parked — trigger-carrying, not awaiting anyone</h2>
@@ -115,26 +116,26 @@
 
 <div class="table-scroll"><table>
   <tr><th>Block</th><th>Home</th><th>Carries</th><th>Status</th></tr>
-  <tr><td><code>c-operators</code></td><td>📖 §1</td><td>catalog closed at 12 · depth ≤3 · bonding rules · extension rule</td><td>awaiting DEC</td></tr>
-  <tr><td><code>c-atom-schema</code></td><td>📖 §3</td><td>code-native atoms · decorator surface · no sidecar YAML</td><td>awaiting DEC</td></tr>
-  <tr><td><code>c-oracles</code></td><td>📖 §5</td><td>ten families, two tiers · universal plane · oracle debt</td><td>awaiting DEC</td></tr>
-  <tr><td><code>c-misuse</code></td><td>📖 §6b</td><td>engine-owned library · six negations · states never authored</td><td>awaiting DEC</td></tr>
-  <tr><td><code>c-applicability</code></td><td>📖 §6c</td><td>inferred + cited · unknown default · parks face refutation</td><td>awaiting DEC</td></tr>
-  <tr><td><code>c-floors</code></td><td>📖 §6c</td><td>mandatory breadth floors</td><td><strong>FLAGGED 05</strong></td></tr>
-  <tr><td><code>c-budget-stop</code></td><td>📖 §6c</td><td>lanes 60/25/15 · cell states · twelve ledgers · stop &amp; exhaustion</td><td><strong>FLAGGED 06</strong></td></tr>
-  <tr><td><code>c-load-env</code></td><td>📖 §6c</td><td>geometric ladder · gates · rails</td><td>awaiting DEC</td></tr>
-  <tr><td><code>c-formats</code></td><td>📖 §12</td><td>five wire formats · additive-only · storage &amp; versioning</td><td>awaiting DEC</td></tr>
-  <tr><td><code>c-evaluation</code></td><td>📖 §13</td><td>evaluation law · severity weights · precedence</td><td>awaiting DEC</td></tr>
-  <tr><td><code>c-review-gates</code></td><td>🏛 Part I</td><td>two gates · F2 ratification modes · non-blocking holds</td><td><strong>FLAGGED F2-mode</strong></td></tr>
-  <tr><td><code>c-openness</code></td><td>🏛 Part I</td><td>engine/policy/judgment split · language public, search private · explain rails</td><td><strong>FLAGGED 12</strong></td></tr>
-  <tr><td><code>c-lifecycle</code></td><td>🏛 Part II</td><td>F3: gate publication, never execution</td><td>awaiting DEC</td></tr>
-  <tr><td><code>c-migration</code></td><td>🏛 Part II</td><td>F1 boundary · wio migrate tiers · launch gates</td><td>awaiting DEC</td></tr>
-  <tr><td><code>c-prototype-bar</code></td><td>🛠️ Goal 1</td><td>the baseline bar: five criteria + loop-completes + scoreboard populated</td><td><strong>FLAGGED 11</strong></td></tr>
-  <tr><td><code>c-search-surfaces</code></td><td>🔬</td><td>six surfaces · blessed evals · held-out law · blind-draft · rows retire on coverage</td><td><strong>FLAGGED LAB</strong></td></tr>
+  <tr><td><code>c-operators</code></td><td>📖 §1</td><td>catalog closed at 12 · depth ≤3 · bonding rules · extension rule</td><td>DEC-028</td></tr>
+  <tr><td><code>c-atom-schema</code></td><td>📖 §3</td><td>code-native atoms · decorator surface · no sidecar YAML</td><td>DEC-028</td></tr>
+  <tr><td><code>c-oracles</code></td><td>📖 §5</td><td>ten families, two tiers · universal plane · oracle debt</td><td>DEC-028</td></tr>
+  <tr><td><code>c-misuse</code></td><td>📖 §6b</td><td>engine-owned library · six negations · states never authored</td><td>DEC-028</td></tr>
+  <tr><td><code>c-applicability</code></td><td>📖 §6c</td><td>inferred + cited · unknown default · parks face refutation</td><td>DEC-028</td></tr>
+  <tr><td><code>c-floors</code></td><td>📖 §6c</td><td>mandatory breadth floors</td><td><strong>DEC-028</strong> (card 05)</td></tr>
+  <tr><td><code>c-budget-stop</code></td><td>📖 §6c</td><td>lanes 60/25/15 · cell states · twelve ledgers · stop &amp; exhaustion</td><td><strong>DEC-028</strong> (card 06)</td></tr>
+  <tr><td><code>c-load-env</code></td><td>📖 §6c</td><td>geometric ladder · gates · rails</td><td>DEC-028</td></tr>
+  <tr><td><code>c-formats</code></td><td>📖 §12</td><td>five wire formats · additive-only · storage &amp; versioning</td><td>DEC-028</td></tr>
+  <tr><td><code>c-evaluation</code></td><td>📖 §13</td><td>evaluation law · severity weights · precedence</td><td>DEC-028</td></tr>
+  <tr><td><code>c-review-gates</code></td><td>🏛 Part I</td><td>two gates · F2 ratification modes · non-blocking holds</td><td><strong>DEC-028</strong> (card F2-mode)</td></tr>
+  <tr><td><code>c-openness</code></td><td>🏛 Part I</td><td>engine/policy/judgment split · language public, search private · explain rails</td><td><strong>DEC-028</strong> (card 12)</td></tr>
+  <tr><td><code>c-lifecycle</code></td><td>🏛 Part II</td><td>F3: gate publication, never execution</td><td>DEC-028</td></tr>
+  <tr><td><code>c-migration</code></td><td>🏛 Part II</td><td>F1 boundary · wio migrate tiers · launch gates</td><td>DEC-028</td></tr>
+  <tr><td><code>c-prototype-bar</code></td><td>🛠️ Goal 1</td><td>the baseline bar: five criteria + loop-completes + scoreboard populated</td><td><strong>DEC-028</strong> (card 11)</td></tr>
+  <tr><td><code>c-search-surfaces</code></td><td>🔬</td><td>six surfaces · blessed evals · held-out law · blind-draft · rows retire on coverage</td><td><strong>DEC-028</strong> (card LAB)</td></tr>
 </table></div>
 
 <h2><span class="num">4</span>What ratification triggers</h2>
-<p style="font-size: 0.95rem;">One message from you — "approved as recommended" plus any exceptions — becomes the DEC: every block flips <code>awaiting DEC → DEC-0xx</code>, the six owed cards dissolve, a ledger row is appended, the scientist un-idles (row 9's substrate = the c-prototype-bar prototype), the Phase-1 build starts (~6 detached Opus jobs, mechanical acceptance checks), and ROADMAP + wiki get the direction update (pushing is publishing).</p>
+<p style="font-size: 0.95rem;"><strong>Executed 2026-07-16 (DEC-028).</strong> Every block above is stamped <code>DEC-028</code> in its home doc; the ledger row is appended (supersedes DEC-025’s lab-autopilot apparatus and moots DEC-027’s row-9 path — both replaced by evals-in-codebase); ROADMAP and wiki carry the direction. Executor amendment rode along: Codex <code>gpt-5.6-sol</code>@high executes the J/E jobs, <code>terra</code> triages, Opus 4.8 reserve, Fable orchestrates. The build is live from this date.</p>
 
 <p class="foot">📜 Decisions · queue + block index only — content lives in 📖 🏛 🛠️; the why lives in ⚗️ · pre-restructure ratification page in this URL's version history · workers.io internal.</p>
 

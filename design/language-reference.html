@@ -157,7 +157,7 @@ binding    := with_actors(TOPOLOGY)   | with_channel(CHANNEL)
 </div>
 
 <!-- ============================================================ -->
-<div class="contract" id="c-operators" data-dec="pending">
+<div class="contract" id="c-operators" data-dec="DEC-028">
   <span class="c-tag">contract · awaiting DEC</span>
   <p><strong>Operator set &amp; nesting (ex-📜 item 03).</strong> The twelve operators of §1, verbatim, and no others — the catalog is <strong>closed at twelve</strong>. Structure depth ≤ 3; <code>interrupt</code> only at declared checkpoints; <code>race</code> only on shared declared Resources; <code>sequence</code> requires each step's inputs/preconditions established by prior outputs ∪ prior effects ∪ setup. Operator #13 requires logged inexpressible-composition evidence + an engine PR implementing all four lives + tests + the ladder.</p>
 </div>
@@ -294,7 +294,7 @@ binding    := with_actors(TOPOLOGY)   | with_channel(CHANNEL)
 </div>
 
 <!-- ============================================================ -->
-<div class="contract" id="c-atom-schema" data-dec="pending">
+<div class="contract" id="c-atom-schema" data-dec="DEC-028">
   <span class="c-tag">contract · awaiting DEC</span>
   <p><strong>Flow-atom schema &amp; interface (ex-📜 item 01).</strong> Code-native atoms, no sidecar YAML: one file per atom in the product's language; the decorator carries only <code>resources</code>, <code>invariants</code>, <code>modalities</code>; inputs/outputs derive from the typed signature; checkpoints are emitted constants (declaration = emission). <code>Resource</code>/<code>Value</code> classes per product (~8–15) with <code>provision/teardown</code> + <code>generate/shrink</code>. YAML survives only as a machine-extracted review projection, never authored.</p>
 </div>
@@ -330,7 +330,7 @@ binding    := with_actors(TOPOLOGY)   | with_channel(CHANNEL)
 <p style="font-family: system-ui, sans-serif; font-size: 0.82rem;"><strong>The observation stream</strong> (frozen format #3) carries five event kinds, each stamped with actor + virtual time: <code>checkpoint(name)</code> · <code>effect(kind, key)</code> · <code>error(type)</code> · <code>terminal(state)</code> · <code>resource(metric, value)</code>. The oracle plane consumes only this stream — the universal tier (liveness · terminal-legality · undeclared-error · bounds) needs nothing else; declared invariants bind to effect/terminal patterns.</p>
 
 <!-- ============================================================ -->
-<div class="contract" id="c-oracles" data-dec="pending">
+<div class="contract" id="c-oracles" data-dec="DEC-028">
   <span class="c-tag">contract · awaiting DEC</span>
   <p><strong>Universal invariant/oracle families (ex-📜 item 02).</strong> Ten families as vocabulary (safety · liveness · durability · conservation · ordering · isolation · authorization · idempotency · compatibility · bounded-resource), evaluated in <strong>two tiers</strong>: the <em>universal plane</em> — liveness horizon, terminal-state legality, undeclared-error (incl. the differential sibling mode), resource bounds — runs on <em>every</em> scenario with zero declarations; <em>declared bindings</em> sharpen it per flow. Executable at v3.0: the universal four + conservation ledger (row-proven modules: <code>wallclock</code>, <code>errorcontract</code>, <code>personaledger</code>). An applicable invariant with no executable oracle = <strong>oracle debt</strong>: blocks coverage claims, never silently dropped. Oracles evaluate engine-side over the observation stream. An oracle is never weakened to make a workload pass.</p>
 </div>
@@ -360,7 +360,7 @@ binding    := with_actors(TOPOLOGY)   | with_channel(CHANNEL)
                                     <span class="cm"># of another flow — with_state(A, stale-id) compiles to</span>
                                     <span class="cm"># sequence(create, destroy, A)</span></code></pre>
 
-<div class="contract" id="c-misuse" data-dec="pending">
+<div class="contract" id="c-misuse" data-dec="DEC-028">
   <span class="c-tag">contract · awaiting DEC</span>
   <p><strong>Misuse negation library &amp; state generation.</strong> The library is <strong>engine-owned and fixed</strong> — it applies to every typed reference input in every product: <code>nonexistent</code> · <code>stale</code> · <code>wrong-lifecycle-state</code> · <code>foreign</code> · <code>malformed</code> · <code>reused</code>. State contexts are <strong>generated, never authored</strong>: <code>with_state</code> = a negation from this library, or a flow prefix (reachable state = the effect-set of running part of another flow). Misuse floor = every flow × every typed input × each applicable negation. New negations are engine PRs, retroactive to every product. The error-contract oracle's <strong>differential mode</strong> needs zero declarations: same invalid input class across all sibling verbs sharing the type → an outlier error type is a wrong-error finding (exactly how fork-nonexistent is caught).</p>
 </div>
@@ -368,22 +368,22 @@ binding    := with_actors(TOPOLOGY)   | with_channel(CHANNEL)
 <!-- ============================================================ -->
 <h2><span class="num">6c</span>The search contract: applicability, floors, budget, stop</h2>
 
-<div class="contract" id="c-applicability" data-dec="pending">
+<div class="contract" id="c-applicability" data-dec="DEC-028">
   <span class="c-tag">contract · awaiting DEC</span>
   <p><strong>Applicability: authored vs inferred (ex-📜 item 04).</strong> Everything is agent-inferred with citations; <code>unknown</code> is the default cell class, not <code>plan</code>. Every park/blocked carries evidence and faces critic refutation. The user sees applicability only via the digest's flagged list.</p>
 </div>
 
-<div class="contract" id="c-floors" data-dec="pending">
+<div class="contract" id="c-floors" data-dec="DEC-028">
   <span class="c-tag">contract · awaiting DEC</span><span class="c-tag flag">flagged 05 — your call</span>
   <p><strong>Minimum mandatory breadth.</strong> Per flow: every declared modality baseline+attack (compiler-gated — DEC-018 async parity made permanent); ≥1 non-solo topology where declared. Product-wide: every applicable mechanism family attacks ≥1 invariant; the misuse-persona floor; every modeled event fires; the documented-surface census floor. All are Stage-A eligibility gates, never score inputs.</p>
 </div>
 
-<div class="contract" id="c-budget-stop" data-dec="pending">
+<div class="contract" id="c-budget-stop" data-dec="DEC-028">
   <span class="c-tag">contract · awaiting DEC</span><span class="c-tag flag">flagged 06 — your call</span>
   <p><strong>Budget &amp; stop semantics.</strong> Lanes: coverage 60 · evidence-depth 25 · exploration 15; mechanical per-flow/per-cell caps; exploration starvation-checked. <strong>Cell states:</strong> <code>plan</code> (required, creates debt) · <code>covered</code> (qualifying evidence) · <code>blocked</code> (valid, unreachable, named infra obligation) · <code>park</code> (inapplicable, evidence + audit) · <code>explore</code> (eligible, not mandatory) · <code>unknown</code> (default). <strong>Twelve debt ledgers</strong>, each independently stop-blocking: mapping · oracle · baseline · attack · actor-topology · channel · modality · mechanism · event/state · load · environment · exploration; a blocked obligation stays debt, an attempted-but-blocked run pays nothing. <strong>Stops:</strong> budget-exhausted or zero-debt only. <strong>Model exhaustion</strong> may be claimed only at: no uncrystallized red · zero mandatory debt across all twelve · no unaudited park · no required candidate hidden behind a score · exploration honored · integrity checks pass. A budget/wall-clock rail stop reports remaining debt and never claims exhaustion.</p>
 </div>
 
-<div class="contract" id="c-load-env" data-dec="pending">
+<div class="contract" id="c-load-env" data-dec="DEC-028">
   <span class="c-tag">contract · awaiting DEC</span>
   <p><strong>Load &amp; environment safety (ex-📜 item 07).</strong> Geometric ladder from the attributable control; steps from a capacity probe + declared product limits; load eligible only after semantic prerequisites are green; every large profile declares shrink dimensions; wall-clock/resource rails versioned in policy.</p>
 </div>
@@ -528,7 +528,7 @@ binding    := with_actors(TOPOLOGY)   | with_channel(CHANNEL)
   <tr><td><strong>5 · Explain response</strong></td><td>explain endpoint → any caller</td><td>cell id + state (<code>owed · covered · blocked · parked</code>) or invalid-with-reason; reasons are citation-grade (bonding rule / named obligation / park evidence) — never the computing rule, never rank, sweep, or seed budgets</td></tr>
 </table></div>
 
-<div class="contract" id="c-formats" data-dec="pending">
+<div class="contract" id="c-formats" data-dec="DEC-028">
   <span class="c-tag">contract · awaiting DEC</span>
   <p><strong>Storage, versioning &amp; the wire contracts (ex-📜 item 09).</strong> The five formats above are the frozen public API family: versioned, <strong>additive-only</strong>, frozen more carefully than any UI or folder. Scenarios are generated artifacts stamped model+generator+policy+seed, fully regenerable; findings/evidence immutable, written once with their full coordinate + versions + SHA + promotion state. Oracles evaluate engine-side over the observation stream → a new language SDK costs registration + <code>ctx</code> + emitter (Python + TypeScript first). Local SQLite index is a compiled view; Convex = evidence tables + rebuildable projections; no external service in the search loop.</p>
 </div>
@@ -549,7 +549,7 @@ binding    := with_actors(TOPOLOGY)   | with_channel(CHANNEL)
 <!-- ============================================================ -->
 <h2><span class="num">13</span>The measurement contract</h2>
 
-<div class="contract" id="c-evaluation" data-dec="pending">
+<div class="contract" id="c-evaluation" data-dec="DEC-028">
   <span class="c-tag">contract · awaiting DEC</span>
   <p><strong>Evaluation law.</strong> One treatment per measurement (taxonomy → generation with current ranking → frontier; any attention formula separate). Freeze before keyed evaluation. Retrodiction decomposes attribution between rows. Blessed instruments (grade-row, transcript-audit) are untouched by the loop they measure. <strong>Severity weights</strong> (the north star's): data-loss 4 · correctness 3 · availability 2 · wrong-error 1 · cosmetic 0. <strong>Precedence (Turso census):</strong> corruption of committed state dominates the crash that revealed it; inaccessible-but-intact committed data ("bricked") classifies as data-loss. Rater convention: setup inside the repro = plain-input; only pre-existing cross-session state = state-context.</p>
 </div>

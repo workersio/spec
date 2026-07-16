@@ -1,0 +1,223 @@
+<title>The skill, structured — whiteboard</title>
+<style>
+  :root {
+    --ground: #FAF9F6; --panel: #F1EFE9; --ink: #23221D; --muted: #6F6D62;
+    --line: #E0DDD2; --a: #5B4B9E; --a-soft: #EAE7F5;
+    --b: #14684F; --b-soft: #E2EFE9; --c: #B05E08; --c-soft: #F7EBDB;
+    --bad: #A33B2E; --code-bg: #23221E; --code-ink: #E6E4DA;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --ground: #181816; --panel: #201F1C; --ink: #E4E3DB; --muted: #9A9789;
+      --line: #34332D; --a: #A99AE8; --a-soft: #262239;
+      --b: #55BD97; --b-soft: #1D2F28; --c: #E0A055; --c-soft: #33281A;
+      --bad: #E07A6B; --code-bg: #121110; --code-ink: #D9D7CC; }
+  }
+  :root[data-theme="dark"] { --ground: #181816; --panel: #201F1C; --ink: #E4E3DB; --muted: #9A9789;
+    --line: #34332D; --a: #A99AE8; --a-soft: #262239; --b: #55BD97; --b-soft: #1D2F28;
+    --c: #E0A055; --c-soft: #33281A; --bad: #E07A6B; --code-bg: #121110; --code-ink: #D9D7CC; }
+  :root[data-theme="light"] { --ground: #FAF9F6; --panel: #F1EFE9; --ink: #23221D; --muted: #6F6D62;
+    --line: #E0DDD2; --a: #5B4B9E; --a-soft: #EAE7F5; --b: #14684F; --b-soft: #E2EFE9;
+    --c: #B05E08; --c-soft: #F7EBDB; --bad: #A33B2E; --code-bg: #23221E; --code-ink: #E6E4DA; }
+
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--ground); color: var(--ink);
+    font-family: Charter, 'Bitstream Charter', 'Iowan Old Style', Georgia, serif;
+    font-size: 17px; line-height: 1.66; }
+  .wrap { max-width: 46rem; margin: 0 auto; padding: 3rem 1.4rem 5rem; }
+  .kicker { font-family: system-ui, sans-serif; font-size: 0.72rem; font-weight: 600;
+    letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); }
+  h1 { font-family: system-ui, sans-serif; font-size: clamp(1.55rem, 4vw, 2.1rem);
+    font-weight: 750; line-height: 1.15; margin: 0.5rem 0 0.8rem; }
+  .standfirst { font-size: 1.02rem; color: var(--muted); margin: 0 0 1rem; }
+  h2 { font-family: system-ui, sans-serif; font-size: 1.22rem; font-weight: 700; margin: 2.6rem 0 0.7rem; }
+  h2 .num { color: var(--muted); font-weight: 600; margin-right: 0.5rem; }
+  h3 { font-family: system-ui, sans-serif; font-size: 0.98rem; font-weight: 700; margin: 1.7rem 0 0.5rem; }
+  p { margin: 0 0 1rem; }
+  ul, ol { margin: 0 0 1rem; padding-left: 1.3rem; }
+  li { margin-bottom: 0.3rem; }
+  code { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 0.85em;
+    background: var(--panel); border: 1px solid var(--line); border-radius: 4px; padding: 0.05em 0.3em; }
+  pre { background: var(--code-bg); color: var(--code-ink); border-radius: 8px;
+    padding: 0.9rem 1.1rem; overflow-x: auto; white-space: pre;
+    font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 0.77rem; line-height: 1.55; margin: 0 0 1.2rem; }
+  pre code { background: none; border: none; padding: 0; color: inherit; font-size: inherit; }
+  pre .cm { color: #98A08E; }
+
+  .wb { font-family: system-ui, sans-serif; font-size: 0.8rem; border: 1.5px dashed var(--c);
+    background: var(--c-soft); border-radius: 8px; padding: 0.55rem 0.9rem; color: var(--ink); }
+
+  table { border-collapse: collapse; width: 100%; margin: 0 0 1.3rem;
+    font-family: system-ui, sans-serif; font-size: 0.82rem; }
+  .table-scroll { overflow-x: auto; margin: 0 0 1.3rem; }
+  .table-scroll table { margin: 0; min-width: 580px; }
+  th { text-align: left; font-size: 0.66rem; text-transform: uppercase; letter-spacing: 0.09em;
+    color: var(--muted); font-weight: 700; padding: 0.45rem 0.8rem 0.45rem 0; border-bottom: 2px solid var(--line); }
+  td { padding: 0.5rem 0.8rem 0.5rem 0; border-bottom: 1px solid var(--line); vertical-align: top; line-height: 1.5; }
+
+  .callout { background: var(--panel); border: 1px solid var(--line); border-radius: 10px;
+    padding: 0.9rem 1.1rem; margin: 0 0 1.2rem; }
+  .callout .label { font-family: system-ui, sans-serif; font-size: 0.68rem; font-weight: 700;
+    letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); display: block; margin-bottom: 0.35rem; }
+  .callout p:last-child { margin-bottom: 0; }
+
+  .ep { border: 1.5px solid var(--line); border-radius: 10px; margin: 0 0 0.8rem;
+    font-family: system-ui, sans-serif; overflow: hidden; }
+  .ep .e-head { padding: 0.55rem 0.95rem; background: var(--panel); border-bottom: 1px solid var(--line);
+    display: flex; gap: 0.6rem; align-items: baseline; flex-wrap: wrap; }
+  .ep .e-name { font-weight: 750; font-size: 0.94rem; }
+  .ep .e-pre { font-size: 0.68rem; color: var(--muted); margin-left: auto; }
+  .ep .e-body { padding: 0.7rem 0.95rem; font-size: 0.82rem; line-height: 1.55; }
+  .ep.red { border-color: var(--bad); }
+  .ep.model { border-color: var(--a); }
+  .ep.exec { border-color: var(--b); }
+
+  .who { display: inline-block; font-size: 0.6rem; font-weight: 700; letter-spacing: 0.06em;
+    text-transform: uppercase; border-radius: 99px; padding: 0.08rem 0.5rem; vertical-align: 1px; }
+  .who.skill { background: var(--a-soft); color: var(--a); border: 1px solid var(--a); }
+  .who.engine { background: var(--b-soft); color: var(--b); border: 1px solid var(--b); }
+  .who.bench { background: var(--c-soft); color: var(--c); border: 1px solid var(--c); }
+  .who.human { background: var(--panel); color: var(--muted); border: 1px solid var(--muted); }
+
+  .flow-step { display: grid; grid-template-columns: 7.2rem 1fr; gap: 0.9rem; align-items: start;
+    padding: 0.5rem 0; border-bottom: 1px solid var(--line); font-family: system-ui, sans-serif; font-size: 0.82rem; line-height: 1.5; }
+  .flow-step:last-child { border-bottom: none; }
+  .flow-step .f-who { text-align: right; padding-top: 0.05rem; }
+  .foot { margin-top: 2.4rem; font-size: 0.76rem; color: var(--muted); font-family: system-ui, sans-serif; }
+</style>
+
+<div class="wrap">
+
+<span class="kicker">workload harness v3 · design whiteboard · 2026-07-15</span>
+<h1>The skill, structured</h1>
+<p class="standfirst">How the judgment layer is built so that atoms get drafted, scenarios get generated, runs execute, and results come back — with the agent never holding anything load-bearing in its head.</p>
+
+<div class="wb"><strong>WHITEBOARD — disposable by design.</strong> This page exists to think against. Converged conclusions fold into 🧩 piece 5 and 📜, then this page is deleted. Open questions for Viswa are collected in §7.</div>
+
+<!-- ============================================================ -->
+<h2><span class="num">1</span>The one design law</h2>
+
+<p>Everything below follows from a single rule, bought with the scars of eight rows:</p>
+
+<div class="callout">
+  <span class="label">the law</span>
+  <p><strong>The skill decides nothing a function could decide, and remembers nothing a file could remember.</strong> Every episode starts by reading state from disk and ends by writing artifacts to disk. The engine's <code>--json</code> outputs are the agent's senses; the model package and evidence ledger are its memory; conversation context is a scratchpad that can vanish at any moment (compaction, crash, session end) with zero loss.</p>
+</div>
+
+<p>Concretely, this kills the three historical failure modes: prose rules silently dropped in rewrites (now: gates are engine functions), the agent's stop-feeling ("model exhausted") ending runs early (now: only <code>zero-debt | budget</code> stops, computed), and steering state lost across compaction (now: the dispatcher re-derives everything from disk each episode).</p>
+
+<!-- ============================================================ -->
+<h2><span class="num">2</span>What the skill package contains</h2>
+
+<pre><code>plugins/wio/skills/workload-harness/
+├── SKILL.md                    <span class="cm">← the dispatcher: ~2 pages. Reads state, picks ONE episode,</span>
+│                               <span class="cm">  runs it, ends turn. No floors, no weights, no formats.</span>
+├── references/
+│   ├── briefs/                 <span class="cm">← self-contained subagent briefs (the DEC-017 lesson:</span>
+│   │   ├── model-drafter.md    <span class="cm">  nothing outside the sandbox is ever needed)</span>
+│   │   ├── atom-critic.md
+│   │   ├── park-refuter.md
+│   │   ├── red-triager.md
+│   │   └── finding-writer.md
+│   ├── drafting-guide.md       <span class="cm">← HOW to write good atoms: checkpoint conventions</span>
+│   │                           <span class="cm">  (one per await/state transition), resource discipline,</span>
+│   │                           <span class="cm">  invariant phrasing, citation format</span>
+│   └── filing-rules.md         <span class="cm">← maintainer-facing rules (no product vocabulary, etc.)</span>
+└── scripts/                    <span class="cm">← thin glue only (e.g. the episode journal helper);</span>
+                                <span class="cm">  ALL mechanics live in the harness extension</span></code></pre>
+
+<p>The diet, stated as a file-count: v0.1.x carried ~15 lib modules and a compiler inside the skill; v3 carries <strong>zero</strong> — the skill is prose about judgment plus briefs, and everything it "knows" about mechanics is which <code>wio harness</code> command to call.</p>
+
+<!-- ============================================================ -->
+<h2><span class="num">3</span>The dispatcher: four episodes, mechanical preconditions</h2>
+
+<p>Each wake, SKILL.md runs one pass: call <code>wio harness status --json</code>, match the FIRST true precondition top-to-bottom, run that one episode, write its artifact, end. Priorities are fixed; the agent never chooses between eligible episodes.</p>
+
+<div class="ep red">
+  <div class="e-head"><span class="e-name">1 · RED episode</span><span class="e-pre">precondition: <code>status.uncrystallized_reds &gt; 0</code></span></div>
+  <div class="e-body">The engine has already reproduced and shrunk (deterministic re-runs — no judgment needed). The skill's job is what remains: <strong>classify</strong> (product bug / harness bug / infra gap — via the red-triager brief + source reading), <strong>write the finding</strong> (finding-writer brief: minimized composition, replay recipe, severity, neighbors) and pass the promotion gates (control evidence attached by the engine; red-proof verified; reviewer verdict). Exit artifact: <code>evidence/findings/&lt;key&gt;.md</code> as a draft finding, or a refutation note that reverts the red.</div>
+</div>
+
+<div class="ep model">
+  <div class="e-head"><span class="e-name">2 · MODEL episode</span><span class="e-pre">precondition: <code>status.model_debt &gt; 0</code> (orphan surfaces · refuted parks · contradiction flags · first run ever)</span></div>
+  <div class="e-body">The only place deep intelligence is spent. Sub-flows by trigger: <strong>initial draft</strong> (read docs/exports/code → write atoms + resources + invariants, every claim cited); <strong>orphan surface</strong> (census floor found a documented API with no flow → draft its atom or park with evidence); <strong>refuted park</strong> (park-refuter killed a park → draft the atom it was hiding); <strong>contradiction</strong> (a run observed something the model says is impossible → fix the model, version-bump). Every output passes the atom-critic (false invariants? missing checkpoints? under-declared resources? — lint catches the mechanical cases first) and lands as a <strong>digest for ratification</strong>. Exit artifact: model diff + digest; officials never run against unratified model changes.</div>
+</div>
+
+<div class="ep exec">
+  <div class="e-head"><span class="e-name">3 · EXECUTE episode</span><span class="e-pre">precondition: <code>status.owed_cells &gt; 0 &amp;&amp; status.budget_remaining &gt; 0</code></span></div>
+  <div class="e-body">One command — <code>wio harness run --budget &lt;chunk&gt;</code> — and the engine does everything: selects eligible cells, materializes scenarios + controls, dispatches to the bench, evaluates oracles, appends evidence, updates cell states. The skill <strong>monitors and reacts</strong>: a <code>blocked</code> cell → write the named infrastructure obligation (and continue); a near-miss/divergence flag → add a coupling hypothesis to the model queue; harness friction → <code>friction.md</code>. It does NOT pick cells, order work, or interpret greens. Exit artifact: the engine's run report + any obligations/hypotheses filed.</div>
+</div>
+
+<div class="ep">
+  <div class="e-head"><span class="e-name">4 · STOP episode</span><span class="e-pre">precondition: <code>status.owed_cells == 0 || status.budget_remaining == 0</code></span></div>
+  <div class="e-body">Render the honest stop report from engine state (never from feeling): debt paid vs remaining, blocked obligations, findings tally, budget spent. If zero-debt: the loop idles until the model changes or new commits land. Exit artifact: stop report; ntfy/PR-comment as configured.</div>
+</div>
+
+<!-- ============================================================ -->
+<h2><span class="num">4</span>The choreography: from nothing to results, who does what</h2>
+
+<p>The full pipeline with every hand-off explicit — <span class="who skill">skill</span> = judgment (tokens) · <span class="who engine">engine</span> = deterministic functions (free) · <span class="who bench">bench</span> = metered execution · <span class="who human">human</span> = ratify/promote only:</p>
+
+<div style="border: 1px solid var(--line); border-radius: 10px; padding: 0.4rem 1rem; margin: 0 0 1.3rem;">
+  <div class="flow-step"><div class="f-who"><span class="who skill">skill</span></div><div>MODEL episode: drafts <code>model/flows/*.py</code> + <code>resources.py</code> from docs/code, cited; atom-critic challenges; digest rendered</div></div>
+  <div class="flow-step"><div class="f-who"><span class="who human">human</span></div><div>ratifies the digest (or edits the flagged items) — the only human step in the loop</div></div>
+  <div class="flow-step"><div class="f-who"><span class="who engine">engine</span></div><div><code>atoms export</code> → manifest · <code>compile</code> → lattice + 12 debt ledgers → <code>generated/</code></div></div>
+  <div class="flow-step"><div class="f-who"><span class="who engine">engine</span></div><div>per <code>run</code> budget-chunk: frontier gates+ranks → materializer emits scenario docs (tree + bindings + control + shrink plan + stamps)</div></div>
+  <div class="flow-step"><div class="f-who"><span class="who bench">bench</span></div><div><code>wio run</code> executes each scenario doc: provisions the environment binding, runs atoms in their runtime, SDK streams observations</div></div>
+  <div class="flow-step"><div class="f-who"><span class="who engine">engine</span></div><div>oracle plane over the stream — universal tier always, declared bindings per flow — verdicts + envelopes appended to <code>evidence/</code>; cell states flip; reds auto-reproduce and auto-shrink (tree peel, deterministic)</div></div>
+  <div class="flow-step"><div class="f-who"><span class="who skill">skill</span></div><div>RED episode on anything that survives shrinking: classify · finding doc · gates. Blocked cells → named obligations. Near-misses → model hypotheses (loops back to MODEL)</div></div>
+  <div class="flow-step"><div class="f-who"><span class="who human">human</span></div><div>promotes findings for filing; the board / PR check / pages render themselves from the ledger — results need no one to "report" them</div></div>
+</div>
+
+<p>Note what the arrows imply: <strong>the skill touches the pipeline at exactly two joints</strong> — before the manifest (drafting) and after the verdicts (triage). Everything between those joints is engine+bench and runs identically with the skill absent. That is the testable definition of "thin."</p>
+
+<!-- ============================================================ -->
+<h2><span class="num">5</span>The subagent roster and their gates</h2>
+
+<div class="table-scroll"><table>
+  <tr><th>Subagent</th><th>Job</th><th>Its gate — what it can block</th></tr>
+  <tr><td><strong>model-drafter</strong></td><td>atoms/resources/invariants from docs+code, every claim cited</td><td>—（it is the thing gated)</td></tr>
+  <tr><td><strong>atom-critic</strong></td><td>refute drafts: false invariants, vendor-test-contradicted claims, missing checkpoints, under-declared resources</td><td>blocks a model version until objections are resolved or overruled-with-note</td></tr>
+  <tr><td><strong>park-refuter</strong></td><td>challenge every park/blocked classification (the row-6 lever)</td><td>a park it kills becomes model debt — re-enters episode 2</td></tr>
+  <tr><td><strong>red-triager</strong></td><td>classify a shrunk red: product/harness/infra; hunt vendor tests that declare the behavior intended (the fleet's proven false-positive killer)</td><td>blocks a finding from draft status; can revert a red</td></tr>
+  <tr><td><strong>finding-writer</strong></td><td>maintainer-grade doc: minimized repro, replay recipe, severity, neighbors; filing-rules compliant</td><td>a finding without its gate evidence cannot be promoted</td></tr>
+</table></div>
+
+<p>All briefs self-contained under <code>references/briefs/</code> (nothing outside the working tree is ever needed — the DEC-017 confinement rule, kept). The critics are the layer that has already earned its keep in production: zero false positives have reached a maintainer across every lane.</p>
+
+<!-- ============================================================ -->
+<h2><span class="num">6</span>Worked example: one wake of the loop</h2>
+
+<pre><code><span class="cm"># dispatcher wakes (cron / CI / operator)</span>
+$ wio harness status --json
+{ "model_debt": 0, "uncrystallized_reds": 1, "owed_cells": 212,
+  "budget_remaining": "61%", "blocked": 3 }
+
+<span class="cm"># rule 1 fires (reds before everything) → RED episode</span>
+$ wio harness scenario queue-recover-after-ack-race --last-red
+→ minimal tree: race(enqueue,enqueue) + crash@after-claim · seed 17
+  control green · red-proof PASS · 3/3 seeds red · shrink log attached
+
+<span class="cm"># skill judgment begins: red-triager brief + source reading</span>
+→ vendor test test_queue.py:1350 asserts the cap HOLDS here → not intended
+→ classification: PRODUCT · severity: correctness (w3)
+<span class="cm"># finding-writer brief → evidence/findings/dup-exec-after-claim-crash.md (draft)</span>
+
+<span class="cm"># episode ends. Next wake: reds=0 → rule 3 → EXECUTE episode resumes the frontier.</span></code></pre>
+
+<p>Two things to notice: the agent's entire "memory" of this event is the finding file and the engine's ledger — a brand-new session next wake loses nothing; and the judgment content (the vendor-test hunt, the classification) is exactly what no function could do, which is the test that the episode boundaries are drawn right.</p>
+
+<!-- ============================================================ -->
+<h2><span class="num">7</span>Open questions — where your judgment is wanted</h2>
+
+<div class="table-scroll"><table>
+  <tr><th>#</th><th>Question</th><th>My default</th></tr>
+  <tr><td>Q1</td><td><strong>Ratification timing:</strong> may the engine run <em>draft</em> scenarios against an unratified model refresh (results quarantined), or does everything wait for the digest?</td><td>run-quarantined: keeps the loop hot; officials still gate on ratification</td></tr>
+  <tr><td>Q2</td><td><strong>Episode granularity for EXECUTE:</strong> one long-running episode babysitting the whole budget, or many short wakes each running one chunk?</td><td>short wakes + chunks (compaction-proof, steerable, matches the lab's detached-jobs pattern)</td></tr>
+  <tr><td>Q3</td><td><strong>Autonomy rails:</strong> what stops a runaway loop? MAX_EPISODES per day, budget caps per lane, or purely the engine's budget lanes?</td><td>engine budget lanes + a per-lane daily cap in policy (rails in data, not prose)</td></tr>
+  <tr><td>Q4</td><td><strong>Interactive vs headless:</strong> fleet lanes are interactive-tmux by your standing rule; customer lanes must be headless. Same SKILL.md for both, with the operator layer outside the skill?</td><td>yes — one skill; interactivity is a property of the session wrapper, never of the skill</td></tr>
+  <tr><td>Q5</td><td><strong>Model refresh cadence:</strong> when new commits land on the target, who notices — a CI hook driving <code>status.model_debt</code>, or periodic re-scan?</td><td>CI hook (impact-mapped surfaces → model debt), periodic re-scan as backstop</td></tr>
+</table></div>
+
+<p class="foot">WHITEBOARD · folds into 🧩 piece 5 + 📜 on convergence, then deleted · listed in the 🧭 index under "whiteboard"</p>
+
+</div>

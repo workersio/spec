@@ -1,0 +1,945 @@
+<title>Stable repo, evolving skill — the .workers contract explained</title>
+<style>
+  :root {
+    --ground: #FAFAF7;
+    --panel: #F1F0EB;
+    --ink: #20261F;
+    --muted: #6C7268;
+    --line: #DEDCD3;
+    --stable: #14684F;
+    --stable-soft: #E2EFE9;
+    --churn: #B05E08;
+    --churn-soft: #F7EBDB;
+    --evidence: #4A5568;
+    --evidence-soft: #E9EBEF;
+    --code-bg: #22271F;
+    --code-ink: #E5E8DF;
+    --good: #14684F;
+    --bad: #A33B2E;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --ground: #171A16;
+      --panel: #1F231E;
+      --ink: #E4E6DD;
+      --muted: #98A092;
+      --line: #333830;
+      --stable: #55BD97;
+      --stable-soft: #1D2F28;
+      --churn: #E0A055;
+      --churn-soft: #33281A;
+      --evidence: #9FB0C7;
+      --evidence-soft: #232A33;
+      --code-bg: #10130F;
+      --code-ink: #D9DDD1;
+      --good: #55BD97;
+      --bad: #E07A6B;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground: #171A16; --panel: #1F231E; --ink: #E4E6DD; --muted: #98A092;
+    --line: #333830; --stable: #55BD97; --stable-soft: #1D2F28;
+    --churn: #E0A055; --churn-soft: #33281A; --evidence: #9FB0C7;
+    --evidence-soft: #232A33; --code-bg: #10130F; --code-ink: #D9DDD1;
+    --good: #55BD97; --bad: #E07A6B;
+  }
+  :root[data-theme="light"] {
+    --ground: #FAFAF7; --panel: #F1F0EB; --ink: #20261F; --muted: #6C7268;
+    --line: #DEDCD3; --stable: #14684F; --stable-soft: #E2EFE9;
+    --churn: #B05E08; --churn-soft: #F7EBDB; --evidence: #4A5568;
+    --evidence-soft: #E9EBEF; --code-bg: #22271F; --code-ink: #E5E8DF;
+    --good: #14684F; --bad: #A33B2E;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--ink);
+    font-family: Charter, 'Bitstream Charter', 'Iowan Old Style', Georgia, serif;
+    font-size: 17px;
+    line-height: 1.68;
+  }
+  .wrap { max-width: 46rem; margin: 0 auto; padding: 3.5rem 1.4rem 6rem; }
+
+  .kicker {
+    font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+    font-size: 0.72rem; font-weight: 600; letter-spacing: 0.14em;
+    text-transform: uppercase; color: var(--muted);
+  }
+  h1 {
+    font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+    font-size: clamp(1.7rem, 4.5vw, 2.4rem); font-weight: 750;
+    line-height: 1.15; letter-spacing: -0.015em; text-wrap: balance;
+    margin: 0.5rem 0 0.9rem;
+  }
+  .standfirst { font-size: 1.12rem; color: var(--muted); margin: 0 0 1rem; text-wrap: balance; }
+
+  h2 {
+    font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+    font-size: 1.32rem; font-weight: 700; letter-spacing: -0.01em;
+    margin: 3.2rem 0 0.8rem; text-wrap: balance;
+  }
+  h2 .num { color: var(--muted); font-weight: 600; margin-right: 0.5rem; font-variant-numeric: tabular-nums; }
+  h3 {
+    font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+    font-size: 1.02rem; font-weight: 700; margin: 2rem 0 0.5rem;
+  }
+  p { margin: 0 0 1rem; }
+  ul, ol { margin: 0 0 1rem; padding-left: 1.3rem; }
+  li { margin-bottom: 0.35rem; }
+  strong { font-weight: 700; }
+  hr { border: none; border-top: 1px solid var(--line); margin: 2.6rem 0; }
+
+  .stable-word { color: var(--stable); font-weight: 700; }
+  .churn-word { color: var(--churn); font-weight: 700; }
+
+  code {
+    font-family: ui-monospace, 'SF Mono', 'Cascadia Code', Menlo, Consolas, monospace;
+    font-size: 0.86em;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 0.08em 0.35em;
+  }
+  pre {
+    background: var(--code-bg); color: var(--code-ink);
+    border-radius: 8px; padding: 1rem 1.2rem;
+    overflow-x: auto; white-space: pre;
+    font-family: ui-monospace, 'SF Mono', 'Cascadia Code', Menlo, Consolas, monospace;
+    font-size: 0.8rem; line-height: 1.55;
+    margin: 0 0 1.2rem;
+  }
+  pre code { background: none; border: none; padding: 0; font-size: inherit; color: inherit; }
+  pre .cm { color: #8FA08A; }
+  pre .st { color: #7FCBAA; }
+  pre .ch { color: #E8B87A; }
+
+  .callout {
+    background: var(--panel); border: 1px solid var(--line);
+    border-radius: 10px; padding: 1rem 1.2rem; margin: 0 0 1.2rem;
+  }
+  .callout .label {
+    font-family: system-ui, -apple-system, sans-serif;
+    font-size: 0.7rem; font-weight: 700; letter-spacing: 0.12em;
+    text-transform: uppercase; color: var(--muted); display: block; margin-bottom: 0.4rem;
+  }
+  .callout p:last-child { margin-bottom: 0; }
+
+  .principle {
+    border-left: 3px solid var(--stable);
+    padding: 0.1rem 0 0.1rem 1.1rem;
+    margin: 1.6rem 0 1.4rem;
+  }
+  .principle .p-name {
+    font-family: system-ui, -apple-system, sans-serif;
+    font-weight: 750; font-size: 1.05rem; display: block; margin-bottom: 0.3rem;
+  }
+  .principle p:last-child { margin-bottom: 0; }
+
+  /* diagrams */
+  .diagram {
+    border: 1px solid var(--line); border-radius: 12px;
+    padding: 1.3rem; margin: 1.4rem 0 1.6rem;
+    font-family: system-ui, -apple-system, sans-serif;
+    overflow-x: auto;
+  }
+  .diagram .cap {
+    font-size: 0.78rem; color: var(--muted); margin-top: 1rem;
+    line-height: 1.5; font-style: normal;
+  }
+  .two-sides { display: flex; gap: 0.8rem; align-items: stretch; min-width: 520px; }
+  .side {
+    flex: 1; border-radius: 10px; padding: 0.9rem 1rem;
+    border: 1.5px solid var(--line); background: var(--panel);
+  }
+  .side .side-title { font-weight: 700; font-size: 0.92rem; margin-bottom: 0.35rem; }
+  .side .side-sub { font-size: 0.8rem; color: var(--muted); line-height: 1.5; }
+  .side.skill { border-color: var(--churn); background: var(--churn-soft); }
+  .side.repo { border-color: var(--stable); background: var(--stable-soft); }
+  .versions { display: flex; gap: 0.35rem; flex-wrap: wrap; margin-top: 0.6rem; }
+  .vchip {
+    font-family: ui-monospace, Menlo, monospace; font-size: 0.7rem;
+    background: var(--ground); border: 1px solid var(--line);
+    border-radius: 99px; padding: 0.1rem 0.55rem; color: var(--churn); font-weight: 600;
+  }
+  .vchip.now { border-color: var(--churn); }
+  .arrow-col {
+    display: flex; flex-direction: column; justify-content: center;
+    align-items: center; gap: 0.2rem; padding: 0 0.2rem;
+    color: var(--muted); font-size: 0.72rem; text-align: center; min-width: 84px;
+  }
+  .arrow-col .arr { font-size: 1.3rem; line-height: 1; color: var(--ink); }
+
+  .layers { display: flex; flex-direction: column; gap: 0.7rem; min-width: 520px; }
+  .layer {
+    border-radius: 10px; padding: 0.85rem 1rem;
+    display: grid; grid-template-columns: 9.5rem 1fr; gap: 1rem; align-items: start;
+    border: 1.5px solid var(--line);
+  }
+  .layer .l-name { font-weight: 750; font-size: 0.9rem; line-height: 1.4; }
+  .layer .l-name .who {
+    display: block; font-weight: 600; font-size: 0.68rem;
+    text-transform: uppercase; letter-spacing: 0.1em; margin-top: 0.25rem;
+  }
+  .layer .l-body { font-size: 0.82rem; line-height: 1.55; color: var(--ink); }
+  .layer .l-body .files { font-family: ui-monospace, Menlo, monospace; font-size: 0.74rem; color: var(--muted); display: block; margin-top: 0.3rem; }
+  .layer.ratified { background: var(--stable-soft); border-color: var(--stable); }
+  .layer.ratified .who { color: var(--stable); }
+  .layer.generated { background: var(--churn-soft); border-color: var(--churn); }
+  .layer.generated .who { color: var(--churn); }
+  .layer.evidence { background: var(--evidence-soft); border-color: var(--evidence); }
+  .layer.evidence .who { color: var(--evidence); }
+
+  table {
+    border-collapse: collapse; width: 100%; margin: 0 0 1.4rem;
+    font-family: system-ui, -apple-system, sans-serif; font-size: 0.85rem;
+  }
+  .table-scroll { overflow-x: auto; margin: 0 0 1.4rem; }
+  .table-scroll table { margin: 0; min-width: 560px; }
+  th {
+    text-align: left; font-size: 0.7rem; text-transform: uppercase;
+    letter-spacing: 0.09em; color: var(--muted); font-weight: 700;
+    padding: 0.5rem 0.8rem 0.5rem 0; border-bottom: 2px solid var(--line);
+  }
+  td { padding: 0.6rem 0.8rem 0.6rem 0; border-bottom: 1px solid var(--line); vertical-align: top; line-height: 1.5; }
+  td.effect-none { color: var(--good); font-weight: 700; white-space: nowrap; }
+  td.effect-some { color: var(--churn); font-weight: 700; }
+
+  /* user-flow diagrams */
+  .lanes { display: flex; gap: 0.8rem; min-width: 560px; }
+  .lane {
+    flex: 1; border: 1.5px solid var(--line); border-radius: 10px;
+    padding: 0.85rem 0.95rem; background: var(--panel);
+  }
+  .lane .lane-title { font-weight: 750; font-size: 0.88rem; margin-bottom: 0.1rem; }
+  .lane .lane-when { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.09em; color: var(--muted); font-weight: 700; margin-bottom: 0.55rem; }
+  .lane ul { padding-left: 1rem; margin: 0; }
+  .lane li { font-size: 0.79rem; line-height: 1.5; margin-bottom: 0.3rem; }
+  .badge {
+    display: inline-block; font-size: 0.66rem; font-weight: 700;
+    border-radius: 99px; padding: 0.08rem 0.5rem; letter-spacing: 0.04em;
+    border: 1px solid transparent; vertical-align: 1px;
+  }
+  .badge.tokens { background: var(--churn-soft); color: var(--churn); border-color: var(--churn); }
+  .badge.notokens { background: var(--stable-soft); color: var(--stable); border-color: var(--stable); }
+
+  .lifecycle { display: flex; align-items: center; gap: 0.5rem; min-width: 640px; font-size: 0.8rem; }
+  .lc-state {
+    border-radius: 10px; padding: 0.7rem 0.9rem; border: 1.5px solid var(--line);
+    background: var(--panel); min-width: 8.5rem;
+  }
+  .lc-state .lc-name { font-weight: 750; font-size: 0.88rem; }
+  .lc-state .lc-sub { font-size: 0.72rem; color: var(--muted); line-height: 1.45; margin-top: 0.2rem; }
+  .lc-state.draft { border-style: dashed; }
+  .lc-state.official { border-color: var(--stable); background: var(--stable-soft); }
+  .lc-state.finding { border-color: var(--bad); }
+  .lc-state.finding .lc-name { color: var(--bad); }
+  .lc-arrow { color: var(--muted); text-align: center; font-size: 0.68rem; line-height: 1.4; min-width: 6.5rem; }
+  .lc-arrow .a { display: block; font-size: 1.15rem; color: var(--ink); }
+
+  .board { min-width: 620px; border-collapse: collapse; width: 100%; font-size: 0.78rem; }
+  .board th { font-size: 0.66rem; padding: 0.4rem 0.6rem 0.4rem 0; }
+  .board td { padding: 0.45rem 0.6rem 0.45rem 0; border-bottom: 1px solid var(--line); }
+  .board .flow-name { font-family: ui-monospace, Menlo, monospace; font-size: 0.74rem; white-space: nowrap; }
+  .cell {
+    display: inline-block; border-radius: 6px; padding: 0.18rem 0.55rem;
+    font-weight: 650; font-size: 0.72rem; white-space: nowrap; border: 1px solid transparent;
+  }
+  .cell.fresh { background: var(--stable-soft); color: var(--stable); border-color: var(--stable); }
+  .cell.stale { background: var(--panel); color: var(--muted); border-color: var(--line); }
+  .cell.red { background: transparent; color: var(--bad); border-color: var(--bad); }
+  .cell.debt { background: transparent; color: var(--muted); border: 1px dashed var(--muted); }
+  .cell.draftc { background: transparent; color: var(--muted); border: 1px dotted var(--muted); font-style: italic; }
+  .cell.updated { box-shadow: 0 0 0 2px var(--churn); }
+  .board-legend { font-size: 0.74rem; color: var(--muted); margin-top: 0.9rem; line-height: 2; }
+
+  /* wireframes */
+  .wf-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(272px, 1fr)); gap: 1rem; }
+  .wf {
+    border: 1.5px solid var(--line); border-radius: 10px; background: var(--ground);
+    overflow: hidden; font-family: system-ui, -apple-system, sans-serif;
+  }
+  .wf .wf-head {
+    background: var(--panel); border-bottom: 1px solid var(--line);
+    padding: 0.5rem 0.8rem;
+  }
+  .wf .wf-title { font-weight: 750; font-size: 0.84rem; }
+  .wf .wf-q { font-size: 0.7rem; color: var(--muted); font-style: italic; margin-top: 0.1rem; }
+  .wf .wf-body { padding: 0.7rem 0.8rem 0.8rem; display: flex; flex-direction: column; gap: 0.45rem; }
+  .wf-el {
+    border: 1px solid var(--line); border-radius: 6px; padding: 0.32rem 0.55rem;
+    font-size: 0.68rem; color: var(--muted); background: var(--panel); line-height: 1.45;
+  }
+  .wf-el b { color: var(--ink); font-weight: 700; }
+  .wf-el.accent { border-color: var(--stable); background: var(--stable-soft); }
+  .wf-el.warn { border-color: var(--bad); background: transparent; }
+  .wf-el.filters { border-style: dashed; background: transparent; }
+  .wf-split { display: flex; gap: 0.45rem; }
+  .wf-split .wf-el { flex: 1; }
+  .wf-foot { font-size: 0.64rem; color: var(--muted); padding: 0 0.8rem 0.7rem; }
+  .wf-foot code { font-size: 0.62rem; padding: 0 0.25em; }
+
+  .scopes { display: flex; gap: 0.9rem; min-width: 560px; align-items: stretch; }
+  .scope {
+    flex: 1; border-radius: 10px; border: 1.5px solid var(--line); padding: 0.9rem 1rem;
+  }
+  .scope.team { border-color: var(--stable); background: var(--stable-soft); }
+  .scope.personal { border-style: dashed; background: var(--panel); }
+  .scope .s-title { font-weight: 750; font-size: 0.92rem; }
+  .scope .s-rule { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700; color: var(--muted); margin: 0.15rem 0 0.5rem; }
+  .scope ul { padding-left: 1rem; margin: 0; }
+  .scope li { font-size: 0.79rem; line-height: 1.5; margin-bottom: 0.25rem; }
+  .scope-arrow { display: flex; flex-direction: column; justify-content: center; align-items: center; color: var(--muted); font-size: 0.7rem; text-align: center; min-width: 90px; }
+  .scope-arrow .a { font-size: 1.25rem; color: var(--ink); }
+
+  /* quiz */
+  .quiz-card {
+    border: 1px solid var(--line); border-radius: 12px;
+    padding: 1.2rem 1.3rem; margin: 0 0 1.2rem; background: var(--panel);
+    font-family: system-ui, -apple-system, sans-serif;
+  }
+  .quiz-card .q-num {
+    font-size: 0.7rem; font-weight: 700; letter-spacing: 0.12em;
+    text-transform: uppercase; color: var(--muted); display: block; margin-bottom: 0.45rem;
+  }
+  .quiz-card .q-text { font-weight: 650; font-size: 0.98rem; line-height: 1.5; margin-bottom: 0.9rem; }
+  .q-opts { display: flex; flex-direction: column; gap: 0.5rem; }
+  .q-opt {
+    text-align: left; font: inherit; font-size: 0.88rem; line-height: 1.5;
+    background: var(--ground); color: var(--ink);
+    border: 1.5px solid var(--line); border-radius: 8px;
+    padding: 0.6rem 0.8rem; cursor: pointer;
+  }
+  .q-opt:hover { border-color: var(--muted); }
+  .q-opt:focus-visible { outline: 2px solid var(--stable); outline-offset: 2px; }
+  .q-opt[data-state="correct"] { border-color: var(--good); background: var(--stable-soft); font-weight: 650; }
+  .q-opt[data-state="wrong"] { border-color: var(--bad); opacity: 0.75; }
+  .q-opt:disabled { cursor: default; }
+  .q-explain {
+    display: none; margin-top: 0.9rem; font-size: 0.85rem; line-height: 1.55;
+    border-top: 1px solid var(--line); padding-top: 0.8rem; color: var(--ink);
+  }
+  .q-explain .verdict { font-weight: 750; }
+  .q-explain .verdict.ok { color: var(--good); }
+  .q-explain .verdict.no { color: var(--bad); }
+
+  .foot { margin-top: 3rem; font-size: 0.8rem; color: var(--muted); font-family: system-ui, sans-serif; }
+</style>
+
+<div class="wrap">
+
+<span class="kicker">workload harness · design explainer · 2026-07-15</span>
+<h1>How the skill keeps improving without breaking anyone's repo</h1>
+<p class="standfirst">The problem, from first principles: our bug-finding brain will keep changing, but pieces of it live as files inside users' repositories. Here is how we draw the line so that our churn never becomes their refactor.</p>
+
+<p style="font-family: system-ui, sans-serif; font-size: 0.8rem; color: var(--muted); border: 1px solid var(--line); border-radius: 8px; padding: 0.55rem 0.9rem;"><strong>Part 2 of 2 — the product</strong> (the contract, lifecycle, pages, and operating model). Companion: <a href="https://claude.ai/code/artifact/3aa3de51-1e07-43f6-b906-982dcc0db0d1" style="color: var(--stable); font-weight: 650;">⚗️ Scenarios from atoms</a> — the method: how the engine generates and searches. Read that one first.</p>
+
+<!-- ============================================================ -->
+<h2><span class="num">1</span>Background: what the system actually is</h2>
+
+<p>The workload harness is two things that live in two different places:</p>
+
+<ul>
+  <li><strong>The skill</strong> — the searching brain. It reads a product's docs and code, decides which situations to test, generates the tests, runs them, and judges the results. We ship it, we version it, and we will keep rewriting it as we learn what finds bugs.</li>
+  <li><strong>The <code>.workers/</code> folder</strong> — the skill's working state, checked into the <em>user's</em> repository. Flow definitions, coverage bookkeeping, generated scenarios, findings.</li>
+</ul>
+
+<div class="diagram">
+  <div class="two-sides">
+    <div class="side skill">
+      <div class="side-title">The skill (ours)</div>
+      <div class="side-sub">Changes constantly — it must, because search strategy is what we're learning.</div>
+      <div class="versions">
+        <span class="vchip">corridors</span>
+        <span class="vchip">usage-first</span>
+        <span class="vchip">attention</span>
+        <span class="vchip now">compositional</span>
+        <span class="vchip">…?</span>
+      </div>
+    </div>
+    <div class="arrow-col"><span class="arr">⇄</span><span>reads &amp; writes</span></div>
+    <div class="side repo">
+      <div class="side-title">.workers/ (theirs)</div>
+      <div class="side-sub">Lives in the user's repo, in their git history, touched by their teammates. Every breaking change here is a migration <em>we impose on a customer</em>.</div>
+    </div>
+  </div>
+  <div class="cap">Four search strategies in six weeks — on our own lanes, that churn was a branch. After launch, the same churn would land inside customer repositories.</div>
+</div>
+
+<p>Here's the uncomfortable fact this design has to absorb: <span class="churn-word">the search strategy is not done</span>. We have rewritten it four times in six weeks, and each rewrite so far also reshaped the folder — different file types, different frontmatter fields, different names for things. Internally that cost nothing: each experiment ran on a fresh branch. But the moment real users have <code>.workers/</code> folders, "we reorganized the taxonomy" means asking every customer to refactor files they didn't write and don't fully understand. That is the thing we must make impossible.</p>
+
+<div class="callout">
+  <span class="label">The question, precisely</span>
+  <p>How do we keep a <span class="stable-word">stable structure in the user's repo</span> while remaining free to <span class="churn-word">change the skill's taxonomy and search approach</span> underneath it?</p>
+</div>
+
+<!-- ============================================================ -->
+<h2><span class="num">2</span>Intuition: four old principles, applied</h2>
+
+<p>Nothing here requires a new idea. Software has solved this exact problem several times — we just have to notice which files in <code>.workers/</code> map to which side of each classic boundary.</p>
+
+<div class="principle">
+  <span class="p-name">Principle 1 — Source vs. build output: never make users edit what a machine produced</span>
+  <p><strong>Toy example.</strong> A C compiler changes its optimizer every release. Object files (<code>.o</code>) come out completely different — different layout, different symbols. Nobody cares, because nobody hand-edits object files: you keep the source, you re-run the compiler. Same with <code>node_modules/</code>, lockfiles, or a build cache — machine-owned things get <em>regenerated</em>, never migrated by hand.</p>
+  <p><strong>Applied.</strong> Most of today's <code>.workers/</code> content — coverage tables, scenario files, the search's bookkeeping — is <em>build output of the skill</em>. It only feels like precious hand-maintained state because early versions asked people (and agents) to author it directly. Once it's formally "compiled from a small source by the skill," we can change its shape every single release: delete the folder, regenerate, done. <span class="churn-word">Churn is free wherever the machine owns the file.</span></p>
+</div>
+
+<div class="principle">
+  <span class="p-name">Principle 2 — Interface vs. implementation: the user touches a small, frozen surface</span>
+  <p><strong>Toy example.</strong> pytest users write one thing: functions named <code>test_*</code>. That interface has held for ~15 years while pytest internally rewrote test collection, ordering, fixtures, and plugins many times over. Users never renamed a file for pytest's benefit. Counter-example: imagine a test framework that required you to arrange tests into folders named after its <em>current strategy</em> — <code>unit/</code>, <code>integration/</code>, <code>corridors/</code>… Every strategy rethink would ripple into every user's tree. That framework would be trapped: unable to improve without hurting its own customers.</p>
+  <p><strong>Applied.</strong> The user-facing surface must contain only <strong>facts about the user's product</strong> — what it promises, what a "job" or "queue" means, what counts as broken. Those facts change when <em>their product</em> changes, not when <em>our strategy</em> changes. Everything that encodes <em>how we search</em> — priorities, orderings, taxonomies of attack — stays behind the interface, where we can rewrite it freely.</p>
+</div>
+
+<div class="principle">
+  <span class="p-name">Principle 3 — Your own observation: code is stable, metadata is fragile</span>
+  <p>You said it exactly right, and here is <em>why</em> it's true. A workload written as code is validated by <strong>execution</strong>: its contract is the product's real API. <code>client.enqueue(task)</code> either runs against DBOS or it doesn't — and the product's API is the thing its vendor already keeps stable for their own users. Frontmatter, filenames, and folder placement are validated only by <strong>convention</strong>: their contract is "whatever the current version of our skill expects to read." When we change the skill, code keeps working; conventions silently rot.</p>
+  <p><strong>Applied — three concrete rules.</strong></p>
+  <ul>
+    <li><strong>Prefer code over declaration.</strong> Push as much of the user-facing surface as possible into runnable code (the flow's setup, operations, checks). If a fact can be <em>derived by inspecting the code</em>, don't ask for it in frontmatter at all.</li>
+    <li><strong>Whatever must be declared, treat like a database schema:</strong> a named, versioned set of fields that only ever grows — new fields arrive with defaults, old fields keep meaning. (This is protobuf's rule, and Rails migrations' rule. Boring on purpose.)</li>
+    <li><strong>Address by key, never by path.</strong> The skill refers to a flow as <code>enqueue-and-complete</code> (a key inside the file), not as <code>flows/queue/enqueue.yaml</code> (a location). Then filenames and folder arrangement belong to the <em>user's</em> taste, and nothing we ship can ever be broken by — or ever demand — a rename.</li>
+  </ul>
+</div>
+
+<div class="principle">
+  <span class="p-name">Principle 4 — When the frozen surface must grow: migration is a command, and we drafted the files anyway</span>
+  <p><strong>Toy example.</strong> Django apps evolve their database schema for years without anyone re-typing their data: <code>manage.py migrate</code> replays small, reviewed, additive changes. The schema moves; the data survives; the human's job is to review, not to retype.</p>
+  <p><strong>Applied.</strong> Rarely, a genuine improvement needs a new <em>declared</em> fact (say, flows must now name their checkpoints). Then <code>wio migrate</code> runs — and here our product has an unfair advantage over Django: <strong>the agent drafted these files in the first place</strong>, from the user's own docs and code. So the migration isn't even "user fills in the new field" — it's "agent re-derives the new field, user reviews a diff." The user's unit of work stays constant forever: <em>read a short diff and say yes or no</em>. Never author, never refactor.</p>
+</div>
+
+<!-- ============================================================ -->
+<h2><span class="num">3</span>The design, concretely: three zones in one folder</h2>
+
+<p>Put the four principles together and <code>.workers/</code> divides into three zones with different ownership and different change rules:</p>
+
+<div class="diagram">
+  <div class="layers">
+    <div class="layer ratified">
+      <div class="l-name">Product truth<span class="who">user-ratified · frozen interface</span></div>
+      <div class="l-body">A small set of <strong>flow atoms</strong>: mostly runnable code (how to enqueue a task, how to check it completed) plus a minimal declared block (what this flow promises, which invariants must hold). Facts about <em>their product</em>. Drafted by the agent, ratified by the user. Changes only when the product changes.
+        <span class="files">model/flows/enqueue_and_complete.py&nbsp;&nbsp;·&nbsp;&nbsp;model/resources.py</span></div>
+    </div>
+    <div class="layer generated">
+      <div class="l-name">Search state<span class="who">machine-owned · regenerable</span></div>
+      <div class="l-body">Everything encoding <em>how we currently search</em>: which situations exist, what's covered, what's owed, generated scenarios, priority views. Compiled by the skill from the product truth. <strong>Deletable and rebuildable at any time</strong> — so its shape can change with every skill release, invisibly.
+        <span class="files">generated/scenarios/&nbsp;&nbsp;·&nbsp;&nbsp;generated/coverage/&nbsp;&nbsp;·&nbsp;&nbsp;generated/debt/</span></div>
+    </div>
+    <div class="layer evidence">
+      <div class="l-name">Evidence<span class="who">append-only · immutable</span></div>
+      <div class="l-body">Confirmed findings and run records, each stamped with the exact model and skill version that produced it. Never regenerated, never migrated — history stays readable under the version that wrote it.
+        <span class="files">evidence/findings/&nbsp;&nbsp;·&nbsp;&nbsp;evidence/runs/</span></div>
+    </div>
+  </div>
+  <div class="cap">Ownership decides change rules. <span style="color:var(--stable); font-weight:700;">Green</span> = user's, stable, tiny. <span style="color:var(--churn); font-weight:700;">Amber</span> = ours, churns freely, regenerated. Grey = history, frozen forever.</div>
+</div>
+
+<p>A flow atom, to make "mostly code, minimal declaration" tangible — one file, declarations living <em>in</em> the code so nothing can drift (a YAML projection is generated from it for review, never authored; the full anatomy — every field's job, the resource classes, the type-derivation — is <a href="https://claude.ai/code/artifact/3aa3de51-1e07-43f6-b906-982dcc0db0d1" style="color: var(--stable);">⚗️ §3</a>):</p>
+
+<pre><code><span class="cm"># enqueue_and_complete.py — ONE file; no sidecar metadata to fall out of sync</span>
+<span class="ch">@flow</span>(
+    key=<span class="st">"enqueue-and-complete"</span>,      <span class="cm"># ← the skill addresses THIS, never the file path</span>
+    invariants=(EXACTLY_ONCE, ACK_NOT_LOST),  <span class="cm"># promises — what the user ratifies</span>
+    resources=(QUEUE_STATE, EXECUTOR_OWNERSHIP),
+)
+<span class="ch">def</span> enqueue_and_complete(ctx, queue: Queue, task: Task) -&gt; Result:
+    <span class="cm"># inputs/outputs derived from the typed signature; validated by the product's own API</span>
+    wf = ctx.client.enqueue(queue, task)
+    <span class="ch">return</span> ctx.await_result(wf)</code></pre>
+
+<h3>The test: walk through every kind of change we might ship</h3>
+
+<div class="table-scroll"><table>
+  <tr><th>We ship…</th><th>User's repo</th><th>Why</th></tr>
+  <tr>
+    <td>A new prioritization strategy (the row-8 / attention class of change)</td>
+    <td class="effect-none">nothing</td>
+    <td>Priorities live in generated search state; the skill rebuilds it.</td>
+  </tr>
+  <tr>
+    <td>A whole new taxonomy of situations (like corridors → usage-first)</td>
+    <td class="effect-none">nothing</td>
+    <td>Taxonomy is how <em>we</em> slice the search — generated zone. Regenerate.</td>
+  </tr>
+  <tr>
+    <td>Renamed internals, new coverage file formats, new folder shape under <code>generated/</code></td>
+    <td class="effect-none">nothing</td>
+    <td>Nobody hand-edits build output. Delete and rebuild.</td>
+  </tr>
+  <tr>
+    <td>A new <em>declared</em> field on flows (e.g. <code>checkpoints:</code>)</td>
+    <td class="effect-some">review a diff</td>
+    <td>Additive schema bump; <code>wio migrate</code> drafts values from their code; user approves.</td>
+  </tr>
+  <tr>
+    <td>A change to the flow-code interface itself (rare, major version)</td>
+    <td class="effect-some">review a diff</td>
+    <td>Agent rewrites the atoms against the new interface; deprecation window; hard-fail with a clear message rather than silent misreads.</td>
+  </tr>
+</table></div>
+
+<p>Notice what disappeared from the table: there is <strong>no row where the user reorganizes files, renames anything, or authors content</strong>. The worst case in the whole design is "read a short diff." And the two amber rows should be rare precisely because Principle 3 keeps the declared surface tiny — most of what we'll want to change lives where changing it costs nothing.</p>
+
+<h3>But wait — if the search record is regenerable, how do we know how much we've searched?</h3>
+
+<p>This is the sharpest question in the whole design, and it exposes a distinction hidden inside "search state." The amber zone is really two things, and only one of them is regenerable:</p>
+
+<ul>
+  <li><strong>The map</strong> — which situations exist, which are valid, what's owed, what should run next. This is a <em>pure function</em> of the green model plus the skill's current policy (generation is required to be deterministic from model-version + policy + seed). Regenerating it is just re-running a compiler; nothing in it was ever information you could lose.</li>
+  <li><strong>What actually ran</strong> — this is <em>never</em> stored in amber as truth. Every run and every finding is appended to the <strong>evidence ledger</strong> (the grey zone): immutable, each record stamped with its full semantic coordinate (flow, modality, event, seed, fault timing) and the exact model and skill versions that produced it.</li>
+</ul>
+
+<div class="callout">
+  <span class="label">The ledger and the balance</span>
+  <p>"How much have we searched?" is answered by <strong>recomputation, never by a stored file</strong>: coverage&nbsp;=&nbsp;evidence&nbsp;ledger&nbsp;⨯&nbsp;current&nbsp;map. It's a bank account — the ledger is the transactions (grey, append-only), the balance is a derived view (amber). You can delete the balance file any time, because the ledger regenerates it. That is exactly why amber is safe to reshape every release.</p>
+</div>
+
+<p>The interesting case is a taxonomy change. What happens to coverage:</p>
+<ol>
+  <li>Old evidence keeps its original coordinates forever — it's immutable and version-stamped.</li>
+  <li>The new compiler maps old records into new cells wherever the mapping is deterministic; those cells count as covered.</li>
+  <li>Cells the old slicing <em>never distinguished</em> honestly show as unsearched. That's deliberate, not a loss — the migration rule is "no false explicit coverage." If the new taxonomy splits a situation the old one lumped together, we genuinely don't know both halves were covered; claiming otherwise would be the lie. We re-search them, and deterministic seeds make replaying old scenarios into new cells cheap.</li>
+</ol>
+
+<p>So a taxonomy change never loses what we <em>did</em> (the ledger is untouched) — it can only shrink what we're allowed to <em>claim</em>. And that shrink is precisely the reason we wanted the new taxonomy in the first place.</p>
+
+<h3>Who drafts a migration — deterministic code or the agent?</h3>
+
+<p>Both, chosen by the kind of change:</p>
+<ul>
+  <li><strong>Mechanical changes → deterministic code.</strong> Rename a field, add a field with a constant default, restructure the YAML shape. Literally the Rails/Django pattern: a small versioned script, testable, replaying identically on every repo. No model involved.</li>
+  <li><strong>Semantic changes → the agent drafts, because deterministic code can't.</strong> If flows must now declare <code>checkpoints:</code>, no script can know where <em>your product's</em> meaningful checkpoints are. But the agent derived the original flow atoms from the user's docs and code — so it re-derives the new field the same way, and its output is never applied directly: it's a diff the user approves.</li>
+</ul>
+<p>Both tiers funnel into the same human motion — review a diff. A change that fits neither tier makes <code>wio migrate</code> hard-fail with a message saying what's needed; it never silently guesses.</p>
+
+<h3>How we know the line is drawn right before launch</h3>
+
+<p>The boundary is a claim, so it gets a test. Before the schema is declared public: run one full internal search-strategy overhaul — swap the taxonomy, swap the ranking — and check that <strong><code>git diff</code> on the user-ratified zone is empty</strong>. If any strategy change forces an edit to a green-zone file, the boundary is in the wrong place and we move it <em>before</em> customers exist, while moving it is still just a branch.</p>
+
+<div class="callout">
+  <span class="label">The contract, in one sentence each</span>
+  <p><span class="stable-word">Green zone:</span> yours; tiny; mostly code; we address it by key, never by path; its schema only grows, never breaks.<br>
+  <span class="churn-word">Amber zone:</span> ours; regenerable; its shape is not a promise and may change every release.<br>
+  <strong>Evidence:</strong> frozen; every artifact stamped with the versions that made it; always readable.<br>
+  <strong>Migrations:</strong> deterministic scripts where mechanical, agent-drafted diffs where semantic, human review in both — never a human that refactors.</p>
+</div>
+
+<!-- ============================================================ -->
+<h2><span class="num">4</span>The user flow: who runs what, and when a red counts</h2>
+
+<p>Three questions decide the whole user experience: where does search run (and who pays for it), when does a failing workload deserve to be visible, and what does the board show for everything that <em>didn't</em> run. Each has a clean answer once you see one distinction.</p>
+
+<h3>Search and replay are different activities with different costs</h3>
+
+<p><strong>Search</strong> is the agent thinking: reading the product, inventing scenarios, deciding where to aim. It costs tokens and takes hours. <strong>Replay</strong> is executing a scenario that already exists — pinned seed, pinned schedule, pinned fault timing. It's deterministic, costs only compute, needs no model at all, and takes minutes. A found scenario is a <em>compiled asset</em>: expensive to discover, nearly free to re-run forever. That one fact places everything:</p>
+
+<div class="diagram">
+  <div class="lanes">
+    <div class="lane">
+      <div class="lane-title">Local, while building</div>
+      <div class="lane-when">developer's machine · on demand</div>
+      <ul>
+        <li>Search <span class="badge tokens">tokens</span> — agent drafts new flows &amp; scenarios for the feature</li>
+        <li>Replay <span class="badge notokens">no tokens</span> — iterate a draft until control is green and red-proof passes</li>
+        <li>Everything here is <strong>draft</strong>: visible to you, never on the team board</li>
+      </ul>
+    </div>
+    <div class="lane">
+      <div class="lane-title">Continuous, on main</div>
+      <div class="lane-when">scheduled · budgeted</div>
+      <ul>
+        <li>Deep search <span class="badge tokens">tokens</span> — the harness keeps hunting new situations against main</li>
+        <li>Promotes scenarios that pass the gates to <strong>official</strong></li>
+        <li>Maintains the <strong>baseline</strong>: last full assessment at a known SHA</li>
+      </ul>
+    </div>
+    <div class="lane">
+      <div class="lane-title">CI, on every PR</div>
+      <div class="lane-when">minutes · gate</div>
+      <ul>
+        <li>Replay only <span class="badge notokens">no tokens</span> — no searching in CI</li>
+        <li>Impact-selected: re-run official scenarios whose flows touch changed surfaces</li>
+        <li>Verdict = diff vs baseline; everything untouched inherits baseline state</li>
+      </ul>
+    </div>
+  </div>
+  <div class="cap">CI never searches — it replays compiled assets against the new commit, which is why it fits in minutes and costs no tokens. The expensive thinking happens locally (scoped to your feature) and continuously on main (budgeted, deep).</div>
+</div>
+
+<h3>When does a red count? The draft → official gate</h3>
+
+<p>You <em>want</em> reds while building — a workload that has never failed proves nothing (that's what the red-proof is). The question is never "may it fail?" but "who sees it?" The gate is on <strong>publication, not execution</strong>:</p>
+
+<div class="diagram">
+  <div class="lifecycle">
+    <div class="lc-state draft">
+      <div class="lc-name">Draft</div>
+      <div class="lc-sub">workspace-only · reds are information: a workload bug, an unfinished feature, or a real find — nobody knows yet</div>
+    </div>
+    <div class="lc-arrow"><span class="a">→</span>control green<br>+ red-proof passed<br>+ review KEEP</div>
+    <div class="lc-state official">
+      <div class="lc-name">Official</div>
+      <div class="lc-sub">on the promise board · replayed by CI · part of the baseline</div>
+    </div>
+    <div class="lc-arrow"><span class="a">→</span>goes red at a<br>later commit</div>
+    <div class="lc-state finding">
+      <div class="lc-name">Regression</div>
+      <div class="lc-sub">a real product signal — precisely because every official red survived the gates once</div>
+    </div>
+  </div>
+  <div class="cap">Promotion gates (already proven in our own lanes): the <strong>control</strong> must pass (the simple version of the situation works — so the workload isn't just broken), the <strong>red-proof</strong> must pass (the oracle demonstrably <em>can</em> fail — so green means something), and a <strong>reviewer</strong> keeps it. A draft red that survives all three isn't noise to hide — it's either a finding or the feature isn't done, and the author knows which.</div>
+</div>
+
+<p>This answers the half-built-feature case directly: declare the flow, let the agent draft scenarios, run them red all day — the board shows nothing until <em>you</em> promote. TDD ergonomics: red locally is progress; red on the team board is a promise broken. And "should we allow it?" — yes, always allow <em>running</em>; gate <em>publishing</em>. A tool that refuses to run incomplete things gets abandoned.</p>
+
+<h3>Partial runs: what the board shows for everything that didn't run</h3>
+
+<p>A PR run replays maybe six scenarios out of hundreds. The board never goes blank for the rest — every cell shows its <strong>last official assessment with its age</strong>. Coverage state carries forward until superseded, exactly like the ledger implies (the balance doesn't reset because today had only two transactions):</p>
+
+<div class="diagram">
+  <div style="overflow-x:auto;">
+  <table class="board">
+    <tr><th>Flow × invariant</th><th>State</th><th>Assessed at</th></tr>
+    <tr>
+      <td class="flow-name">enqueue-and-complete · exactly-once</td>
+      <td><span class="cell fresh updated">✓ proven</span></td>
+      <td>this PR · a3f9c2 · 4 min ago</td>
+    </tr>
+    <tr>
+      <td class="flow-name">enqueue-and-complete · ack-not-lost</td>
+      <td><span class="cell red updated">● regression</span></td>
+      <td>this PR · a3f9c2 · 4 min ago</td>
+    </tr>
+    <tr>
+      <td class="flow-name">fork-and-resume · typed-errors</td>
+      <td><span class="cell fresh">✓ proven</span></td>
+      <td>baseline · 8d117e · 3 h ago</td>
+    </tr>
+    <tr>
+      <td class="flow-name">gc-lifecycle · no-stranded-parent</td>
+      <td><span class="cell stale">✓ proven · aging</span></td>
+      <td>baseline · 41 commits ago</td>
+    </tr>
+    <tr>
+      <td class="flow-name">stream-read · ordered-delivery</td>
+      <td><span class="cell debt">◌ never searched</span></td>
+      <td>— · open debt</td>
+    </tr>
+    <tr>
+      <td class="flow-name">export-report · totals-conserved</td>
+      <td><span class="cell draftc">◐ draft in progress</span></td>
+      <td>not on board · 3 scenarios in workspace</td>
+    </tr>
+  </table>
+  </div>
+  <div class="board-legend">
+    <span class="cell fresh updated">✓ proven</span>&nbsp; touched by this run (outlined) &nbsp;·&nbsp;
+    <span class="cell fresh">✓ proven</span>&nbsp; inherited from baseline &nbsp;·&nbsp;
+    <span class="cell stale">✓ aging</span>&nbsp; true, but old — freshness is honest &nbsp;·&nbsp;
+    <span class="cell red">● regression</span>&nbsp; official scenario went red &nbsp;·&nbsp;
+    <span class="cell debt">◌ debt</span>&nbsp; never assessed, never pretends otherwise &nbsp;·&nbsp;
+    <span class="cell draftc">◐ draft</span>&nbsp; being built, off the board
+  </div>
+  <div class="cap">Every cell answers "what do we know, from which commit, how long ago." A partial run updates the cells it touched (outlined); the rest keep their last-known state with an honest age. Nothing is ever "unknown because today's run skipped it" — and nothing unsearched ever masquerades as green.</div>
+</div>
+
+<p>So the status page is never "the result of the last run." It is <strong>the current best knowledge per promise</strong> — freshest evidence wins per cell, staleness visible, debt visible, drafts invisible. One ledger; the PR view, the builder's view, and the release view are just three filters over these same cells.</p>
+
+<!-- ============================================================ -->
+<h2><span class="num">5</span>The pages: seven views, two worlds</h2>
+
+<p>The UI skeleton every mature test product converges on — a home board on the default branch, a diff page per PR, a detail page with history per test/issue, an explorer — maps directly onto our objects. Seven pages cover every moment; everything else is a filter, not a page.</p>
+
+<h3>Two worlds: visibility follows git</h3>
+
+<div class="diagram">
+  <div class="scopes">
+    <div class="scope personal">
+      <div class="s-title">Personal workspace</div>
+      <div class="s-rule">exists locally → private</div>
+      <ul>
+        <li>Drafts, local replays, half-built workloads — reds welcome</li>
+        <li>Rendered by the CLI: <code>wio status</code> is the board in your terminal; <code>wio open</code> deep-links the web view</li>
+        <li>Same pages, scoped to your working tree</li>
+      </ul>
+    </div>
+    <div class="scope-arrow"><span class="a">→</span>push = publish<br><span style="opacity:.75">promote = official</span></div>
+    <div class="scope team">
+      <div class="s-title">Team pages</div>
+      <div class="s-rule">ref exists on origin → shared</div>
+      <ul>
+        <li>One scope per origin branch; <code>main</code> is the default landing</li>
+        <li>Only <strong>official</strong> scenarios and published evidence render here</li>
+        <li>Open a PR → your branch's evidence becomes its verdict page</li>
+      </ul>
+    </div>
+  </div>
+  <div class="cap">One rule, no sharing model to invent: a ref on origin gets a team page, local-only work gets a personal one. Promotion (draft→official) and publication (personal→team) are the same motion seen from two sides — which is why a half-built workload's reds structurally cannot leak onto a team page.</div>
+</div>
+
+<h3>Why the default view leads with promises when scenarios are the unit</h3>
+
+<p>To be precise about what the home page is <em>not</em>: it is not "the" board — the plan mandates twelve projections from one ledger (by dimension, by mechanism, by frontier, by debt floor…), and none is canonical. The home page is just the projection chosen as the default landing, and it leads with promises (a flow-grouped promise list, with per-dimension coverage chips carrying the search dimensions) for the reasons below. The choice is a reversible product bet: every view is a cheap GROUP BY, so if real users' first question turns out to be "where is it searching" rather than "do my promises hold," flipping the landing is one route change, zero migration.</p>
+
+<p>Because the object counts diverge over time, and only one layer stays human-scale. Flows × invariants is <em>tens</em> of rows and grows only when the product grows. Scenarios are <em>thousands</em> and grow forever — compositional generation never stops manufacturing them. Runs are millions. The reading order is a pyramid:</p>
+
+<div class="callout">
+  <span class="label">The aggregation pyramid</span>
+  <p><strong>Promises</strong> (tens — the board) ← <strong>situations</strong> (hundreds — the lattice, page 5) ← <strong>scenarios</strong> (thousands — the explorer, page 4) ← <strong>runs</strong> (millions — the ledger). Humans read the top; every level is one click down. Severity attaches to invariant classes, so the top layer is also the only place a severity-weighted posture can be expressed.</p>
+</div>
+
+<p>Two honesty rules make the coarse index safe: a cell is never a bare checkmark — its verdict (worst-of its scenarios) always ships with its <strong>depth</strong> ("holding · 34/61 situations searched"), so aggregation can't lie about how hard the promise was attacked. And composed scenarios credit <strong>every</strong> flow coordinate they carry, with interaction coverage getting its own projection — the flow × flow coupling matrix on page 5, which shows which state-sharing pairs have never been attacked together. The grid is a GROUP BY over coordinates, not the storage; it handles many-to-many composition natively.</p>
+
+<h3>The seven pages</h3>
+
+<div class="diagram">
+  <div class="wf-grid">
+
+    <div class="wf">
+      <div class="wf-head">
+        <div class="wf-title">1 · Promise board <span style="font-weight:400; color:var(--muted);">(home)</span></div>
+        <div class="wf-q">"What holds right now on this branch?"</div>
+      </div>
+      <div class="wf-body">
+        <div class="wf-el filters">scope: main ▾ &nbsp;·&nbsp; filter: surface · invariant family · severity · freshness · state</div>
+        <div class="wf-el accent"><b>promise list, grouped by flow</b> — per invariant: verdict (worst-of its scenarios) + SHA + age + <b>per-dimension coverage chips</b> (modality 3/3 · events 4/6 · topologies 1/3 · load ▂); click = that promise's lattice slice</div>
+        <div class="wf-split">
+          <div class="wf-el"><b>3 regressions</b> ↗ findings</div>
+          <div class="wf-el"><b>12 cells in debt</b> ↗ coverage</div>
+        </div>
+      </div>
+      <div class="wf-foot">everyone · default landing · ≈ Codecov repo dashboard · CLI: <code>wio status</code></div>
+    </div>
+
+    <div class="wf">
+      <div class="wf-head">
+        <div class="wf-title">2 · PR / commit verdict</div>
+        <div class="wf-q">"Did my change break a promise?"</div>
+      </div>
+      <div class="wf-body">
+        <div class="wf-el warn"><b>VERDICT: 1 regression</b> · vs baseline 8d117e · replayed 6 of 214 official scenarios (impact-selected)</div>
+        <div class="wf-el"><b>flipped</b> — ack-not-lost ✓→● &nbsp;(scenario, seed, replay cmd)</div>
+        <div class="wf-el"><b>new debt</b> — 2 new surfaces have no flow yet</div>
+        <div class="wf-el filters">toggle: flipped-only · show inherited baseline</div>
+      </div>
+      <div class="wf-foot">author + reviewers · linked from the GitHub check · ≈ Codecov PR page · CLI: <code>wio verdict &lt;sha&gt;</code></div>
+    </div>
+
+    <div class="wf">
+      <div class="wf-head">
+        <div class="wf-title">3 · Findings</div>
+        <div class="wf-q">"What's broken, how bad, is it handled?"</div>
+      </div>
+      <div class="wf-body">
+        <div class="wf-el filters">filter: severity · status (new / ack / fixed / regressed) · flow</div>
+        <div class="wf-el warn"><b>gc strands pending parent</b> · availability · open · since 41c2f0</div>
+        <div class="wf-el"><b>detail page:</b> minimized composition · violated invariant · replay recipe (seed + versions) · history across commits</div>
+      </div>
+      <div class="wf-foot">whole team, triage · ≈ Sentry issues · CLI: <code>wio findings</code></div>
+    </div>
+
+    <div class="wf">
+      <div class="wf-head">
+        <div class="wf-title">4 · Scenario explorer</div>
+        <div class="wf-q">"What are the compiled assets — and do I trust them?"</div>
+      </div>
+      <div class="wf-body">
+        <div class="wf-el filters">filter: flow · modality · event · depth · last result</div>
+        <div class="wf-el"><b>scenario list</b> — coordinate chips, last result, flakiness marker</div>
+        <div class="wf-el accent"><b>detail:</b> full coordinate · seed · per-SHA green/red timeline ▁▁▂▁█▁ · cost</div>
+      </div>
+      <div class="wf-foot">skeptics &amp; debuggers · ≈ Cypress/Currents test explorer · CLI: <code>wio scenario &lt;key&gt;</code></div>
+    </div>
+
+    <div class="wf">
+      <div class="wf-head">
+        <div class="wf-title">5 · Coverage &amp; debt</div>
+        <div class="wf-q">"How hard have we searched — and where haven't we?"</div>
+      </div>
+      <div class="wf-body">
+        <div class="wf-el"><b>searched vs open debt</b> per search dimension: flow-composition · actor topology · channel · modality · mechanism · event×checkpoint · state · load · environment — the doc's twelve debt ledgers, each independently stop-blocking</div>
+        <div class="wf-el"><b>coupling matrix</b> — flow × flow: attacked together vs share-state-but-never-composed (where interaction bugs hide)</div>
+        <div class="wf-el"><b>trend</b> — debt shrinking / coverage growing per week</div>
+        <div class="wf-el"><b>budget</b> — where search spend went, blocked obligations</div>
+      </div>
+      <div class="wf-foot">the lead's investment view — and the "is this tool real" page · ≈ mutation-testing report · CLI: <code>wio debt</code> · this page's central visual is the lattice map drawn in <a href="https://claude.ai/code/artifact/3aa3de51-1e07-43f6-b906-982dcc0db0d1" style="color: var(--stable);">⚗️ §5</a></div>
+    </div>
+
+    <div class="wf">
+      <div class="wf-head">
+        <div class="wf-title">6 · Release / compare</div>
+        <div class="wf-q">"Ship it? What changed since last release?"</div>
+      </div>
+      <div class="wf-body">
+        <div class="wf-el filters">compare: v1.4.0 ▾ … v1.5.0-rc ▾</div>
+        <div class="wf-split">
+          <div class="wf-el accent"><b>newly proven</b> 14</div>
+          <div class="wf-el warn"><b>regressed</b> 1</div>
+          <div class="wf-el"><b>still debt</b> 12</div>
+        </div>
+        <div class="wf-el"><b>exportable attestation</b> — posture at this SHA, signed with versions</div>
+      </div>
+      <div class="wf-foot">release manager · ≈ Sentry releases · CLI: <code>wio compare &lt;ref&gt; &lt;ref&gt;</code></div>
+    </div>
+
+    <div class="wf">
+      <div class="wf-head">
+        <div class="wf-title">7 · Model digest</div>
+        <div class="wf-q">"What does the harness believe about my product?"</div>
+      </div>
+      <div class="wf-body">
+        <div class="wf-el"><b>flows · invariants · personas</b> as drafted, each with its citation</div>
+        <div class="wf-el accent"><b>needs your judgment (3)</b> — new declared field to ratify · 2 parks to approve</div>
+        <div class="wf-el"><b>model history</b> — versioned, diffable</div>
+      </div>
+      <div class="wf-foot">the ratifier — where agent-drafts-user-reviews lives · CLI: <code>wio digest</code></div>
+    </div>
+
+  </div>
+  <div class="cap">Sufficiency check against the moments: building = 1 + 7 in personal scope · CI = 2 · triage = 3 · trust = 4 + 5 · release = 6 · ratify = 7. Every page has a CLI twin rendering the same ledger records — the web page and the terminal view are two skins over one projection.</div>
+</div>
+
+<!-- ============================================================ -->
+<h2><span class="num">6</span>Where this sits: three layers, and who does what</h2>
+
+<p>Zooming out from the folder and the pages: the whole system is three layers with different genericity, and only the thinnest one is about any particular product.</p>
+
+<div class="table-scroll"><table>
+  <tr><th>Layer</th><th>What it is</th><th>Generic across…</th><th>Role</th></tr>
+  <tr><td><strong>The bench</strong> (wio platform)</td><td>managed hosts/real VMs, deterministic sim, fault injection, evidence plumbing, the status page</td><td>any product, any language</td><td>ours — the metered substrate; where value is captured</td></tr>
+  <tr><td><strong>The searcher</strong> (engine + policies + language SDKs)</td><td>the method: algebra, lattice, debt, frontier, oracles (the companion doc, end to end)</td><td>any product; opinionated about method only</td><td>ours, split by the openness boundary (📜 12 amendment): the <em>language</em> — operators, validity rules, wire formats — is public and evangelized (the trust surface and the demand generator); the <em>search</em> — compiler, frontier, ranking, sweep — runs as a metered platform service and never ships. Trust rides on readable pinned scenarios, the open validator + replay client, the falsifiable <code>explain</code> endpoint, and the compounding evidence record</td></tr>
+  <tr><td><strong>The map</strong> (per-product model)</td><td>~a dozen atoms, resource types, invariants — the green zone of §3</td><td>product-specific by definition</td><td>theirs — but agent-drafted and merely ratified, so onboarding stays cheap</td></tr>
+</table></div>
+
+<h3>Who writes scenarios? Nobody.</h3>
+
+<div class="table-scroll"><table>
+  <tr><th>Actor</th><th>Writes</th><th>Runs on</th></tr>
+  <tr><td><strong>The skill</strong> (an agent in <em>their</em> repo)</td><td>drafts the map — atoms, resources, invariants — from their docs/code, with citations; hypothesizes couplings; triages reds</td><td>their agent subscription (their tokens)</td></tr>
+  <tr><td><strong>The user</strong></td><td>nothing — <strong>ratifies</strong> the digest, reviews diffs, promotes findings</td><td>minutes of attention</td></tr>
+  <tr><td><strong>The engine</strong></td><td><em>generates</em> every scenario deterministically from model + policy + seed</td><td>—</td></tr>
+  <tr><td><strong>wio</strong></td><td>executes, replays in CI, serves the ledger</td><td>our metered compute</td></tr>
+</table></div>
+
+<p>Hand-authored scenarios are welcome guests — a developer pinning the exact composition of a bug they just fixed enters through the same draft → gates → official pipeline — but they are never the load-bearing mechanism. And the economics fall out of the same table: the skill spends <em>their</em> tokens on the thinking; the bench meters the doing; and every compiled scenario converts our one-time search into their recurring CI replay. Only the map layer scales with customers — and the agent writes it, which is the entire commercial bet (the prior-art record says this family of products lived or died on exactly that authoring cost).</p>
+
+<h3>What ships: five pieces, and what never does</h3>
+
+<div class="table-scroll"><table>
+  <tr><th>Piece</th><th>What it is</th><th>Who installs it</th></tr>
+  <tr><td><strong>1 · <code>wio</code> CLI</strong></td><td>the front door — same verbs: <code>init · digest · compile · atoms export · run · verdict · status · debt · findings · scenario · compare · migrate · explain</code>; the validator and replay client run locally (open, with the language spec), while the sparse compiler, debt ledgers, frontier, and the live policy execute on the platform's metered generation service (📜 12 amendment: language public, search private)</td><td>the user, once</td></tr>
+  <tr><td><strong>2 · the skill / plugin</strong></td><td>the <em>judgment</em> layer: the operating loop, drafting briefs, critics — what makes their agent draft atoms, run the loop, triage reds; thin by design</td><td>the user, into their coding agent (v0.2.0 = first public)</td></tr>
+  <tr><td><strong>3 · atom SDKs</strong></td><td>thin per-language packages (Python + TypeScript first): <code>@flow</code> decorator, <code>ctx</code>, <code>Resource</code>/<code>Value</code>, observation emitter</td><td>a dependency in their repo</td></tr>
+  <tr><td><strong>4 · <code>.workers/</code></strong></td><td>their green zone (<code>model/</code>, ratified) + regenerable <code>generated/</code> + <code>evidence/</code></td><td>nobody — <code>wio init</code> + the agent create it</td></tr>
+  <tr><td><strong>5 · the platform</strong></td><td>the bench (managed hosts, deterministic sim, dispatch) + the seven pages + the GitHub CI check + the evidence store</td><td>nobody — the hosted, metered service</td></tr>
+</table></div>
+
+<p><strong>Never shipped:</strong> the lab — the blinded corpus, the blessed grading instruments, retrodiction, the resident scientist. That is <em>our</em> apparatus for improving pieces 1–3; users only ever receive promoted releases (development lives on <code>lab/auto</code>; a human PROMOTE decision merges to the released line). The whole user experience compresses to: <strong>install CLI + plugin → <code>wio init</code> → the agent drafts, you ratify a digest → the board fills → a CI check on every PR.</strong> Pieces 4 and 5 materialize on their own.</p>
+
+<!-- ============================================================ -->
+<h2><span class="num">7</span>Check your understanding</h2>
+<p style="font-family: system-ui, sans-serif; font-size: 0.9rem; color: var(--muted);">Six questions, medium difficulty. Click an answer to see the reasoning.</p>
+
+<div class="quiz-card" data-correct="1">
+  <span class="q-num">Question 0</span>
+  <div class="q-text">A developer is building a workload for a feature that's only half-implemented, and it fails on every local run. What does the rest of the team see on the promise board?</div>
+  <div class="q-opts">
+    <button class="q-opt">A red cell for the new flow, since every executed scenario appends its result to the shared evidence ledger.</button>
+    <button class="q-opt">No change — draft scenarios never publish; the board's cells keep their last official assessment with its age.</button>
+    <button class="q-opt">A grey "in progress" cell replaces the flow's previous state until the new workload passes its red-proof.</button>
+    <button class="q-opt">A red cell, but flagged as unconfirmed until the control run passes and a reviewer keeps the scenario.</button>
+  </div>
+  <div class="q-explain"></div>
+  <div class="q-why" hidden>The gate is on publication, not execution: draft runs stay in the developer's workspace, and the board only ever reflects <em>official</em> scenarios. Existing cells are untouched (their last-known state carries forward), and the draft appears at most as an off-board "◐ draft in progress" note — never as a red. Reds earn board visibility only after control-green, red-proof, and review promote the scenario.</div>
+</div>
+
+<div class="quiz-card" data-correct="2">
+  <span class="q-num">Question 1</span>
+  <div class="q-text">We ship skill v3.4, which completely replaces how scenarios are prioritized and renames every internal coverage category. What happens in a customer's repo?</div>
+  <div class="q-opts">
+    <button class="q-opt">The skill runs <code>wio migrate</code> to rename the coverage categories inside their existing files.</button>
+    <button class="q-opt">The customer reviews an agent-drafted diff updating their flow atoms to the new categories.</button>
+    <button class="q-opt">Nothing — priorities and categories live in the machine-owned zone, which is regenerated.</button>
+    <button class="q-opt">Their generated folder is kept as-is for history, and new categories start in a fresh folder.</button>
+  </div>
+  <div class="q-explain"></div>
+  <div class="q-why" hidden>Prioritization and search taxonomy are search state — build output. The skill deletes and regenerates that zone on its own; migration and review are reserved for the rare case where the <em>declared</em> user-facing schema grows. (History lives in the evidence zone, not by preserving stale build output.)</div>
+</div>
+
+<div class="quiz-card" data-correct="0">
+  <span class="q-num">Question 2</span>
+  <div class="q-text">Why is a flow written as runnable code more durable across skill versions than the same information written as frontmatter metadata?</div>
+  <div class="q-opts">
+    <button class="q-opt">Code's contract is the product's own API, which the vendor keeps stable; metadata's contract is whatever our current skill version expects to read.</button>
+    <button class="q-opt">Code can be executed in parallel by the runner, whereas metadata must be parsed serially before any scenario can start executing.</button>
+    <button class="q-opt">Code is stored in the evidence zone with version stamps, while metadata sits in the generated zone and gets rebuilt on every release.</button>
+    <button class="q-opt">Code files are addressed by key rather than path, so renaming them never breaks the skill's references to a flow.</button>
+  </div>
+  <div class="q-explain"></div>
+  <div class="q-why" hidden>Execution validates code against something <em>outside our control that is already kept stable</em> — the product's real API. Conventions (field names, folder meanings) are validated only by our own reader, which is exactly the thing we keep changing. Key-addressing is true but applies to both code and metadata; the zone placements in the other options are wrong.</div>
+</div>
+
+<div class="quiz-card" data-correct="3">
+  <span class="q-num">Question 3</span>
+  <div class="q-text">A real improvement needs flows to declare something new — say, named checkpoints where faults can be injected. What is the designed path?</div>
+  <div class="q-opts">
+    <button class="q-opt">Ask users to add the field to each flow atom, since product-truth files are user-owned and only they know the right values.</button>
+    <button class="q-opt">Infer checkpoints at runtime on every run, since the declared schema is frozen at launch and can never be extended.</button>
+    <button class="q-opt">Ship it as a new parallel schema version and keep reading both formats in the skill forever, so no repo ever changes.</button>
+    <button class="q-opt">Bump the schema additively with a default; <code>wio migrate</code> drafts the values from their code, and the user approves a diff.</button>
+  </div>
+  <div class="q-explain"></div>
+  <div class="q-why" hidden>The schema is frozen against <em>breaking</em>, not against <em>growing</em>. Additive field + default + agent-drafted values + human review keeps the user's unit of work at "read a diff." Making users author it violates agent-drafts-user-ratifies; reading all formats forever piles up complexity that eventually breaks anyway; and pure runtime inference is right only when it's reliable — when it isn't, the fact belongs in the reviewed declaration.</div>
+</div>
+
+<div class="quiz-card" data-correct="1">
+  <span class="q-num">Question 4</span>
+  <div class="q-text">Which change would prove the compatibility boundary was drawn in the wrong place?</div>
+  <div class="q-opts">
+    <button class="q-opt">A skill release deletes the entire <code>generated/</code> tree and rebuilds it with a different folder structure.</button>
+    <button class="q-opt">A new search strategy only works if users move fields between their flow atoms' declared blocks.</button>
+    <button class="q-opt">A finding recorded under skill v2 keeps its original v2 model stamp after the customer upgrades to v3.</button>
+    <button class="q-opt">The skill starts addressing a flow by its <code>key:</code> even though the user renamed the file that holds it.</button>
+  </div>
+  <div class="q-explain"></div>
+  <div class="q-why" hidden>The invariant is: search-strategy changes never require edits to user-ratified files. A strategy that reaches into the green zone means strategy concerns leaked into the frozen interface — the boundary must move. The other three are the design working exactly as intended: regenerable build output, immutable stamped evidence, key-over-path addressing.</div>
+</div>
+
+<div class="quiz-card" data-correct="2">
+  <span class="q-num">Question 5</span>
+  <div class="q-text">Before declaring the schema public at launch, what is the concrete rehearsal that tests the whole design?</div>
+  <div class="q-opts">
+    <button class="q-opt">Run <code>wio migrate</code> against an empty repo and confirm it scaffolds all three zones without any errors.</button>
+    <button class="q-opt">Have an external user hand-author a full flow atom from documentation alone, without agent assistance.</button>
+    <button class="q-opt">Perform one full internal strategy overhaul and verify the user-ratified zone shows an empty git diff.</button>
+    <button class="q-opt">Regenerate the search state on two machines and confirm both produce byte-identical scenario files.</button>
+  </div>
+  <div class="q-explain"></div>
+  <div class="q-why" hidden>The design's promise is "our churn is never your refactor" — so the rehearsal is to cause the churn on purpose (swap taxonomy, swap ranking) and mechanically check the promise: zero diff in the green zone. Scaffolding, determinism, and hand-authoring tests are all useful, but none of them exercises the one claim the whole boundary exists to make.</div>
+</div>
+
+<hr>
+<p class="foot">Companion to <code>WORKLOAD-HARNESS-COMPOSITIONAL-END-STATE.md</code> and its §24 decision packet · workers.io internal · format after Litt's "explain a diff" structure (background → intuition → design → quiz).</p>
+
+</div>
+
+<script>
+document.querySelectorAll('.quiz-card').forEach(function (card) {
+  var correct = parseInt(card.dataset.correct, 10);
+  var opts = card.querySelectorAll('.q-opt');
+  var explain = card.querySelector('.q-explain');
+  var why = card.querySelector('.q-why').innerHTML;
+  opts.forEach(function (btn, i) {
+    btn.addEventListener('click', function () {
+      opts.forEach(function (b, j) {
+        b.disabled = true;
+        if (j === correct) b.dataset.state = 'correct';
+        else if (j === i) b.dataset.state = 'wrong';
+      });
+      var ok = i === correct;
+      explain.innerHTML = '<span class="verdict ' + (ok ? 'ok">Correct.' : 'no">Not quite.') + '</span> ' + why;
+      explain.style.display = 'block';
+    });
+  });
+});
+</script>

@@ -1,0 +1,130 @@
+<title>Workload harness v3 — read me first</title>
+<style>
+  :root {
+    --ground: #FAFAF8; --panel: #F0F0EC; --ink: #22231F; --muted: #6E7069;
+    --line: #DFDFD8; --accent: #14684F; --accent-soft: #E2EFE9;
+    --hold: #B05E08; --hold-soft: #F7EBDB;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --ground: #17181A; --panel: #1F2022; --ink: #E4E5DE; --muted: #999B92;
+      --line: #333531; --accent: #55BD97; --accent-soft: #1D2F28;
+      --hold: #E0A055; --hold-soft: #33281A; }
+  }
+  :root[data-theme="dark"] { --ground: #17181A; --panel: #1F2022; --ink: #E4E5DE; --muted: #999B92;
+    --line: #333531; --accent: #55BD97; --accent-soft: #1D2F28;
+    --hold: #E0A055; --hold-soft: #33281A; }
+  :root[data-theme="light"] { --ground: #FAFAF8; --panel: #F0F0EC; --ink: #22231F; --muted: #6E7069;
+    --line: #DFDFD8; --accent: #14684F; --accent-soft: #E2EFE9;
+    --hold: #B05E08; --hold-soft: #F7EBDB; }
+
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--ground); color: var(--ink);
+    font-family: Charter, 'Bitstream Charter', 'Iowan Old Style', Georgia, serif;
+    font-size: 17px; line-height: 1.65; }
+  .wrap { max-width: 44rem; margin: 0 auto; padding: 3.2rem 1.4rem 4.5rem; }
+  .kicker { font-family: system-ui, sans-serif; font-size: 0.72rem; font-weight: 600;
+    letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); }
+  h1 { font-family: system-ui, sans-serif; font-size: clamp(1.55rem, 4vw, 2.1rem);
+    font-weight: 750; line-height: 1.15; letter-spacing: -0.015em; margin: 0.5rem 0 0.8rem; }
+  .standfirst { font-size: 1.02rem; color: var(--muted); margin: 0 0 1.4rem; }
+  code { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 0.85em;
+    background: var(--panel); border: 1px solid var(--line); border-radius: 4px; padding: 0.05em 0.3em; }
+
+  .status { font-family: system-ui, sans-serif; font-size: 0.84rem; line-height: 1.55;
+    border: 1.5px solid var(--hold); background: var(--hold-soft); border-radius: 10px;
+    padding: 0.8rem 1rem; margin: 0 0 1.6rem; }
+  .status .s-label { font-size: 0.66rem; font-weight: 700; letter-spacing: 0.12em;
+    text-transform: uppercase; color: var(--hold); display: block; margin-bottom: 0.3rem; }
+
+  .card { display: grid; grid-template-columns: 3.2rem 1fr; gap: 0.9rem; align-items: start;
+    border: 1.5px solid var(--line); border-radius: 12px; padding: 0.95rem 1.1rem;
+    margin: 0 0 0.75rem; font-family: system-ui, sans-serif; text-decoration: none; color: var(--ink); }
+  a.card:hover { border-color: var(--accent); }
+  .card .c-ico { font-size: 1.7rem; line-height: 1; padding-top: 0.15rem; text-align: center; }
+  .card .c-order { display: block; font-size: 0.62rem; font-weight: 700; letter-spacing: 0.08em;
+    text-transform: uppercase; color: var(--muted); text-align: center; margin-top: 0.3rem; }
+  .card .c-title { font-weight: 750; font-size: 1rem; }
+  .card .c-title .c-q { font-weight: 500; color: var(--muted); font-size: 0.86rem; }
+  .card .c-body { font-size: 0.82rem; line-height: 1.5; color: var(--ink); margin-top: 0.2rem; }
+  .card .c-when { font-size: 0.74rem; color: var(--muted); margin-top: 0.3rem; }
+  .card .c-when b { color: var(--accent); font-weight: 700; }
+
+  h2 { font-family: system-ui, sans-serif; font-size: 1.05rem; font-weight: 700; margin: 2rem 0 0.6rem; }
+  .rules { font-family: system-ui, sans-serif; font-size: 0.82rem; line-height: 1.6;
+    background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 0.85rem 1rem; }
+  .foot { margin-top: 2rem; font-size: 0.76rem; color: var(--muted); font-family: system-ui, sans-serif; }
+</style>
+
+<div class="wrap">
+
+<span class="kicker">workers.io · workload harness v3 · the documentation set · restructured 2026-07-16</span>
+<h1>Read me first</h1>
+<p class="standfirst">Six documents, one system, one rule: a fact lives in exactly one place. Normative rules appear inline as <strong>CONTRACT blocks</strong> — they win over any prose, anywhere.</p>
+
+<div class="status">
+  <span class="s-label">the queue</span>
+  Open decisions live in one place: <strong><a href="https://claude.ai/code/artifact/f5abbeac-699a-4006-93a8-9a7a92109c6d" style="color: var(--hold);">📜 Decisions</a></strong> — six owed cards block the build; six parked cards carry triggers. Live project status lives in <code>ROADMAP.md</code> and the scientist's packet, not in this set.
+</div>
+
+<a class="card" href="https://claude.ai/code/artifact/3aa3de51-1e07-43f6-b906-982dcc0db0d1">
+  <div><div class="c-ico">⚗️</div><span class="c-order">read 1st</span></div>
+  <div>
+    <div class="c-title">The rationale <span class="c-q">— why does this method find bugs?</span></div>
+    <div class="c-body">The thesis and every argument: the aiming wall, atoms + the twelve-operator algebra, the pruning funnel, enumerability as debt, the stable-repo principles, the engine/policy/judgment rethink, the experiment ladder, the openness posture, and the no-ratifier argument.</div>
+    <div class="c-when"><b>Read when:</b> you want to believe (or break) the design. Stable essay; quizzes included; never cited as authority.</div>
+  </div>
+</a>
+
+<a class="card" href="https://claude.ai/code/artifact/5f152ab6-7e22-4a5e-9dbf-d56f89b40ee9">
+  <div><div class="c-ico">🏛</div><span class="c-order">read 2nd</span></div>
+  <div>
+    <div class="c-title">The product book <span class="c-q">— what is it, and what do users experience?</span></div>
+    <div class="c-body">Part I, the machine: seven pieces, the skill's operating loop (both ratification modes), one run end-to-end, the end-state repo layout. Part II, the experience: repo zones + migrations, the draft→official lifecycle, the read surfaces (design parked — PAGES card in 📜), the economics, what ships and what never does. Carries the F1/F2/F3, openness, review-gate, migration, and lifecycle contract blocks.</div>
+    <div class="c-when"><b>Read when:</b> any build or customer conversation. Supersedes 🧩 <em>The system</em> and 🧱 <em>Stable repo, evolving skill</em>; absorbed the 🧠 whiteboard.</div>
+  </div>
+</a>
+
+<a class="card" href="https://claude.ai/code/artifact/5f600e91-8e0c-4039-be4f-4c996ccbdc28">
+  <div><div class="c-ico">📖</div><span class="c-order">consult</span></div>
+  <div>
+    <div class="c-title">The spec <span class="c-q">— what exactly may I write, and what does it mean?</span></div>
+    <div class="c-body">The reference manual: vocabulary, the twelve operators, atom rules R1–R10, Resource/Value and <code>ctx</code> APIs, the state grammar, the search contract (floors · budget · stop), the five wire formats + CLI surface, and the measurement contract. Carries the operator, atom-schema, oracle, misuse, floors, budget-stop, formats, and evaluation contract blocks. J1/J4 briefs compile from here; it becomes the public docs at 0.2.0.</div>
+    <div class="c-when"><b>Read when:</b> writing or reviewing atoms, building the engine, or checking what anything means. Updates to match built code.</div>
+  </div>
+</a>
+
+<a class="card" href="https://claude.ai/code/artifact/089f4233-ed58-45f4-ba44-8bdc294f8c25">
+  <div><div class="c-ico">🔬</div><span class="c-order">measure</span></div>
+  <div>
+    <div class="c-title">The search surfaces <span class="c-q">— what do we still have to find by experiment?</span></div>
+    <div class="c-body">The six surfaces the architecture left open — drafting text, ranking, policy values, within-cell search, the vocabulary, oracle thresholds — each with an eval suite in the codebase that prints its current state. The lab, decomposed into practice; carries the search-surfaces contract block.</div>
+    <div class="c-when"><b>Read when:</b> improving anything — find your surface, move its number. Numbers live in <code>evals/scoreboard.py</code>, never in the doc.</div>
+  </div>
+</a>
+
+<a class="card" href="https://claude.ai/code/artifact/f5abbeac-699a-4006-93a8-9a7a92109c6d">
+  <div><div class="c-ico">📜</div><span class="c-order">rule</span></div>
+  <div>
+    <div class="c-title">Decisions <span class="c-q">— what's open, and where does each rule live?</span></div>
+    <div class="c-body">The queue (owed + parked cards) and the contract-block index. Content lives in the blocks; events live in the interception-ledger; this page is process only — empty-ish at steady state.</div>
+    <div class="c-when"><b>Read when:</b> ratifying, or tracing any rule to its DEC. One "approved" message collapses the owed queue.</div>
+  </div>
+</a>
+
+<a class="card" href="https://claude.ai/code/artifact/8636168f-a7c6-42ea-8a6e-44e9904298a8">
+  <div><div class="c-ico">🛠️</div><span class="c-order">track</span></div>
+  <div>
+    <div class="c-title">The plan <span class="c-q">— how do we get there?</span></div>
+    <div class="c-body">Two goals, no dates: assemble everything and run it once (the baseline), and make every search surface separately runnable (the experiment harness). The build jobs J1–J6, the eval-harness jobs E1–E5, capacity costs. Everything after is deliberately unplanned. Carries the prototype-bar contract block.</div>
+    <div class="c-when"><b>Read when:</b> checking sequencing. The one page that goes stale by design as work lands.</div>
+  </div>
+</a>
+
+<h2>The rules of the set</h2>
+<div class="rules">
+  <strong>One fact, one home.</strong> Cross-doc references are citations, never restatement — an amendment touches one page plus pointers, or it's in the wrong doc. · <strong>Contract blocks are normative</strong> (styled callouts with a CONTRACT chip, indexed in 📜); they win over any prose. The interception-ledger holds the append-only DEC events; the docs hold the codified current law. · <strong>Ownership by change type:</strong> a decision → 📜 queue then its block · a build learning → 📖 · a phase landing → 🛠️ · a new argument → ⚗️ · a UX/packaging consequence → 🏛. · <strong>Change rules:</strong> search-space-class doc edits auto-apply (journaled); anything touching a contract block needs a DEC row. · <strong>Staleness contract:</strong> ⚗️ 🏛 📖 stable · 🛠️ weekly · this index structural-only. · <strong>Brainstorms are queues:</strong> disposable whiteboard artifacts fold into the set within days, then tombstone — if you can't point to the block or section that carries an idea, it isn't decided. · <strong>Artifacts are canonical; repo files are derived.</strong> Sources + this map: <code>skills-git/design/</code> (STRUCTURE.md); pointer: <code>skills-git/DESIGN-TRUTH.md</code>; evidence: <code>PRIOR-ART-AUTOPSY.md</code>.
+</div>
+
+<p class="foot">workers.io internal · the set: ⚗️ why → 🏛 what &amp; experienced-as → 📖 reference → 🔬 searched-by-experiment → 📜 queue → 🛠️ sequencing · superseded pages (🧩 🧱 🧠) are pointer stubs at their old URLs · this index updates only when the set's structure changes.</p>
+
+</div>

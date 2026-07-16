@@ -1,0 +1,897 @@
+<title>Scenarios from atoms — the compositional approach explained</title>
+<style>
+  :root {
+    --ground: #FBFAF7;
+    --panel: #F2F0EA;
+    --ink: #23231E;
+    --muted: #6F6E64;
+    --line: #E0DDD2;
+    --atom: #0E6B5E;          /* flow atoms, authored, trusted */
+    --atom-soft: #E1EFEB;
+    --op: #4A44B8;            /* operators, the algebra */
+    --op-soft: #E9E8F8;
+    --gen: #B05E08;           /* generated, machine-made */
+    --gen-soft: #F7EBDB;
+    --code-bg: #23261F;
+    --code-ink: #E6E8DE;
+    --good: #0E6B5E;
+    --bad: #A33B2E;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --ground: #17181A; --panel: #1F2023; --ink: #E5E4DC; --muted: #9B9A8E;
+      --line: #34342F; --atom: #4FC0A8; --atom-soft: #1C2E2A;
+      --op: #9C97F0; --op-soft: #262447; --gen: #E0A055; --gen-soft: #33281A;
+      --code-bg: #101210; --code-ink: #D9DCD2; --good: #4FC0A8; --bad: #E07A6B;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground: #17181A; --panel: #1F2023; --ink: #E5E4DC; --muted: #9B9A8E;
+    --line: #34342F; --atom: #4FC0A8; --atom-soft: #1C2E2A;
+    --op: #9C97F0; --op-soft: #262447; --gen: #E0A055; --gen-soft: #33281A;
+    --code-bg: #101210; --code-ink: #D9DCD2; --good: #4FC0A8; --bad: #E07A6B;
+  }
+  :root[data-theme="light"] {
+    --ground: #FBFAF7; --panel: #F2F0EA; --ink: #23231E; --muted: #6F6E64;
+    --line: #E0DDD2; --atom: #0E6B5E; --atom-soft: #E1EFEB;
+    --op: #4A44B8; --op-soft: #E9E8F8; --gen: #B05E08; --gen-soft: #F7EBDB;
+    --code-bg: #23261F; --code-ink: #E6E8DE; --good: #0E6B5E; --bad: #A33B2E;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--ground); color: var(--ink);
+    font-family: Charter, 'Bitstream Charter', 'Iowan Old Style', Georgia, serif;
+    font-size: 17px; line-height: 1.68;
+  }
+  .wrap { max-width: 46rem; margin: 0 auto; padding: 3.5rem 1.4rem 6rem; }
+
+  .kicker {
+    font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+    font-size: 0.72rem; font-weight: 600; letter-spacing: 0.14em;
+    text-transform: uppercase; color: var(--muted);
+  }
+  h1 {
+    font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+    font-size: clamp(1.7rem, 4.5vw, 2.4rem); font-weight: 750;
+    line-height: 1.15; letter-spacing: -0.015em; text-wrap: balance;
+    margin: 0.5rem 0 0.9rem;
+  }
+  .standfirst { font-size: 1.12rem; color: var(--muted); margin: 0 0 1rem; text-wrap: balance; }
+  h2 {
+    font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+    font-size: 1.32rem; font-weight: 700; letter-spacing: -0.01em;
+    margin: 3.2rem 0 0.8rem; text-wrap: balance;
+  }
+  h2 .num { color: var(--muted); font-weight: 600; margin-right: 0.5rem; font-variant-numeric: tabular-nums; }
+  h3 {
+    font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+    font-size: 1.02rem; font-weight: 700; margin: 2rem 0 0.5rem;
+  }
+  p { margin: 0 0 1rem; }
+  ul, ol { margin: 0 0 1rem; padding-left: 1.3rem; }
+  li { margin-bottom: 0.35rem; }
+  hr { border: none; border-top: 1px solid var(--line); margin: 2.6rem 0; }
+
+  .atom-word { color: var(--atom); font-weight: 700; }
+  .op-word { color: var(--op); font-weight: 700; }
+  .gen-word { color: var(--gen); font-weight: 700; }
+
+  code {
+    font-family: ui-monospace, 'SF Mono', 'Cascadia Code', Menlo, Consolas, monospace;
+    font-size: 0.86em; background: var(--panel); border: 1px solid var(--line);
+    border-radius: 4px; padding: 0.08em 0.35em;
+  }
+  pre {
+    background: var(--code-bg); color: var(--code-ink);
+    border-radius: 8px; padding: 1rem 1.2rem; overflow-x: auto; white-space: pre;
+    font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+    font-size: 0.8rem; line-height: 1.55; margin: 0 0 1.2rem;
+  }
+  pre code { background: none; border: none; padding: 0; color: inherit; font-size: inherit; }
+  pre .cm { color: #8FA08A; }
+  pre .k { color: #A9A4F5; }
+  pre .a { color: #7FCBAA; }
+  pre .v { color: #E8B87A; }
+
+  .callout {
+    background: var(--panel); border: 1px solid var(--line);
+    border-radius: 10px; padding: 1rem 1.2rem; margin: 0 0 1.2rem;
+  }
+  .callout .label {
+    font-family: system-ui, sans-serif; font-size: 0.7rem; font-weight: 700;
+    letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted);
+    display: block; margin-bottom: 0.4rem;
+  }
+  .callout p:last-child { margin-bottom: 0; }
+
+  .diagram {
+    border: 1px solid var(--line); border-radius: 12px;
+    padding: 1.3rem; margin: 1.4rem 0 1.6rem;
+    font-family: system-ui, -apple-system, sans-serif; overflow-x: auto;
+  }
+  .diagram .cap { font-size: 0.78rem; color: var(--muted); margin-top: 1rem; line-height: 1.5; }
+
+  /* composition tree */
+  .ctree { font-size: 0.8rem; min-width: 480px; }
+  .cnode {
+    border-radius: 8px; padding: 0.5rem 0.75rem; margin: 0.4rem 0;
+    border: 1.5px solid var(--line);
+  }
+  .cnode .cn-label { font-weight: 700; font-size: 0.82rem; }
+  .cnode .cn-note { font-size: 0.72rem; color: var(--muted); }
+  .cnode.op { border-color: var(--op); background: var(--op-soft); }
+  .cnode.op > .cn-label { color: var(--op); }
+  .cnode.atom { border-color: var(--atom); background: var(--atom-soft); }
+  .cnode.atom > .cn-label { color: var(--atom); }
+  .cnode.bind { border-style: dashed; border-color: var(--gen); background: var(--gen-soft); }
+  .cnode.bind > .cn-label { color: var(--gen); }
+  .cnest { margin-left: 1.4rem; }
+
+  table {
+    border-collapse: collapse; width: 100%; margin: 0 0 1.4rem;
+    font-family: system-ui, -apple-system, sans-serif; font-size: 0.85rem;
+  }
+  .table-scroll { overflow-x: auto; margin: 0 0 1.4rem; }
+  .table-scroll table { margin: 0; min-width: 560px; }
+  th {
+    text-align: left; font-size: 0.7rem; text-transform: uppercase;
+    letter-spacing: 0.09em; color: var(--muted); font-weight: 700;
+    padding: 0.5rem 0.8rem 0.5rem 0; border-bottom: 2px solid var(--line);
+  }
+  td { padding: 0.6rem 0.8rem 0.6rem 0; border-bottom: 1px solid var(--line); vertical-align: top; line-height: 1.5; }
+  td code { white-space: nowrap; }
+
+  /* loop + ladder */
+  .vsteps { display: flex; flex-direction: column; gap: 0.55rem; }
+  .vstep {
+    display: grid; grid-template-columns: 8.5rem 1fr; gap: 1rem; align-items: start;
+    border: 1.5px solid var(--line); border-radius: 10px;
+    background: var(--panel); padding: 0.75rem 0.95rem;
+  }
+  .vstep .v-n {
+    font-size: 0.68rem; font-weight: 700; letter-spacing: 0.1em;
+    text-transform: uppercase; color: var(--muted); padding-top: 0.15rem;
+  }
+  .vstep .v-n b { display: block; font-size: 0.92rem; letter-spacing: 0; text-transform: none; color: var(--ink); font-weight: 750; margin-top: 0.1rem; }
+  .vstep .v-body { font-size: 0.82rem; line-height: 1.55; }
+  .vstep .v-body .trace {
+    display: block; margin-top: 0.45rem; padding: 0.45rem 0.6rem;
+    border-left: 3px solid var(--gen); background: var(--gen-soft);
+    border-radius: 0 6px 6px 0; font-size: 0.76rem; line-height: 1.55;
+  }
+  .vstep .v-body .trace .t-label {
+    font-size: 0.62rem; font-weight: 700; letter-spacing: 0.1em;
+    text-transform: uppercase; color: var(--gen); display: block; margin-bottom: 0.15rem;
+  }
+  @media (max-width: 560px) { .vstep { grid-template-columns: 1fr; gap: 0.3rem; } }
+
+  .ladder { min-width: 560px; }
+  .rung { display: grid; grid-template-columns: 11rem 1fr 8rem; gap: 1rem; align-items: start;
+    border: 1.5px solid var(--line); border-radius: 10px; padding: 0.75rem 0.95rem; margin-bottom: 0.6rem; background: var(--panel); }
+  .rung .r-name { font-weight: 750; font-size: 0.86rem; }
+  .rung .r-what { font-size: 0.78rem; line-height: 1.5; }
+  .rung .r-cost { font-size: 0.72rem; color: var(--muted); text-align: right; font-variant-numeric: tabular-nums; }
+  .rung.hot { border-color: var(--gen); }
+
+  .pillars { display: flex; gap: 0.8rem; min-width: 560px; }
+  .pillar { flex: 1; border-radius: 10px; padding: 0.85rem 0.95rem; border: 1.5px solid var(--line); }
+  .pillar .p-t { font-weight: 750; font-size: 0.9rem; margin-bottom: 0.1rem; }
+  .pillar .p-w { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.09em; font-weight: 700; margin-bottom: 0.5rem; }
+  .pillar ul { padding-left: 1rem; margin: 0; }
+  .pillar li { font-size: 0.78rem; line-height: 1.5; margin-bottom: 0.3rem; }
+  .pillar.engine { border-color: var(--atom); background: var(--atom-soft); }
+  .pillar.engine .p-w { color: var(--atom); }
+  .pillar.policy { border-color: var(--gen); background: var(--gen-soft); }
+  .pillar.policy .p-w { color: var(--gen); }
+  .pillar.judgment { border-color: var(--op); background: var(--op-soft); }
+  .pillar.judgment .p-w { color: var(--op); }
+
+  /* leverage cascade */
+  .lev { display: flex; flex-direction: column; gap: 0.45rem; min-width: 560px; font-family: system-ui, sans-serif; }
+  .lev-row { display: grid; grid-template-columns: 11.5rem 1fr 9.5rem; gap: 0.8rem; align-items: center; }
+  .lev-row .l-who { font-size: 0.72rem; font-weight: 700; text-align: right; line-height: 1.35; }
+  .lev-row .l-who span { display: block; font-weight: 500; color: var(--muted); font-size: 0.66rem; }
+  .lev-row .l-bar { height: 1.35rem; border-radius: 5px; min-width: 2px; }
+  .lev-row .l-count { font-size: 0.74rem; color: var(--ink); font-weight: 650; font-variant-numeric: tabular-nums; }
+  .lev-row.written .l-bar { background: var(--op-soft); border: 1.5px solid var(--op); }
+  .lev-row.ratified .l-bar { background: var(--atom-soft); border: 1.5px solid var(--atom); }
+  .lev-row.machine .l-bar { background: var(--gen-soft); border: 1.5px solid var(--gen); }
+  .lev-divider { display: grid; grid-template-columns: 11.5rem 1fr; gap: 0.8rem; align-items: center; margin: 0.25rem 0; }
+  .lev-divider .d-line { border-top: 2px dashed var(--muted); position: relative; }
+  .lev-divider .d-label { font-size: 0.66rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); text-align: right; }
+
+  /* space map */
+  .space-wrap { min-width: 620px; font-family: system-ui, sans-serif; }
+  .space-bands { display: flex; margin-left: 7.2rem; gap: 2px; margin-bottom: 0.3rem; }
+  .space-bands .band { font-size: 0.6rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); text-align: center; border-bottom: 2px solid var(--line); padding-bottom: 0.15rem; }
+  .space-body { display: flex; }
+  .space-rows { width: 7.2rem; display: flex; flex-direction: column; justify-content: space-around; }
+  .space-rows .rl { font-size: 0.64rem; font-weight: 700; color: var(--muted); text-align: right; padding-right: 0.6rem; line-height: 1.3; }
+  #lattice { display: grid; gap: 2px; flex: 1; }
+  #lattice .c { width: 100%; aspect-ratio: 1; border-radius: 2px; }
+  .c.owed { background: var(--gen-soft); border: 1px solid var(--gen); }
+  .c.covered { background: var(--atom); opacity: 0.85; }
+  .c.redc { background: var(--bad); }
+  .c.blocked { background: transparent; border: 1px dashed var(--muted); }
+  .c.parked { background: var(--panel); border: 1px solid var(--line); }
+  .space-legend { font-size: 0.72rem; color: var(--muted); margin-top: 0.8rem; line-height: 2.1; }
+  .space-legend .sw { display: inline-block; width: 0.72rem; height: 0.72rem; border-radius: 2px; vertical-align: -0.1rem; margin-right: 0.3rem; }
+
+  /* quiz */
+  .quiz-card {
+    border: 1px solid var(--line); border-radius: 12px;
+    padding: 1.2rem 1.3rem; margin: 0 0 1.2rem; background: var(--panel);
+    font-family: system-ui, -apple-system, sans-serif;
+  }
+  .quiz-card .q-num {
+    font-size: 0.7rem; font-weight: 700; letter-spacing: 0.12em;
+    text-transform: uppercase; color: var(--muted); display: block; margin-bottom: 0.45rem;
+  }
+  .quiz-card .q-text { font-weight: 650; font-size: 0.98rem; line-height: 1.5; margin-bottom: 0.9rem; }
+  .q-opts { display: flex; flex-direction: column; gap: 0.5rem; }
+  .q-opt {
+    text-align: left; font: inherit; font-size: 0.88rem; line-height: 1.5;
+    background: var(--ground); color: var(--ink);
+    border: 1.5px solid var(--line); border-radius: 8px;
+    padding: 0.6rem 0.8rem; cursor: pointer;
+  }
+  .q-opt:hover { border-color: var(--muted); }
+  .q-opt:focus-visible { outline: 2px solid var(--atom); outline-offset: 2px; }
+  .q-opt[data-state="correct"] { border-color: var(--good); background: var(--atom-soft); font-weight: 650; }
+  .q-opt[data-state="wrong"] { border-color: var(--bad); opacity: 0.75; }
+  .q-opt:disabled { cursor: default; }
+  .q-explain {
+    display: none; margin-top: 0.9rem; font-size: 0.85rem; line-height: 1.55;
+    border-top: 1px solid var(--line); padding-top: 0.8rem;
+  }
+  .q-explain .verdict { font-weight: 750; }
+  .q-explain .verdict.ok { color: var(--good); }
+  .q-explain .verdict.no { color: var(--bad); }
+
+  .foot { margin-top: 3rem; font-size: 0.8rem; color: var(--muted); font-family: system-ui, sans-serif; }
+</style>
+
+<div class="wrap">
+
+<span class="kicker">workload harness · design explainer II · 2026-07-15</span>
+<h1>Scenarios from atoms: the compositional approach, and the skill that can experiment its way there</h1>
+<p class="standfirst">How generating tests from a small algebra of trusted parts solves the aiming problem that scoring never could — and the structural rethink that lets the skill get there by experiment instead of by rewrite.</p>
+
+<p style="font-family: system-ui, sans-serif; font-size: 0.8rem; color: var(--muted); border: 1px solid var(--line); border-radius: 8px; padding: 0.55rem 0.9rem;"><strong>The why of the set — the method and its arguments.</strong> Companion: <a href="https://claude.ai/code/artifact/5f152ab6-7e22-4a5e-9dbf-d56f89b40ee9" style="color: var(--atom); font-weight: 650;">🏛 The product book</a> — the machine and the experience that wrap this engine (pieces, run trace, repo zones, lifecycle, the pages, who does what). Read this one first.</p>
+
+<div class="callout">
+  <span class="label">The whole argument, one screen</span>
+  <p style="margin-bottom:0;">
+  <strong>1 ·</strong> Eight measured runs say the harness maps and verifies but doesn't <em>aim</em> — and scoring can't fix aiming, because a score only reorders a list that never contained the missing situations (§1).<br>
+  <strong>2 ·</strong> So stop authoring situations: author ~a dozen trusted <span class="atom-word">flow atoms</span> and let a typed <span class="op-word">algebra</span> generate every valid combination — a generated scenario <em>is</em> an aim (§2–4).<br>
+  <strong>3 ·</strong> Because the space is enumerable, "never tried" becomes countable <span class="gen-word">debt</span> that gates the search; attention is demoted to tie-breaker; the only honest stops are budget-exhausted or zero-debt (§5).<br>
+  <strong>4 ·</strong> Atoms are code in the product's own language — declarations live <em>in</em> the code, so nothing drifts — and one engine speaks to every language through a frozen manifest/observation protocol (§3, §6).<br>
+  <strong>5 ·</strong> The skill splits into engine (tested code) / policy (versioned data) / judgment (the agent), so improving the method becomes a cheap, attributable experiment up a cost ladder — never a rewrite (§8).<br>
+  <strong>6 ·</strong> Path: ratify §24 → smallest prototype → one treatment at a time → blind rows → promote (§7 has the pointer; the plan of record is the decision packet).
+  </p>
+</div>
+
+<!-- ============================================================ -->
+<h2><span class="num">1</span>Background: why generation, not better scoring</h2>
+
+<div class="callout">
+  <span class="label">Vocabulary: two L-scales that share letters — don't conflate them</span>
+  <p><strong>The interception funnel (L1–L4)</strong> — the four stages a real bug must survive, in order, for the harness to catch it. This is how every lab row is graded, and where the 94% / 9% / 58% numbers below live:</p>
+  <p style="margin-left:0.8rem;">
+  <strong>L1 · Map</strong> — is the bug's surface/seam represented in the model at all? (~94% — solved)<br>
+  <strong>L2 · Aim</strong> — did any scenario actually <em>attack</em> the bug's specific situation? (<strong>9%, pinned four rows — the wall this whole design attacks</strong>)<br>
+  <strong>L3 · Oracle</strong> — if the failure fired, would an oracle notice? (~58% — improving)<br>
+  <strong>L4 · Catch</strong> — did a run actually go red and get confirmed? (0% — the product of the three above)
+  </p>
+  <p style="margin-bottom:0;"><strong>Scenario rungs (L0–L4)</strong> — an unrelated scale describing one scenario's <em>complexity</em>: L0 attributable control · L1 one adversarial dimension · L2 interaction between actors/flows · L3 an event/state landing mid-attack · L4 scale/soak. Rule of thumb: percentages and "the wall" = funnel; a label on a single scenario = rung. (Coincidentally, the bugs we keep missing are funnel-L2 failures that live in rung-L2/L3 scenarios — interaction situations nobody aimed at.)</p>
+</div>
+
+<p>Eight measured runs of the harness tell one story. Mapping (funnel L1) works — the harness finds ~94% of the product's surfaces. Verification (L3) works — oracles catch what they're pointed at. But <strong>aiming (L2)</strong> — actually attacking the situations where the bugs live — has been stuck at 9% for four straight runs, under three different philosophies:</p>
+
+<ul>
+  <li><strong>Hand-authored scenarios</strong> (usage-first): real situations, but a run produces ~10 of them, and the author's imagination is the ceiling. The missed bugs sat in situations nobody happened to write.</li>
+  <li><strong>Better scoring</strong> (attention formulas): re-rank the candidate list by where the vendor's tests are thin. Failed twice — a score can only <em>reorder</em> a list; it cannot put a missing situation <em>onto</em> the list.</li>
+  <li><strong>More budget</strong>: longer runs converged to repetition, not coverage — with no enumerable space, "keep searching" means "keep circling."</li>
+</ul>
+
+<div class="callout">
+  <span class="label">The core move</span>
+  <p>Stop authoring situations and stop scoring guesses. Author a small set of trusted <span class="atom-word">flow atoms</span>, define a small <span class="op-word">algebra of operators</span> that combine them, and let the machine <span class="gen-word">generate every valid combination</span> as a candidate. A generated scenario <em>is</em> an aim — and because the space of valid combinations is enumerable, <strong>what you haven't tried becomes a visible, countable debt</strong> instead of a blind spot. Aiming stops being a scoring problem and becomes a coverage obligation.</p>
+</div>
+
+<p>That last sentence is the entire thesis. Everything else in this document is mechanism.</p>
+
+<h3>The same run, before and after — with real numbers</h3>
+
+<div class="table-scroll"><table>
+  <tr><th></th><th>Row 6 as it actually ran (usage-first, hand-planned)</th><th>The same budget, compositional</th></tr>
+  <tr>
+    <td><strong>Situations that existed</strong></td>
+    <td>10 scenarios — the ones the model thought to write</td>
+    <td>~1,100 valid cells compiled from ~a dozen atoms (the measured DBOS lattice: 48 documented surfaces → 1,104 real cells)</td>
+  </tr>
+  <tr>
+    <td><strong>What "untested" looked like</strong></td>
+    <td>Invisible. Async was parked on a false premise, streams were simply absent from the model, a modeled event was never emitted — and nothing could notice</td>
+    <td>Visible, countable debt: an un-attacked modality, an un-fired event, an un-composed coupled pair each block the stop row mechanically</td>
+  </tr>
+  <tr>
+    <td><strong>How it ended</strong></td>
+    <td>Stopped at 59% of budget declaring "model exhausted" — honest greens, zero findings, and the catchable bugs sat in situations that were never <em>on any list</em></td>
+    <td>"Exhausted" becomes computable: either debt reaches zero or the budget does — runtime converts to coverage instead of repetition</td>
+  </tr>
+</table></div>
+
+<p>That contrast is why the fix is generative rather than a better sampler: row 6's failure wasn't picking badly from its options — it was that the winning options <em>didn't exist</em> in its universe.</p>
+
+<!-- ============================================================ -->
+<h2><span class="num">2</span>Intuition: a grammar, not a library</h2>
+
+<p><strong>Toy example 1 — language.</strong> Nobody writes a dictionary of every sentence. You learn ~10,000 words and a grammar, and you can produce infinitely many <em>valid</em> sentences — while the grammar mechanically rejects word salad. Flow atoms are the words; operators are the grammar; composition validity is the parser. Ten atoms and twelve operators express more situations than ten thousand hand-written scenarios, and — the part that matters — the set of grammatical sentences of bounded length is <em>enumerable</em>. You can know which ones you haven't said.</p>
+
+<div class="callout">
+  <span class="label">"The generator" — a definition, once</span>
+  <p>Wherever this page says <em>generator</em>, it means <strong>deterministic engine code — a script, never an agent</strong>: the validator + compiler + materializer pipeline, pure functions with byte-identical output for the same (manifest, policy, seed). No model call exists anywhere in the generation path — that's the lesson of rows 1–8, where an agent <em>was</em> the generator and its imagination was the ceiling. The agent appears only before generation (drafting atoms, gated by critics) and after it (triaging reds). Between those two joints, everything is arithmetic — which is precisely what makes "what wasn't generated" a computable debt instead of a blind spot.</p>
+</div>
+
+<p><strong>Toy example 2 — property-based testing, one level up.</strong> QuickCheck showed that generating inputs from combinators beats hand-picking examples: the generator explores corners no human bothers to write. The compositional harness is the same idea lifted from <em>function inputs</em> to <em>system situations</em>: instead of generating an integer, generate "two workers race on the same queue while a crash lands right after a claim, on Postgres." Same philosophy, same shrinking discipline, bigger objects.</p>
+
+<p><strong>Toy example 3 — chemistry.</strong> Atoms are hand-vetted and few; molecules are combinatorial and many. You trust the molecule because you trust the atoms <em>and the bonding rules</em>. This is where the manual effort goes: not into writing hundreds of tests, but into making ~10 atoms genuinely trustworthy (real API calls, real oracles) and the bonding rules genuinely strict (a composition that can't establish its preconditions is never emitted).</p>
+
+<div class="callout">
+  <span class="label">Why enumerability is the win</span>
+  <p>With hand-authoring, "did we test enough?" is unanswerable — the space has no boundary. With a grammar, the compiler can materialize every valid situation up to a bound, mark each one <em>attacked / owed / blocked / parked</em>, and refuse to claim "done" while owed cells remain. Our best runs stopped early saying "my model is exhausted" — that stop row is only honest when exhaustion is computed over an enumerated space, not felt.</p>
+</div>
+
+<!-- ============================================================ -->
+<h2><span class="num">3</span>The atoms: small, trusted, heavily annotated</h2>
+
+<div class="callout">
+  <span class="label">Ontology — three catalogs, one job each</span>
+  <p><strong>Atoms = flows</strong> — same thing, two names: "flow" says what it is (a goal-oriented journey), "atom" says its role in composition (smallest trusted, combinable unit). <strong>Resources &amp; Values are not atoms — they're the valence</strong>: the typed sites where bonds legally form (<code>race</code> needs a shared <code>Resource</code>; <code>sequence</code> needs an output→input type match). They never compose or run alone; ~8–15 classes per product, two kinds: <code>Resource</code> (provisionable state — queue, database) and <code>Value</code> (data — task, workflow-id). <strong>Invariants are the third catalog</strong> — falsifiable properties attached to flows, becoming the oracles of every composition that contains them. A scenario is a molecule: flows bonded by operators, legality from the types, judgment from the invariants.</p>
+</div>
+
+<p>A flow atom is the smallest user-meaningful behavior — a goal, not a subsystem. It is <strong>one code file in the product's own language</strong>: a function whose typed signature carries most of the declarations, plus a decorator carrying only what no signature can express. There is no sidecar metadata file to drift out of sync — the declarations <em>are</em> the code:</p>
+
+<pre><code><span class="k">@flow</span>(
+    key=<span class="v">"enqueue-and-complete"</span>,
+    resources=(SYSTEM_DB, QUEUE_STATE, EXECUTOR_OWNERSHIP),
+        <span class="cm"># side effects — invisible to any signature; where race() finds real</span>
+        <span class="cm"># contention and how the generator detects coupling BETWEEN flows</span>
+    invariants=(EXACTLY_ONCE, ACK_NOT_LOST),
+        <span class="cm"># promises — kept declarative because the USER must ratify them as text;</span>
+        <span class="cm"># they resolve to the oracles every composition containing this atom runs</span>
+    modalities=(<span class="v">"sync"</span>, <span class="v">"async"</span>, <span class="v">"process-parallel"</span>),
+)
+<span class="k">def</span> <span class="a">enqueue_and_complete</span>(ctx, queue: Queue, task: Task) -&gt; tuple[WorkflowId, Result]:
+        <span class="cm"># inputs & outputs DERIVED from the type-hinted signature —</span>
+        <span class="cm"># they cannot drift from the code because they ARE the code;</span>
+        <span class="cm"># this is what sequence() matches upstream outputs against</span>
+    wf = ctx.client.enqueue(queue, task)
+    ctx.checkpoint(AFTER_CLAIM)
+        <span class="cm"># checkpoints: the declaration IS the emission — a declared-but-never-</span>
+        <span class="cm"># emitted checkpoint is impossible; these are the only legal places</span>
+        <span class="cm"># interrupt() may land an event</span>
+    <span class="k">return</span> wf.id, ctx.await_result(wf)</code></pre>
+
+<p>The types in that signature aren't tags — they're classes defined once per product in the model package, each carrying exactly the behavior the machine needs (the pytest-fixture and QuickCheck-<code>Arbitrary</code> patterns, merged):</p>
+
+<pre><code><span class="cm"># model/resources.py — agent-drafted, user-ratified, ~8–15 per product</span>
+<span class="k">class</span> <span class="a">Queue</span>(Resource):
+    <span class="k">def</span> provision(ctx): <span class="k">return</span> ctx.client.create_queue(ctx.unique_name(<span class="v">"q"</span>))
+        <span class="cm"># how scenario setup creates one when no upstream flow provides it</span>
+    <span class="k">def</span> teardown(ctx, q): ...
+
+<span class="k">class</span> <span class="a">Task</span>(Value):
+    <span class="k">@staticmethod</span>
+    <span class="k">def</span> generate(rng): ...        <span class="cm"># property-based payload sampling within a cell</span>
+    shrink = [<span class="v">"payload_size"</span>]     <span class="cm"># the deterministic path from a red back to minimal</span></code></pre>
+
+<p>At composition time these are <em>types</em> (the generator matches them statically, nothing runs); at execution time the flow receives <em>instances</em> — worker A and worker B race on the <em>same</em> <code>Queue</code> object, each with <em>different</em> <code>Task</code> payloads. The generator never executes anything: it reads the decorator metadata and signatures via import/AST and extracts a normalized manifest (§6). A YAML-shaped projection of the atom still exists — but as <strong>compiled output for human review</strong>, generated one-way from the code, never authored. Ten to fifteen atoms cover a product like DBOS; the agent drafts them from docs and code, a critic reviews, the user ratifies.</p>
+
+<!-- ============================================================ -->
+<h2><span class="num">4</span>The algebra: twelve operators, strict bonding rules</h2>
+
+<div class="table-scroll"><table>
+  <tr><th>Group</th><th>Operators</th><th>What they search</th></tr>
+  <tr>
+    <td><strong>Structure</strong></td>
+    <td><code>flow</code> · <code>sequence</code> · <code>parallel</code> · <code>race</code> · <code>repeat</code></td>
+    <td>Journeys, orderings, contention, interaction between flows — where the funnel-L2 aiming wall lives</td>
+  </tr>
+  <tr>
+    <td><strong>Adversity</strong></td>
+    <td><code>interrupt(A, event, checkpoint)</code></td>
+    <td>A world event (crash, outage, clock jump) landing at a <em>declared</em> checkpoint — fault timing made first-class</td>
+  </tr>
+  <tr>
+    <td><strong>Binding</strong></td>
+    <td><code>with_actors</code> · <code>with_channel</code> · <code>with_modality</code> · <code>with_state</code> · <code>with_load</code> · <code>with_environment</code></td>
+    <td>The remaining coordinate dimensions: who, through what route, in which execution form, from which precondition, at what scale, on which substrate</td>
+  </tr>
+</table></div>
+
+<p>Operators nest. Here is a real generated candidate, drawn as its composition tree:</p>
+
+<div class="diagram">
+  <div class="ctree">
+    <div class="cnode bind"><span class="cn-label">with_environment</span> <span class="cn-note">— freebsd-postgres</span>
+      <div class="cnest">
+        <div class="cnode op"><span class="cn-label">interrupt</span> <span class="cn-note">— event: process-crash · checkpoint: after-claim</span>
+          <div class="cnest">
+            <div class="cnode op"><span class="cn-label">race</span> <span class="cn-note">— legal only because both atoms declare the shared resources <code>queue</code> + <code>executor-ownership</code></span>
+              <div class="cnest">
+                <div class="cnode atom"><span class="cn-label">flow(enqueue-and-complete)</span> <span class="cn-note">— worker A</span></div>
+                <div class="cnode atom"><span class="cn-label">flow(enqueue-and-complete)</span> <span class="cn-note">— worker B</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="cap">Reads as: two workers contend on one queue; one crashes just after claiming; on Postgres. The oracles come with the atoms (exactly-once, ack-not-lost) — no one has to remember to check. <span style="color:var(--atom); font-weight:700;">Green</span> = trusted atoms · <span style="color:var(--op); font-weight:700;">violet</span> = structural/adversarial operators · <span style="color:var(--gen); font-weight:700;">amber</span> = coordinate bindings.</div>
+</div>
+
+<h3>Bonding rules: why generated ≠ garbage</h3>
+
+<p>A composition is emitted only if it type-checks: upstream <code>outputs</code> satisfy downstream <code>inputs</code>; preconditions are establishable; <code>race</code> requires a genuinely shared declared resource; <code>interrupt</code> names a real checkpoint; the invariants stay observable; and a deterministic shrink path exists. Invalid combinations are <strong>never emitted to fill a grid</strong> — the lattice is sparse by construction. This is the difference between combinatorial <em>coverage</em> and combinatorial <em>explosion</em>.</p>
+
+<h3>Why this doesn't explode: the pruning funnel</h3>
+
+<p>The space is tiered because the nine dimensions play three roles — and the collapse from billions to thousands happens through five gates, <strong>each powered by one specific line of the atoms' declarations</strong>:</p>
+
+<div class="table-scroll"><table>
+  <tr><th>Gate</th><th>Survivors</th><th>What it checks</th><th>Powered by (the declaration)</th></tr>
+  <tr><td><strong>0 · naive cross</strong></td><td>~10¹⁰</td><td>nothing — every tree × every dimension value, blindly. Never computed, stored, or visited</td><td>—</td></tr>
+  <tr><td><strong>1 · composition typing</strong></td><td>~18,000 trees → <strong>~50</strong></td><td>the biggest kill (~350×): <code>sequence</code> needs each step's inputs/preconditions established by prior outputs <em>or effects</em> or setup (~15 of 144 ordered pairs survive) · <code>race</code> needs a shared Resource (~8–10 of 78) · triples only compose through valid pairs (~10 of ~17,000)</td><td>typed signatures · <code>resources=()</code></td></tr>
+  <tr><td><strong>2 · mechanism applicability</strong></td><td>×8 → ×4</td><td>a mechanism is a way an <em>invariant</em> breaks; no retries declared → no retry-exhaustion cells</td><td><code>invariants=()</code></td></tr>
+  <tr><td><strong>3 · event × checkpoint reality</strong></td><td>×36 → ×8</td><td>events land only on checkpoints the composition actually reaches; event applicability is per-flow</td><td><code>ctx.checkpoint()</code> constants</td></tr>
+  <tr><td><strong>4 · state applicability</strong></td><td>×10 → ×2–3</td><td>negations only where a typed reference input exists; prefix-states only where reachable</td><td>typed reference params</td></tr>
+  <tr><td><strong>5 · topology validity</strong></td><td>×4 → ×1–2</td><td>only declared-valid actor relationships</td><td>topology declarations</td></tr>
+  <tr><td><strong>= identity cells</strong></td><td><strong>~10⁴</strong></td><td>enumerable, debt-accounted (measured 4-dim probe floor: 1,104; full cross 10–100×)</td><td></td></tr>
+</table></div>
+
+<p>Below the identity tier: <strong>replication dimensions</strong> (channel · environment · load) don't multiply everywhere — applicability prunes them (CLI parsing gets no database matrix), and <strong>covering arrays</strong> handle the rest: every <em>pair</em> of dimension values is guaranteed to co-occur in some scenario, collapsing exponential crossing to near-quadratic (decades of combinatorial-testing data: most interaction bugs are 2–3-factor). <strong>Value space</strong> inside a cell (seeds, schedules, fault offsets, payloads) is infinite and sampled, never enumerated. <strong>Depth escalation</strong> keeps granularity honest: start coarse, refine cells where evidence or coupling points — the dial is policy, so tuning it is a cheap experiment. Finally the floors select the mandated ~250–350 for the breadth pass; the rest is ranked frontier.</p>
+
+<div class="callout">
+  <span class="label">The punchline — and why under-declaring is dangerous</span>
+  <p>"The declarations are the pruning function" is literal: each field kills one axis of the explosion (signature → invalid sequences · <code>resources</code> → invalid races · checkpoints → impossible fault placements · <code>invariants</code> → irrelevant mechanisms · typed params → inapplicable states · <code>modalities</code> → unimplemented forms). The flip side is R2's warning in the reference: a <em>missing</em> declaration doesn't just lose information — it silently prunes away real cells, shrinking the space where bugs live. Pruning power and blinding power are the same power, which is why the lint checks declarations against what the code actually touches.</p>
+</div>
+
+<h3>Proof the algebra speaks our language: both real findings are compositions</h3>
+
+<div class="diagram">
+  <div style="font-weight:750; font-size:0.95rem; margin-bottom:0.15rem;">Finding 1 · gc-strand <span style="font-weight:600; color:var(--bad); font-size:0.75rem;">● availability (w2)</span></div>
+  <p style="font-size:0.84rem; margin:0 0 0.8rem; line-height:1.55;"><strong>The bug in one sentence:</strong> garbage-collect deletes a completed child workflow that a still-pending parent references — after a crash, the recovered parent waits forever for a child that no longer exists.</p>
+  <div class="ctree">
+    <div class="cnode op"><span class="cn-label">interrupt</span> <span class="cn-note">— event: process-crash · checkpoint: before-parent-completes</span>
+      <div class="cnest">
+        <div class="cnode op"><span class="cn-label">sequence</span> <span class="cn-note">— first the parent forks and awaits children, then gc runs over them</span>
+          <div class="cnest">
+            <div class="cnode atom"><span class="cn-label">flow(fork-children-and-await)</span> <span class="cn-note">— parent creates children, awaits their results</span></div>
+            <div class="cnode atom"><span class="cn-label">flow(garbage-collect)</span> <span class="cn-note">— deletes completed workflows, including the children</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="cap"><strong>Caught by:</strong> the liveness invariant the atoms already carry (<em>every workflow eventually reaches a terminal state</em>) — the recovered parent never terminates, so the oracle fires. No one had to anticipate this bug; the invariant plus the composition found it.</div>
+</div>
+
+<div class="diagram">
+  <div style="font-weight:750; font-size:0.95rem; margin-bottom:0.15rem;">Finding 2 · fork-nonexistent <span style="font-weight:600; color:var(--bad); font-size:0.75rem;">● wrong-error (w1)</span></div>
+  <p style="font-size:0.84rem; margin:0 0 0.8rem; line-height:1.55;"><strong>The bug in one sentence:</strong> forking a workflow id that doesn't exist raises a bare <code>Exception</code>, while every sibling API raises the typed <code>DBOSNonExistentWorkflowError</code> — so callers can't handle it.</p>
+  <div class="ctree">
+    <div class="cnode bind"><span class="cn-label">with_state</span> <span class="cn-note">— precondition: workflow-id-nonexistent (the misuse persona's binding)</span>
+      <div class="cnest">
+        <div class="cnode atom"><span class="cn-label">flow(fork-workflow)</span> <span class="cn-note">— fork an existing workflow from a step</span></div>
+      </div>
+    </div>
+  </div>
+  <div class="cap"><strong>Caught by:</strong> the error-contract oracle — a flow may only raise its declared, typed errors. The misuse persona exists precisely to run every flow from illegitimate states.</div>
+</div>
+
+<p>Both findings took days of agent judgment to find by hand. As compositions, each is <em>two operators deep</em> — well inside the generator's mandatory coverage floors (every state-sharing flow pair gets composed; every flow gets a misuse binding). The machine would have emitted both as ordinary coverage debt. That's the retrodiction argument for the whole approach.</p>
+
+<h3>Where states come from: negation and prefixes, never imagination</h3>
+
+<p>The <code>with_state</code> dimension looks like it needs someone to imagine situations ("what if the id doesn't exist?") — which would reopen the authoring trap. It doesn't: states are <strong>generated from two mechanical sources</strong>, both reading declarations that already exist.</p>
+
+<p><strong>Source 1 — precondition negation over typed inputs.</strong> Every typed reference in a signature (<code>workflow: WorkflowId</code>) gets a fixed, <strong>engine-owned misuse library</strong> — the same six negations for every reference-shaped type in every product, forever:</p>
+
+<ul>
+  <li><strong>nonexistent</strong> — well-formed id, never created (mint a fresh one)</li>
+  <li><strong>stale</strong> — existed, then destroyed (valid id → run the destroy flow → use it)</li>
+  <li><strong>wrong-lifecycle-state</strong> — refers to an object in a state the verb doesn't accept (fork a PENDING one? a cancelled one?)</li>
+  <li><strong>foreign</strong> — belongs to another tenant/queue (the isolation probe)</li>
+  <li><strong>malformed</strong> — not even well-formed</li>
+  <li><strong>reused</strong> — where single-use is expected</li>
+</ul>
+
+<p>The misuse floor is then arithmetic: every flow × every typed input × each applicable negation = owed cells. Nobody imagined "nonexistent workflow id" — it's negation #1 applied to a declared type. And the oracle has a <strong>differential mode needing zero declarations</strong>: feed the same invalid input class to every sibling verb accepting that type and compare the errors — five raise the typed error, one raises bare <code>Exception</code>; the finding is an <em>inconsistency</em>, with the product's own siblings as the oracle. <span style="color: var(--muted); font-size: 0.88em;">(This page narrates; the binding library + floor is <code>c-misuse</code>, 📖 §6b.)</span></p>
+
+<p><strong>Source 2 — reachable states are flow prefixes.</strong> The subtler states (<code>acknowledged-not-completed</code>, <code>recovery-pending</code>) are the effect-sets left behind by running part of another flow: <code>with_state(A, stale-id)</code> compiles to <code>sequence(create, destroy, A)</code>. The state axis mostly collapses back into the composition algebra — reachable states = post-conditions of flow prefixes, enumerated from the same <code>effects</code> declarations.</p>
+
+<p>Residual quality-dependence, ranked small: resource lifecycle enums (usually a literal enum in the product source — extractable, not imagined) · destroy paths existing as flows (the surface-census floor already forces this) · declared error types (extractable; the differential mode works without them). The state dimension <em>felt</em> like the hardest of the nine; declared types + negation + prefixes make it the most mechanical.</p>
+
+<!-- ============================================================ -->
+<h2><span class="num">5</span>How the search runs on top of the algebra</h2>
+
+<p>The loop below is abstract, so each step also carries a live trace (<span class="gen-word">amber</span>) following <strong>one concrete cell</strong> from birth to verdict — including where the environment gets bound, which the abstract version hides. Environments enter twice: at <em>compile</em> (a coordinate the cell is born with) and at <em>run</em> (the bench materializes it).</p>
+
+<div class="diagram">
+  <div class="vsteps">
+
+    <div class="vstep">
+      <div class="v-n">1 · compile<b>Sparse lattice</b></div>
+      <div class="v-body">Every VALID composition up to the bound becomes a cell: owed / covered / blocked / parked. Environment profiles are declared in the model (agent-drafted: <code>postgres-16</code>, <code>sqlite</code>…) and multiply a cell <strong>only where applicable</strong> — recovery flows get both database profiles; pure CLI parsing gets none. Same composition + same seed across two profiles = an environment matrix, which also arms a differential oracle.
+        <span class="trace"><span class="t-label">trace · cell #1372 is born</span><code>with_environment( interrupt( race(enqueue, enqueue), crash, after-claim ), postgres-16 )</code> → state: <strong>owed</strong>. Its sibling #1373 (same tree, <code>sqlite</code>) is also owed.</span>
+      </div>
+    </div>
+
+    <div class="vstep">
+      <div class="v-n">2 · gate<b>Eligibility</b></div>
+      <div class="v-body">Debt floors decide what MAY run: breadth before depth, controls before attacks, per-cell caps — and <strong>environment reachability</strong>: a cell whose profile the bench can't provision yet becomes <em>infrastructure debt</em> — never silently covered, restored to the frontier when the capability lands.
+        <span class="trace"><span class="t-label">trace</span>#1372: control exists (one worker, no crash, postgres — green ✓), postgres recipe available → <strong>eligible</strong>. Sibling #1373: no sqlite recipe yet → <strong>blocked</strong>, logged as a named infrastructure obligation. (Exactly our real multi-executor block: source-confirmed candidate, execution-blocked, waiting on a platform lever.)</span>
+      </div>
+    </div>
+
+    <div class="vstep">
+      <div class="v-n">3 · rank<b>Attention</b></div>
+      <div class="v-body">Orders the <em>eligible</em> frontier only — severity of threatened invariants, novelty, vendor-test deficit, coupling. Never a coverage claim; no score can promote an ineligible cell. Ranking is the one component with a failed history, so it carries explicit doctrine — bounded failure, signal decay labels, ranker portfolio with a random control lane, online reweighting, per-run metrics, the two-key ladder rule: 📖 §9.
+        <span class="trace"><span class="t-label">trace</span>#1372 ranks high: shared <code>queue</code> resource (coupling), exactly-once threatened (w4), the vendor's tests never crash inside this window.</span>
+      </div>
+    </div>
+
+    <div class="vstep">
+      <div class="v-n">4 · run<b>Execute + control</b></div>
+      <div class="v-body">The bench <strong>materializes the environment binding</strong>: provisions a guest with the profile's services (Postgres via its recipe), hands the flow its <code>ctx</code> with handles bound to that instance, then sweeps bounded seeds/schedules/fault-timings inside the cell. Every run gets the <strong>universal oracle plane</strong> (liveness · terminal-state · undeclared-error · bounds — zero declarations needed) plus the atoms' declared invariants.
+        <span class="trace"><span class="t-label">trace</span>guest up with postgres-16 · 20 seeds × fault sweep around <code>after-claim</code> · seed 17: the task body executed <strong>twice</strong> — RED.</span>
+      </div>
+    </div>
+
+    <div class="vstep">
+      <div class="v-n">5 · react<b>Shrink · neighbors</b></div>
+      <div class="v-body">A red preempts new search: peel the tree to minimal, then mutate one coordinate at a time around the find. The environment is a peel step too — if the red survives on the default profile, the finding is not environment-specific; if it only fires on one profile, that <em>is</em> the finding.
+        <span class="trace"><span class="t-label">trace</span>drop the race → green (contention essential) · red survives seed minimization → finding crystallized with replay recipe · neighbors enqueued: same crash at <code>after-ack</code>; same race, <code>async</code> modality · #1372 → <strong>covered-red</strong>; the board's cell flips.</span>
+      </div>
+    </div>
+
+  </div>
+  <div class="cap">The two-stage rule that encodes the lesson of eight rows: <strong>coverage debt decides where the harness is allowed to search; attention only decides which eligible cell runs next.</strong> The thing that failed twice (scoring) is demoted to tie-breaker; the thing that was missing (enumerable obligations) becomes the gate. Budget splits across three lanes — coverage, evidence-driven depth, open exploration — and the only honest stops are "budget exhausted" or "zero debt."</div>
+</div>
+
+<p>Two mechanics deserve a sentence each. <strong>Shrinking</strong>: because a scenario is a tree, minimization is deterministic — peel operators one at a time until the red disappears; the last tree that still fails is the finding. Concretely, for cell #1372's red at seed 17:</p>
+
+<div class="callout">
+  <span class="label">Shrink, step by step — every answer is a fact about the bug</span>
+  <p style="margin-bottom:0;">
+  <strong>1 ·</strong> peel <code>with_environment(postgres-16)</code> → run on the default profile → <span style="color:var(--bad); font-weight:700;">still red</span> ⇒ not environment-specific; binding dropped.<br>
+  <strong>2 ·</strong> peel <code>interrupt(crash, after-claim)</code> → no crash → <span style="color:var(--good); font-weight:700;">green</span> ⇒ the crash is essential; keep it.<br>
+  <strong>3 ·</strong> collapse <code>race</code> to one worker → <span style="color:var(--good); font-weight:700;">green</span> ⇒ contention is essential; keep it.<br>
+  <strong>4 ·</strong> shrink declared values: task-count 100 → 2, payload 64&nbsp;KB → 1&nbsp;KB → <span style="color:var(--bad); font-weight:700;">still red</span>.<br>
+  <strong>Minimal finding:</strong> two workers, two tasks, one crash after claim — with a passing control exactly one peel away, and a replay recipe (tree + seed + fault timing) attached. No judgment anywhere in the walk.
+  </p>
+</div>
+
+<p><strong>Neighborhoods</strong>: a confirmed red generates adjacent candidates by changing exactly one coordinate (same crash, different checkpoint; same race, async modality) — evidence buys depth without erasing breadth obligations.</p>
+
+<h3>How many scenarios is "meaningful"?</h3>
+
+<p>Not a magic number — the honest threshold is <strong>every debt floor paid once</strong> (the first full breadth pass). But that converts to arithmetic. The three objects have three counts: <strong>cells</strong> (~1,100 for DBOS — free, static), <strong>scenarios</strong> (a cell materialized: tree + cast + control + shrink plan), and <strong>runs</strong> (~30–100 per scenario: seeds × fault sweeps × schedules — where <code>Task.generate(rng)</code> hunts rare values inside an aimed situation).</p>
+
+<div class="table-scroll"><table>
+  <tr><th>Floor</th><th>Arithmetic (DBOS-scale: ~12 atoms, ~48 surfaces)</th><th>Scenarios</th></tr>
+  <tr><td>Baselines (controls)</td><td>~12 flows × ~3 modalities</td><td>~30–40</td></tr>
+  <tr><td>Attack floor</td><td>flow × applicable mechanism families + every modeled event fired + misuse per flow</td><td>~100–150</td></tr>
+  <tr><td>Interaction floor</td><td>state-sharing flow pairs (counted from <code>resources</code>) × a composition each</td><td>~40–80</td></tr>
+  <tr><td>Environment matrix</td><td>only where profiles genuinely apply</td><td>~30–50</td></tr>
+  <tr><td><strong>First breadth pass</strong></td><td>≈ 10–15k runs ≈ <strong>~1 h on the current 32-core metal host, ~8 min on ten</strong> — grounded in the platform's measured ¼s-per-seed restore + cached builds; full tiered capacity math incl. the whole-space passes lives in 🛠️ §5</td><td><strong>≈ 250–350</strong></td></tr>
+</table></div>
+
+<p>For contrast: row 6's universe was <strong>10 scenarios</strong>. The breadth pass is ~30× more situations — but the difference isn't volume (rows 5–8 finished with budget left over); it's that the 250 are the <em>enumerated obligations of the model</em>, so "what haven't we tried?" finally has an answer. Steady state: a few hundred official scenarios per product, growing where evidence points, with CI replaying the impact-selected ~5–20 per PR.</p>
+
+<p>And one extension the machinery gets nearly for free: <strong>resource and performance invariants</strong>. The observation stream can carry memory, queue depth, handle counts, and operation counts; the oracle plane then enforces <em>bounds</em> invariants ("memory bounded over N cycles", "the queue drains after the burst", "cost grows linearly up the load ladder"). The deterministic sim is uniquely good at this — virtual time compresses a week-long soak into minutes, with zero flakiness. What stays off the sim: wall-clock latency and throughput <em>numbers</em> — virtual time distorts exactly what a benchmark measures, so real benchmarking runs on the bench's real VMs as a separate lane feeding the same ledger. Correctness first; bounds invariants as the fast-follow; benchmarks when a buyer wants numbers rather than bounds.</p>
+
+<h3>The leverage picture: how much we write vs. how much runs</h3>
+
+<p>Honest order-of-magnitude estimates. Everything above the dashed line is written by hand (once, or once per language); the green layer is the only per-product human-touched code — and even that is agent-drafted, merely ratified. Everything below the line is manufactured:</p>
+
+<div class="diagram">
+  <div class="lev">
+    <div class="lev-row written">
+      <div class="l-who">Engine (once, ever)<span>validator · compiler · debt · frontier · shrinker · extractor + tests</span></div>
+      <div class="l-bar" style="width: 26%;"></div>
+      <div class="l-count">~3k core + ~3k tests</div>
+    </div>
+    <div class="lev-row written">
+      <div class="l-who">SDK (once per language)<span>decorator · ctx · observation emitter</span></div>
+      <div class="l-bar" style="width: 6%;"></div>
+      <div class="l-count">~700 LOC each</div>
+    </div>
+    <div class="lev-row ratified">
+      <div class="l-who">Product model (per product)<span>~12 atoms + resources.py — agent-drafted, user-ratified</span></div>
+      <div class="l-bar" style="width: 9%;"></div>
+      <div class="l-count">~1k LOC</div>
+    </div>
+    <div class="lev-divider"><div class="d-label">no human below this line</div><div class="d-line"></div></div>
+    <div class="lev-row machine">
+      <div class="l-who">Identity cells<span>compiled situations, free &amp; static (measured 4-dim probe floor: 1,104)</span></div>
+      <div class="l-bar" style="width: 34%;"></div>
+      <div class="l-count">~10⁴</div>
+    </div>
+    <div class="lev-row machine">
+      <div class="l-who">Scenarios (breadth pass)<span>materialized cells: tree + cast + control + shrink plan</span></div>
+      <div class="l-bar" style="width: 22%;"></div>
+      <div class="l-count">~250–350</div>
+    </div>
+    <div class="lev-row machine">
+      <div class="l-who">Runs (breadth pass)<span>seeds × fault sweeps × schedules — ~11 core-hours: ~0.5–2 h on one metal host, minutes fanned out</span></div>
+      <div class="l-bar" style="width: 78%;"></div>
+      <div class="l-count">~10–20k</div>
+    </div>
+    <div class="lev-row machine">
+      <div class="l-who">CI replays (forever)<span>~5–20 impact-selected per PR, no tokens</span></div>
+      <div class="l-bar" style="width: 100%;"></div>
+      <div class="l-count">thousands / month</div>
+    </div>
+  </div>
+  <div class="cap">The ratio that matters: <strong>~1k lines of ratified product code manufacture ~10–20k adversarial runs per breadth pass and a recurring replay stream</strong> — roughly a 10–40× amplification at each layer. (Bar widths indicative, not linear.) The engine is paid once across all products; the SDK once per language; only the green layer scales with customers, and the agent writes it.</div>
+</div>
+
+<h3>What the space looks like</h3>
+
+<p>The lattice, drawn — at the <em>probe floor's</em> granularity (1,104 squares; the full v3 identity space is 10–100× this, so read the picture as one zoom level of a map that refines where evidence points). Each square is one <em>valid</em> cell — a composition × its bindings. Rows are what's being composed (12 solo flows, then the state-coupled pairs the <code>resources</code> declarations expose); column bands are the binding dimensions. The ocean of invalid combinations (billions) is <em>not drawn</em> — the type rules never emit it:</p>
+
+<div class="diagram">
+  <div class="space-wrap">
+    <div class="space-bands">
+      <div class="band" style="flex:10;">modality</div>
+      <div class="band" style="flex:16;">event × checkpoint</div>
+      <div class="band" style="flex:8;">topology</div>
+      <div class="band" style="flex:6;">environment</div>
+      <div class="band" style="flex:6;">load</div>
+    </div>
+    <div class="space-body">
+      <div class="space-rows">
+        <div class="rl">12 solo flows</div>
+        <div class="rl">coupled pairs<br>(shared state)</div>
+      </div>
+      <div id="lattice"></div>
+    </div>
+    <div class="space-legend">
+      <span class="sw" style="background:var(--gen-soft); border:1px solid var(--gen);"></span>owed — enumerated, not yet attacked (the debt) &nbsp;
+      <span class="sw" style="background:var(--atom); opacity:.85;"></span>covered — attacked with a control &nbsp;
+      <span class="sw" style="background:var(--bad);"></span>red — a finding lives here &nbsp;
+      <span class="sw" style="border:1px dashed var(--muted);"></span>blocked — infrastructure debt (e.g. a missing environment recipe) &nbsp;
+      <span class="sw" style="background:var(--panel); border:1px solid var(--line);"></span>parked — inapplicable, with audited evidence
+    </div>
+  </div>
+  <div class="cap">Reading the map: early in a lane's life the field is mostly amber (owed) — that amber count is the honest answer to "how much haven't we searched." The breadth pass turns floors green band by band; reds cluster and spawn neighbors around themselves (one-coordinate mutations); a whole blocked column is one missing bench capability, restored to amber the day the recipe lands. "Model exhausted" may only be declared when no amber remains — and the picture makes that claim checkable at a glance. This same picture, rendered from live data, becomes a coverage projection in the product (read-surface design parked — 📜 PAGES card).</div>
+</div>
+
+<!-- ============================================================ -->
+<h2><span class="num">6</span>One engine, many languages</h2>
+
+<p>Atoms must be written in the product's own language — the access channel is one of the nine search dimensions, and testing a TypeScript SDK through a Python bridge would destroy exactly the realism the method is built on. The architecture that squares this with "one engine" is the LSP / Terraform-provider / Temporal-SDK shape:</p>
+
+<ul>
+  <li><strong>One engine</strong> (language-neutral): compiler, lattice, debt, frontier, shrinker, evidence. It never reads Python or TypeScript — it consumes a normalized <strong>atom manifest</strong> and emits language-neutral scenario documents.</li>
+  <li><strong>Thin per-language SDKs</strong>: a decorator in Python, an annotation in TypeScript, a macro in Rust — each providing atom registration, the <code>ctx</code> interface, and an observation emitter. <code>wio atoms export</code> machine-extracts the manifest from code (import/AST), one-way, so the sync problem never returns.</li>
+  <li><strong>Engine-side oracles</strong>: SDKs only <em>emit observations</em> (checkpoint reached, effect recorded, typed error, terminal state, resource counts); oracle evaluation runs once, centrally, over that stream. A new language costs registration + ctx + emitter — never a re-port of the generators or the oracle plane.</li>
+</ul>
+
+<p>What freezes as public contract: the <strong>manifest schema + observation/runner protocol</strong> — versioned, additive-only, the same family as the evidence envelope. Scope: Python + TypeScript first (covers DBOS's both SDKs — making <code>channel</code> a live differential dimension — plus the local-first/JS world); cross-language compositions (enqueue via TS, recover via Python — a real interop bug class) are protocol-supported but a later cut.</p>
+
+<p>Where this engine sits in the product — the bench/searcher/map layers, who writes what, and the economics — lives in <a href="https://claude.ai/code/artifact/5f152ab6-7e22-4a5e-9dbf-d56f89b40ee9" style="color: var(--atom); font-weight: 650;">🏛 The product book</a>, Part II.</p>
+
+<!-- ============================================================ -->
+<h2><span class="num">7</span>From here</h2>
+
+<div class="callout">
+  <span class="label">The execution plan lives in its own page</span>
+  <p style="margin-bottom:0;">The plan collapsed to two goals (2026-07-16): assemble everything and run it once — the baseline in the codebase — then search the six surfaces with per-surface evals (🔬); everything after is deliberately unplanned until the baseline exists. Maintained in 🛠️ The plan, the one page of the set that goes stale by design. The diagnosis that plan rests on stays here, because it’s method: today’s scripts vary and account for situations a human authored — nothing generates situations; the missing layer is pure, deterministic, unit-testable functions, specified by 📖</p>
+</div>
+
+<!-- ============================================================ -->
+<h2><span class="num">8</span>The structural rethink: a skill that experiments instead of rewrites</h2>
+
+<p>Here is the uncomfortable diagnosis of the current skill: it is <strong>prose doctrine</strong>. Its rules live as SKILL.md text; every improvement is a rewrite of that text; and prose has no compiler. The proof already happened: the v0.1.4 rewrite silently <em>dropped</em> v0.1.3's async-parity gate — nobody chose that, the rewrite just didn't carry it, and it cost a measured run to notice. Prose rules don't compose, don't diff meaningfully, and can't be A/B tested. A skill that must find its final form <em>by experiment</em> cannot be made of prose.</p>
+
+<p>The rethink separates the skill into three materials with three change-speeds:</p>
+
+<div class="diagram">
+  <div class="pillars">
+    <div class="pillar engine">
+      <div class="p-t">Engine</div>
+      <div class="p-w">deterministic code · changes by PR + tests</div>
+      <ul>
+        <li>Composition validator, sparse compiler, debt ledgers, frontier, shrinker</li>
+        <li>Unit-testable; a gate cannot be "forgotten" in a rewrite because it is a function, not a paragraph</li>
+        <li>Lives in the wio lib — versioned, selftested</li>
+      </ul>
+    </div>
+    <div class="pillar policy">
+      <div class="p-t">Policy</div>
+      <div class="p-w">declarative data · changes by swap</div>
+      <ul>
+        <li>Breadth floors, budget splits, depth caps, ranking weights, operator bounds</li>
+        <li>One versioned file; frozen ex ante per run — <strong>an experiment = a policy diff</strong></li>
+        <li>Two policies can run head-to-head on the same engine</li>
+      </ul>
+    </div>
+    <div class="pillar judgment">
+      <div class="p-t">Judgment</div>
+      <div class="p-w">the agent · changes by brief</div>
+      <ul>
+        <li>Drafting atoms from docs, coupling hypotheses, park reasons, red triage, critic review</li>
+        <li>The only place model intelligence is spent — everything mechanical is engine</li>
+        <li>SKILL.md shrinks to the operating loop: when to call which engine command</li>
+      </ul>
+    </div>
+  </div>
+  <div class="cap">Today's skill mixes all three in one prose document, so every change risks every rule. Separated, each material changes at its own speed with its own safety: engine by tested PR, policy by versioned swap, judgment by brief. The lab's "lever" stops meaning "edit the doctrine text" and starts meaning "a policy diff or an engine PR" — diffable, attributable, reversible.</div>
+</div>
+
+<h3>The experiment ladder: pay for evidence in the cheapest currency first</h3>
+
+<div class="diagram">
+  <div class="ladder">
+    <div class="rung"><div class="r-name">1 · Engine selftests</div><div class="r-what">Does the mechanism work? Validator rejects invalid trees, compiler is deterministic, gates fire.</div><div class="r-cost">seconds · free</div></div>
+    <div class="rung"><div class="r-name">2 · Retrodiction</div><div class="r-what">Does this <em>policy</em> aim at real bugs? Score the frontier it would mandate against the sealed answer key — grader-side, no run. (This ladder rung just saved us: it rejected the DEC-027 formula for pennies.)</div><div class="r-cost">minutes · cents</div></div>
+    <div class="rung"><div class="r-name">3 · Prototype checks</div><div class="r-what">Does the abstraction express reality? Known findings' coordinates in the mandated set; zero invalid emissions; zero authored-file diff on policy swap.</div><div class="r-cost">hours · cheap</div></div>
+    <div class="rung hot"><div class="r-name">4 · Blinded row</div><div class="r-what">Does it actually intercept? Full harness run against the blinded corpus, graded on the north star. The only rung that proves interception — and the only expensive one, so everything weak dies on rungs 1–3 first.</div><div class="r-cost">~4 h · $$$</div></div>
+  </div>
+  <div class="cap">The structural rethink exists to make rungs 1–3 possible. Prose can only be tested on rung 4 — which is why every prose-era lever cost a full row to evaluate, and why the search for the final form was so slow. Engine + policy can be tested on rungs 1–3, so dozens of candidate ideas can die cheaply for every one that earns a row.</div>
+</div>
+
+<div class="callout">
+  <span class="label">The end state, in one paragraph</span>
+  <p>Users ratify ~a dozen <span class="atom-word">trusted atoms</span>. The <span class="atom-word">engine</span> compiles every valid composition into a sparse lattice with explicit debt, gates search by coverage, ranks by a <span class="gen-word">versioned policy</span>, runs through wio, shrinks reds along the tree, and publishes stamped evidence. The <span class="op-word">agent</span> spends its intelligence only where judgment lives: drafting the model, hypothesizing couplings, triaging reds. Improving the product means: a policy diff or an engine PR, evaluated up the ladder, promoted only when a blind row confirms — while every user's repo, and every claim on their status page, carries forward untouched.</p>
+</div>
+
+<!-- ============================================================ -->
+<h2><span class="num">9</span>Why the repo stays stable while the skill churns</h2>
+
+<p>The harness is two things in two places: <strong>the skill</strong> — the searching brain we ship, version, and keep rewriting (four strategies in six weeks: corridors → usage-first → attention → compositional) — and <strong>the <code>.workers/</code> folder</strong> — its working state, checked into the <em>user's</em> repository, touched by their teammates. Internally that churn cost nothing; after launch, "we reorganized the taxonomy" would mean asking every customer to refactor files they didn't write. The design has to make that impossible, and it does so with four old principles, applied:</p>
+
+<ul>
+  <li><strong>Source vs. build output.</strong> A compiler changes its optimizer every release and nobody migrates <code>.o</code> files — machine-owned things get regenerated, never hand-migrated. Most of <code>.workers/</code> (coverage tables, scenarios, bookkeeping) is <em>build output of the skill</em>: delete and rebuild every release, so churn is free wherever the machine owns the file.</li>
+  <li><strong>Interface vs. implementation.</strong> pytest froze one tiny interface (<code>test_*</code> functions) and rewrote everything behind it for fifteen years. Our frozen surface contains only <strong>facts about the user's product</strong> (what it promises, what a queue means) — those change when <em>their product</em> changes, never when <em>our strategy</em> does. Everything encoding how we search stays behind the interface.</li>
+  <li><strong>Code over declaration.</strong> A workload written as code is validated by <em>execution</em> against the product's real API — the thing its vendor already keeps stable. Frontmatter and folder placement are validated only by <em>convention</em> — "whatever our current reader expects" — and silently rot on every rewrite. So: prefer code; whatever must be declared is a versioned, additive-only schema; address by key, never by path.</li>
+  <li><strong>Migration is a command.</strong> When the declared surface must genuinely grow, <code>wio migrate</code> replays small reviewed changes (Django's move) — and our unfair advantage is that the agent drafted the files in the first place, so it re-derives the new field and the user's unit of work stays constant forever: <em>read a short diff and say yes or no</em>. Never author, never refactor.</li>
+</ul>
+
+<p>The consequences of these principles — the three concrete zones, the change-kinds table, the ledger/balance model of coverage, and the pre-launch rehearsal (one full strategy overhaul must leave the user-ratified zone with a zero diff) — are product behavior now, specified in <a href="https://claude.ai/code/artifact/5f152ab6-7e22-4a5e-9dbf-d56f89b40ee9" style="color: var(--atom); font-weight: 650;">🏛 Part II</a>.</p>
+
+<!-- ============================================================ -->
+<h2><span class="num">10</span>The openness posture: language public, search private</h2>
+
+<p>The operators and composition are the key idea — so what ships open, without giving the search away? The resolution is to split what currently travels together. <strong>The language must be public</strong>: users hold pinned scenario docs in their repos, and a composition tree is only legible if the operator semantics are published — hiding the language would make their own artifacts gibberish. Publishing it costs little: the twelve operators leak from any corpus of scenario docs regardless, and the validity rules are derivable from the semantics (anyone who understands <code>race</code> can infer it needs a shared resource). <strong>The search stays private</strong>: applicability inference, the floors, the ranker portfolio and its learned weights, sweep planning, fault models — everything eight rows of lab spend actually taught. Ship the verifier, keep the generator: the SQL-public / query-planner-private shape. Chess rules vs. chess engine.</p>
+
+<p>Trust survives the hidden generator on three rails: every claim on a board is backed by a <em>readable, replayable</em> pinned doc in the public language; the validator ships compiled inside the CLI, so "valid" is independently checkable offline against the public spec; and the <code>explain</code> endpoint makes coverage claims <em>falsifiable</em> — any skeptic can probe any situation they care about and catch a lie at any point of the space. The extraction risk of that endpoint is bounded by design: answers carry state + citation, never mechanism; probing is per-project, budgeted, and audited; and a maximal extraction reconstructs only the enumerator — the publishable-paper layer — while the tuned search never passes through the endpoint at all.</p>
+
+<p><strong>And the no-ratifier argument, from the same posture:</strong> ratification (F2) assumed a user who knows their product's truth. In our own fleet lanes there is no such person — the <em>maintainer</em> is the only true ratifier, reachable only through filed issues. So fleet lanes run <strong>self-ratified</strong>: critic gates substitute for the human, judgment-holds queue without blocking, and maintainer responses become the ground-truth channel (a closed-as-intended is model-correction feedback, not a loss). The measurable cost — false reds that die at triage — is exactly the M2 evidence we want in hand before any customer runs user-ratified mode. The binding rules for both modes live in <a href="https://claude.ai/code/artifact/5f152ab6-7e22-4a5e-9dbf-d56f89b40ee9" style="color: var(--atom); font-weight: 650;">🏛 Part I</a>.</p>
+
+<!-- ============================================================ -->
+<h2><span class="num">11</span>Check your understanding</h2>
+<p style="font-family: system-ui, sans-serif; font-size: 0.9rem; color: var(--muted);">Five questions. Click an answer to see the reasoning.</p>
+
+<div class="quiz-card" data-correct="1">
+  <span class="q-num">Question 1</span>
+  <div class="q-text">Why can compositional generation move the aiming needle when two attention formulas could not?</div>
+  <div class="q-opts">
+    <button class="q-opt">Because generated scenarios run faster than authored ones, more of the candidate list gets executed within the same run budget.</button>
+    <button class="q-opt">Because a score can only reorder an existing list, while generation makes the space enumerable — so situations never tried become visible, mandatory debt.</button>
+    <button class="q-opt">Because the operators encode the vendor's test deficit directly, replacing the frozen attention weights with structural priors.</button>
+    <button class="q-opt">Because composition trees shrink deterministically, so every red becomes a minimal finding without extra search spend.</button>
+  </div>
+  <div class="q-explain"></div>
+  <div class="q-why" hidden>The attention formulas failed structurally: they ranked candidates that already existed, and the missed bugs sat in situations that were never on the list at all. Generation attacks exactly that — the algebra materializes every valid situation up to a bound, so "never tried" becomes countable debt that gates the search. Speed and shrinking are real benefits but not the mechanism; operators don't encode vendor deficit (that stays in ranking).</div>
+</div>
+
+<div class="quiz-card" data-correct="3">
+  <span class="q-num">Question 2</span>
+  <div class="q-text">Which atom declaration is what makes <code>race(A, B)</code> a legal composition?</div>
+  <div class="q-opts">
+    <button class="q-opt">Matching <code>outputs</code> on A and <code>inputs</code> on B, so the second flow can consume what the first produced.</button>
+    <button class="q-opt">A shared <code>checkpoint</code> name, giving the scheduler a common point to interleave the two flows.</button>
+    <button class="q-opt">The same <code>modality</code> on both atoms, since two execution forms cannot contend inside one run.</button>
+    <button class="q-opt">A genuinely shared declared <code>resource</code>, so the contention the race creates is real rather than incidental.</button>
+  </div>
+  <div class="q-explain"></div>
+  <div class="q-why" hidden>Races search contention, and contention needs something contended — the bonding rule requires a shared declared resource (queue, executor-ownership, a database table). Outputs→inputs is <code>sequence</code>'s rule; checkpoints belong to <code>interrupt</code>; modality is an independent binding dimension. This is also how the generator finds <em>coupled</em> flow pairs for interaction search: shared resources are statically countable.</div>
+</div>
+
+<div class="quiz-card" data-correct="0">
+  <span class="q-num">Question 3</span>
+  <div class="q-text">A generated scenario goes red. What makes its minimization deterministic rather than a fresh search?</div>
+  <div class="q-opts">
+    <button class="q-opt">The scenario is a tree of operators, so shrinking peels one operator or shrink-declared input at a time until the red disappears.</button>
+    <button class="q-opt">The seed is pinned, so re-running the identical scenario always reproduces the failure on the first attempt.</button>
+    <button class="q-opt">The control scenario already passed, so the diff between control and attack isolates the failing operator directly.</button>
+    <button class="q-opt">The oracle records which invariant fired, so the shrinker deletes every operator not referenced by that invariant.</button>
+  </div>
+  <div class="q-explain"></div>
+  <div class="q-why" hidden>Structure is what buys determinism: drop the environment binding, drop the interrupt, collapse the race, reduce declared shrink inputs — each step either keeps the red (continue) or loses it (that piece was essential). The pinned seed makes each step <em>reproducible</em> but doesn't tell you what to remove; the control tells you the simple case works but the attack may differ in several coordinates at once; oracles don't map to operators.</div>
+</div>
+
+<div class="quiz-card" data-correct="2">
+  <span class="q-num">Question 4</span>
+  <div class="q-text">Under the engine / policy / judgment split, what does a typical search-improvement experiment become?</div>
+  <div class="q-opts">
+    <button class="q-opt">A rewrite of the skill document on a branch, measured by running one blinded row against the previous version's row.</button>
+    <button class="q-opt">A new subagent brief that redirects the model's judgment toward the under-searched dimensions of the lattice.</button>
+    <button class="q-opt">A diff to one versioned policy file, evaluated up the ladder — selftests, then retrodiction, then prototype checks — before any row is spent.</button>
+    <button class="q-opt">An engine PR adding the new mechanism behind a feature flag, promoted when the fleet lanes report more findings.</button>
+  </div>
+  <div class="q-explain"></div>
+  <div class="q-why" hidden>Most search-behavior changes (floors, weights, budgets, caps, bounds) are policy — data, not code — so an experiment is a policy diff against a fixed engine, and the ladder kills weak ideas for cents before the one expensive rung. Prose rewrites are the failure mode this design retires; engine PRs are for new <em>mechanisms</em> (rarer); fleet findings are not a measurement instrument — the blinded lab is.</div>
+</div>
+
+<div class="quiz-card" data-correct="1">
+  <span class="q-num">Question 5</span>
+  <div class="q-text">What did the row-8 regression teach that the migration path enforces structurally?</div>
+  <div class="q-opts">
+    <button class="q-opt">That attention signals built from historical issue density decay as the vendor fixes the historically dense territory.</button>
+    <button class="q-opt">That two levers shipped together produce an unattributable result, so each treatment ships alone with a cheap kill-switch before the next.</button>
+    <button class="q-opt">That aim-debt gates cannot raise the aiming rate unless the underlying scenario format is compositional first.</button>
+    <button class="q-opt">That skill versions must branch from the same base, since divergent branches carrying different gates cannot be reconciled.</button>
+  </div>
+  <div class="q-explain"></div>
+  <div class="q-why" hidden>Row 8 stacked the attention thesis and the aim-debt gate; it regressed, and no one could say which lever hurt (or whether one helped). The evaluation plan hard-codes the lesson: taxonomy, then generation with unchanged ranking, then the frontier — one treatment per measurement, with retrodiction decomposing attribution cheaply between rows. Option A is a real observation from the retrodiction data but not the structural rule; C and D aren't claims the plan makes.</div>
+</div>
+
+<hr>
+<p class="foot">⚗️ The rationale — the why of the set · companion: 🏛 the product book (the machine + the experience) · 📖 the spec (normative CONTRACT blocks live there and in 🏛/🛠️; they win over this page's prose) · workers.io internal.</p>
+
+</div>
+
+<script>
+(function renderLattice() {
+  var grid = document.getElementById('lattice');
+  if (!grid) return;
+  var COLS = 46, ROWS = 24;               // 1,104 cells — the measured DBOS lattice size
+  var bands = [[0,10],[10,26],[26,34],[34,40],[40,46]];  // modality, event, topology, env, load
+  grid.style.gridTemplateColumns = 'repeat(' + COLS + ', 1fr)';
+  function h(r, c) {                       // deterministic hash → stable picture
+    var x = (r * 73856093) ^ (c * 19349663); x = (x ^ (x >> 13)) >>> 0;
+    return (x % 1000) / 1000;
+  }
+  for (var r = 0; r < ROWS; r++) {
+    for (var c = 0; c < COLS; c++) {
+      var d = document.createElement('div');
+      var v = h(r, c), cls = 'owed';
+      var coupled = r >= 12;               // bottom half = coupled pairs
+      if (c === 38) cls = 'blocked';       // one whole env column: missing recipe
+      else if (!coupled && r >= 10 && c >= 26 && c < 34) cls = 'parked';  // 2 flows × topology band: solo-only, audited
+      else if (v < (coupled ? 0.10 : 0.24)) cls = 'covered';   // breadth pass reached solo flows first
+      else if ((r === 14 && (c === 12 || c === 13)) || (r === 3 && c === 11) || (r === 17 && c === 29)) cls = 'redc';  // findings cluster + neighbors
+      else if (v > 0.965) cls = 'parked';
+      d.className = 'c ' + cls;
+      grid.appendChild(d);
+    }
+  }
+})();
+
+document.querySelectorAll('.quiz-card').forEach(function (card) {
+  var correct = parseInt(card.dataset.correct, 10);
+  var opts = card.querySelectorAll('.q-opt');
+  var explain = card.querySelector('.q-explain');
+  var why = card.querySelector('.q-why').innerHTML;
+  opts.forEach(function (btn, i) {
+    btn.addEventListener('click', function () {
+      opts.forEach(function (b, j) {
+        b.disabled = true;
+        if (j === correct) b.dataset.state = 'correct';
+        else if (j === i) b.dataset.state = 'wrong';
+      });
+      var ok = i === correct;
+      explain.innerHTML = '<span class="verdict ' + (ok ? 'ok">Correct.' : 'no">Not quite.') + '</span> ' + why;
+      explain.style.display = 'block';
+    });
+  });
+});
+</script>

@@ -1,0 +1,192 @@
+<title>Pipelines — dev, prod, and how anything binds to anything</title>
+<style>
+  :root { --ground: #F9FAF9; --panel: #EFF1EF; --ink: #21231F; --muted: #6C7069;
+    --line: #DDE0DC; --a: #14684F; --a-soft: #E2EFE9; --hold: #B05E08; --hold-soft: #F7EBDB; }
+  @media (prefers-color-scheme: dark) { :root { --ground: #17181A; --panel: #1F211F; --ink: #E3E5E0;
+    --muted: #979B93; --line: #333531; --a: #55BD97; --a-soft: #1D2F28; --hold: #E0A055; --hold-soft: #33281A; } }
+  :root[data-theme="dark"] { --ground: #17181A; --panel: #1F211F; --ink: #E3E5E0; --muted: #979B93;
+    --line: #333531; --a: #55BD97; --a-soft: #1D2F28; --hold: #E0A055; --hold-soft: #33281A; }
+  :root[data-theme="light"] { --ground: #F9FAF9; --panel: #EFF1EF; --ink: #21231F; --muted: #6C7069;
+    --line: #DDE0DC; --a: #14684F; --a-soft: #E2EFE9; --hold: #B05E08; --hold-soft: #F7EBDB; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--ground); color: var(--ink);
+    font-family: Charter, 'Bitstream Charter', 'Iowan Old Style', Georgia, serif;
+    font-size: 17px; line-height: 1.66; }
+  .wrap { max-width: 44rem; margin: 0 auto; padding: 3.2rem 1.4rem 5rem; }
+  .kicker { font-family: system-ui, sans-serif; font-size: 0.72rem; font-weight: 600;
+    letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); }
+  h1 { font-family: system-ui, sans-serif; font-size: clamp(1.5rem, 4vw, 2rem);
+    font-weight: 750; line-height: 1.18; margin: 0.5rem 0 1rem; text-wrap: balance; }
+  h2 { font-family: system-ui, sans-serif; font-size: 1.15rem; font-weight: 700; margin: 2.4rem 0 0.6rem; }
+  p { margin: 0 0 1rem; }
+  ul { margin: 0 0 1rem; padding-left: 1.3rem; }
+  li { margin-bottom: 0.5rem; }
+  a { color: var(--a); }
+  code { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 0.85em;
+    background: var(--panel); border: 1px solid var(--line); border-radius: 4px; padding: 0.05em 0.3em; }
+  .note { font-family: system-ui, sans-serif; font-size: 0.8rem; color: var(--muted);
+    border: 1px solid var(--line); border-radius: 8px; padding: 0.55rem 0.9rem; margin-bottom: 1.4rem; }
+</style>
+<div class="wrap">
+<span class="kicker">workers.io · operations · 2026-07-16</span>
+
+        
+          <h1>Dev, prod, and how anything binds to anything.</h1>
+          <div style="display:none">
+            <span class="badge active">active</span>
+            <span class="dates">created 2026-07-16 · updated 2026-07-16</span>
+          </div>
+          <p>
+            The operational reality of the deployment tiers, written down so
+            it stops living in heads. Companions: the devbox layout note
+            (<code>~/work/product/README.md</code>), the interception rules
+            (<code>interception/README.md</code>), and the design set via
+            <code>skills-git/DESIGN-TRUTH.md</code>.
+          </p>
+        
+
+        
+          <h2 id="tiers">The tiers, as they actually exist</h2>
+          <ul>
+            <li>
+              <strong>dev</strong> — Convex <code>dev:courteous-pig-756</code>
+              · <code>dev-api.workers.io</code> · the metal bench on demand.
+              Deployed by the dev job of
+              <code>.github/workflows/deploy-convex.yml</code> on pushes to
+              the <code>dev</code> branch touching <code>convex/**</code>.
+              <em>This deployment is what the live fleet uses — treat it as
+              integration, never a scratchpad.</em>
+            </li>
+            <li>
+              <strong>prod</strong> — Convex prod (GitHub environment
+              <code>convex-prod</code>, separate deploy key) via
+              <code>main</code> push or manual dispatch; public CLI binaries
+              via release-please (<code>release-cli.yml</code>,
+              <code>publish-cli.yml</code>).
+            </li>
+            <li>
+              <strong>quality gates</strong> — PR CI
+              (<code>quality.yml</code>, <code>rust-quality.yml</code>),
+              nightly determinism regression (<code>dst-nightly.yml</code>),
+              and the metal AMI pipeline (<code>bake-host-ami.yml</code>:
+              main pushes touching hypervisor paths → bake → two-guest smoke
+              gates → AMI refresh; gate evidence preserved on failure per
+              PR #134). Rollout of baked AMIs is the deliberate operator step
+              described in
+              <code>docs/hypervisor/fleet-rollout.html</code>.
+            </li>
+          </ul>
+        
+
+        
+          <h2 id="binding">How a client picks its world</h2>
+          <p>
+            A wio environment is nothing but <strong>binary + four env vars +
+            a config dir</strong>: <code>XDG_CONFIG_HOME</code> (isolated
+            auth/session state), <code>WIO_CONVEX_URL</code>,
+            <code>WIO_API_URL</code>, <code>WIO_WORKOS_CLIENT_ID</code>
+            (resolution in <code>packages/wio/src/config.rs</code>). Named
+            profiles on the devbox:
+          </p>
+          <ul>
+            <li>
+              <code>~/bin/wio</code> — the fleet: staging-worktree binary +
+              dev api/convex + <code>~/.config/wio-staging</code>. Untouched
+              until the retirement checklist in the staging worktree's
+              <code>DO-NOT-REMOVE.md</code> completes (PR #126 was superseded
+              by #125, so a main-built binary is expected equivalent; rebuild
+              → repoint → verify one lane → remove worktree).
+            </li>
+            <li>
+              <code>just wio-dev</code> (<code>interception/justfile</code>)
+              — the binary from the current branch + dev api/convex +
+              <code>~/.config/wio-dev</code>.
+            </li>
+            <li>
+              personal Convex — only when a task edits <code>convex/</code>:
+              <code>npx convex dev</code> (personal deployment) or
+              <code>npx convex deploy --preview-create &lt;task&gt;</code>
+              (ephemeral); point <code>WIO_CONVEX_URL</code> at it.
+            </li>
+          </ul>
+          <p>
+            Rules: the shared dev deployment changes only via
+            <code>dev</code>-branch pushes · experiments get their own
+            deployment · prod only via <code>main</code>.
+          </p>
+        
+
+        
+          <h2 id="isolation">Per-task isolation</h2>
+          <p>
+            A dev task = its own checkout + its own deployment + its own
+            config dir, all disposable. Direction (2026-07-16):
+            sandbox-per-task — a container from one baked dev image (warm
+            build layers, cgroup limits); scaling out runs the same image on
+            more machines; the endpoint is the bench itself as the sandbox
+            provider. Git worktrees are the explicitly-interim mechanism.
+          </p>
+        
+
+        
+          <h2 id="hosts">Metal hosts attach by enrollment, not assignment</h2>
+          <p>
+            The CLI has no hosts verb and never assigns hosts. The baked AMI
+            carries the host service (ready only after kldload + SMT parking
+            + metal preflight, <code>packages/hypervisor/ops/host/launch.sh</code>);
+            agentd connects outward and enrolls with whichever deployment its
+            host-side config points at
+            (<code>convex/platformHost.ts</code>: enroll, claim, report,
+            renew), appearing there as capacity. Re-aiming a host at a
+            different deployment is a host-side config change + service
+            restart. Clients just create work; dispatch places it
+            (<code>convex/platformOps.ts</code>, <code>workloadDispatch.ts</code>).
+          </p>
+        
+
+        
+          <h2 id="metal-admission">Metal admission — the two tracks</h2>
+          <p>
+            <strong>Track 1, local:</strong> all iteration — the interception
+            engine, its eval suites (retrodiction is zero-execution; oracle
+            work replays recorded streams), the toybox, drafting, shrinking,
+            the smoke, every sim-reachable cell. <strong>Track 2,
+            metal:</strong> metal-only cells accumulate as a queue; the
+            frontier emits a batch manifest (frozen scenario docs · build
+            keys · estimated runs/wall-clock/cost · debt paid); the operator
+            approves the number; the host is started, drained, stopped
+            (idle-watchdog backstop). Metal never idles and never hosts
+            exploration. Sim-vs-metal divergence on the same doc+seed is
+            itself signal (the ND class; the M14 simulator-oracle
+            comparison).
+          </p>
+        
+
+        
+          <h2 id="interception">Interception's lane</h2>
+          <p>
+            Part 5 of the product (<code>interception/</code>): local
+            monolith for engine and evals (no service in the search loop, by
+            design) → the dev deployment for bench execution → prod untouched
+            until the platform work un-parks. Interception CI lanes stay
+            separate from the wio release lanes. The <code>generation</code>
+            package is never published in any form; <code>composition</code>
+            is spec-public, source-private (the validator ships compiled
+            inside the wio binary).
+          </p>
+        
+
+        
+          <h2 id="cleanups">Known cleanups</h2>
+          <ul>
+            <li>Staging-worktree retirement (checklist in its
+              <code>DO-NOT-REMOVE.md</code>).</li>
+            <li>Fleet lanes move to separate machines on pinned released
+              versions — removes the fleet's devbox dependency.</li>
+            <li>Idle-stop watchdog for metal instances (conductor cron;
+              notify-only for debug-keyed instances).</li>
+          </ul>
+        
+      
+<p class="note" style="margin-top:2rem;">This artifact is the interim home of the pipelines map (Viswa, 2026-07-16 — removed from formal/docs for now). It moves into the repo docs shell when operations docs get a proper place there.</p>
+</div>

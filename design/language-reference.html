@@ -1,0 +1,559 @@
+<title>The language & SDK reference — workload harness v3</title>
+<style>
+  :root {
+    --ground: #FBFAF8; --panel: #F1EFEA; --ink: #23221E; --muted: #6F6D63;
+    --line: #E0DDD3; --op: #4A44B8; --op-soft: #E9E8F8;
+    --atom: #0E6B5E; --atom-soft: #E1EFEB; --gen: #B05E08; --gen-soft: #F7EBDB;
+    --bad: #A33B2E; --code-bg: #23241E; --code-ink: #E6E5DA;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --ground: #171816; --panel: #1F201C; --ink: #E4E3DB; --muted: #9A9789;
+      --line: #343329; --op: #9C97F0; --op-soft: #262447;
+      --atom: #4FC0A8; --atom-soft: #1C2E2A; --gen: #E0A055; --gen-soft: #33281A;
+      --bad: #E07A6B; --code-bg: #111210; --code-ink: #D9D8CC; }
+  }
+  :root[data-theme="dark"] { --ground: #171816; --panel: #1F201C; --ink: #E4E3DB; --muted: #9A9789;
+    --line: #343329; --op: #9C97F0; --op-soft: #262447; --atom: #4FC0A8; --atom-soft: #1C2E2A;
+    --gen: #E0A055; --gen-soft: #33281A; --bad: #E07A6B; --code-bg: #111210; --code-ink: #D9D8CC; }
+  :root[data-theme="light"] { --ground: #FBFAF8; --panel: #F1EFEA; --ink: #23221E; --muted: #6F6D63;
+    --line: #E0DDD3; --op: #4A44B8; --op-soft: #E9E8F8; --atom: #0E6B5E; --atom-soft: #E1EFEB;
+    --gen: #B05E08; --gen-soft: #F7EBDB; --bad: #A33B2E; --code-bg: #23241E; --code-ink: #E6E5DA; }
+
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--ground); color: var(--ink);
+    font-family: Charter, 'Bitstream Charter', 'Iowan Old Style', Georgia, serif;
+    font-size: 16.5px; line-height: 1.62; }
+  .wrap { max-width: 47rem; margin: 0 auto; padding: 3rem 1.4rem 5rem; }
+  .kicker { font-family: system-ui, sans-serif; font-size: 0.72rem; font-weight: 600;
+    letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); }
+  h1 { font-family: system-ui, sans-serif; font-size: clamp(1.5rem, 4vw, 2rem);
+    font-weight: 750; line-height: 1.15; margin: 0.5rem 0 0.7rem; }
+  .standfirst { font-size: 1rem; color: var(--muted); margin: 0 0 1rem; }
+  h2 { font-family: system-ui, sans-serif; font-size: 1.18rem; font-weight: 700; margin: 2.5rem 0 0.6rem; }
+  h2 .num { color: var(--muted); font-weight: 600; margin-right: 0.5rem; }
+  h3 { font-family: system-ui, sans-serif; font-size: 0.95rem; font-weight: 700; margin: 1.5rem 0 0.4rem; }
+  p { margin: 0 0 0.9rem; }
+  ul { margin: 0 0 0.9rem; padding-left: 1.25rem; }
+  li { margin-bottom: 0.25rem; }
+  code { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 0.85em;
+    background: var(--panel); border: 1px solid var(--line); border-radius: 4px; padding: 0.04em 0.28em; }
+  pre { background: var(--code-bg); color: var(--code-ink); border-radius: 8px;
+    padding: 0.85rem 1rem; overflow-x: auto; white-space: pre;
+    font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 0.76rem; line-height: 1.55; margin: 0 0 1.1rem; }
+  pre code { background: none; border: none; padding: 0; color: inherit; font-size: inherit; }
+  pre .cm { color: #99A18E; }
+  pre .k { color: #A9A4F5; }
+  pre .s { color: #E8B87A; }
+  pre .g { color: #7FCBAA; }
+
+  .wb { font-family: system-ui, sans-serif; font-size: 0.79rem; border: 1.5px dashed var(--gen);
+    background: var(--gen-soft); border-radius: 8px; padding: 0.55rem 0.9rem; margin-bottom: 1.2rem; }
+
+  .opref { border: 1px solid var(--line); border-radius: 10px; margin: 0 0 0.65rem;
+    font-family: system-ui, sans-serif; overflow: hidden; }
+  .opref .o-head { display: flex; gap: 0.7rem; align-items: baseline; flex-wrap: wrap;
+    padding: 0.5rem 0.9rem; background: var(--op-soft); border-bottom: 1px solid var(--line); }
+  .opref .o-sig { font-family: ui-monospace, Menlo, monospace; font-weight: 700; font-size: 0.85rem; color: var(--op); }
+  .opref .o-what { font-size: 0.72rem; color: var(--muted); margin-left: auto; }
+  .opref .o-body { padding: 0.55rem 0.9rem 0.65rem; font-size: 0.79rem; line-height: 1.55; }
+  .opref .o-body b { font-weight: 700; }
+  .opref .o-row { display: grid; grid-template-columns: 4.6rem 1fr; gap: 0.6rem; padding: 0.12rem 0; }
+  .opref .o-k { font-size: 0.64rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em;
+    color: var(--muted); padding-top: 0.15rem; text-align: right; }
+  .opref.bind .o-head { background: var(--gen-soft); }
+  .opref.bind .o-sig { color: var(--gen); }
+
+  table { border-collapse: collapse; width: 100%; margin: 0 0 1.1rem;
+    font-family: system-ui, sans-serif; font-size: 0.8rem; }
+  .table-scroll { overflow-x: auto; margin: 0 0 1.1rem; }
+  .table-scroll table { margin: 0; min-width: 560px; }
+  th { text-align: left; font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.09em;
+    color: var(--muted); font-weight: 700; padding: 0.4rem 0.8rem 0.4rem 0; border-bottom: 2px solid var(--line); }
+  td { padding: 0.45rem 0.8rem 0.45rem 0; border-bottom: 1px solid var(--line); vertical-align: top; line-height: 1.45; }
+  td code { white-space: nowrap; }
+
+  .callout { background: var(--panel); border: 1px solid var(--line); border-radius: 10px;
+    padding: 0.85rem 1rem; margin: 0 0 1.1rem; }
+  .callout .label { font-family: system-ui, sans-serif; font-size: 0.66rem; font-weight: 700;
+    letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); display: block; margin-bottom: 0.3rem; }
+  .callout p:last-child { margin-bottom: 0; }
+
+  .ctree { font-family: system-ui, sans-serif; font-size: 0.78rem; }
+  .cnode { border-radius: 8px; padding: 0.42rem 0.7rem; margin: 0.35rem 0; border: 1.5px solid var(--line); }
+  .cnode .cn-label { font-weight: 700; font-size: 0.8rem; }
+  .cnode .cn-note { font-size: 0.7rem; color: var(--muted); }
+  .cnode.op { border-color: var(--op); background: var(--op-soft); }
+  .cnode.op > .cn-label { color: var(--op); }
+  .cnode.atomn { border-color: var(--atom); background: var(--atom-soft); }
+  .cnode.atomn > .cn-label { color: var(--atom); }
+  .cnode.bindn { border-style: dashed; border-color: var(--gen); background: var(--gen-soft); }
+  .cnode.bindn > .cn-label { color: var(--gen); }
+  .cnest { margin-left: 1.3rem; }
+  .contract { border: 1.5px solid var(--op); border-radius: 10px; padding: 0.85rem 1rem;
+    margin: 0 0 1.1rem; font-family: system-ui, sans-serif; font-size: 0.82rem; line-height: 1.55; }
+  .contract .c-tag { display: inline-block; font-size: 0.62rem; font-weight: 700; letter-spacing: 0.1em;
+    text-transform: uppercase; background: var(--op-soft); color: var(--op); border-radius: 99px;
+    padding: 0.1rem 0.55rem; margin: 0 0.4rem 0.4rem 0; }
+  .contract .c-tag.flag { background: var(--gen-soft); color: var(--gen); }
+  .contract p { margin: 0.25rem 0 0; }
+  .foot { margin-top: 2.4rem; font-size: 0.75rem; color: var(--muted); font-family: system-ui, sans-serif; }
+</style>
+
+<div class="wrap">
+
+<span class="kicker">workload harness v3 · reference manual · consult, don't read linearly</span>
+<h1>The language &amp; SDK reference</h1>
+<p class="standfirst">The composition language (twelve operators), the atom-authoring rules, the Resource/Value and <code>ctx</code> APIs, the observation vocabulary, the state grammar, and a full scenario document — with worked examples.</p>
+
+<div class="wb"><strong>STATUS: v0 DRAFT — the spec the prototype implements.</strong> J1 (SDK) and J4 (validator/compiler) briefs compile from this page; where the built code teaches us better, this page updates to match the code, never the reverse silently. Normative rules live inline as <strong>CONTRACT blocks</strong> on this page and its siblings — a contract block wins over any prose, anywhere; 📜 is the decision queue + block index; the interception-ledger is the append-only DEC log.</div>
+
+<!-- ============================================================ -->
+<h2><span class="num">0</span>Canonical vocabulary — one meaning everywhere</h2>
+
+<div class="table-scroll"><table>
+  <tr><th>Term</th><th>Meaning</th></tr>
+  <tr><td><strong>Persona</strong></td><td>a contract-holding human or system role</td></tr>
+  <tr><td><strong>Flow</strong></td><td>a goal-oriented journey with ≥1 invariant — a goal, never a subsystem/event/modality/mechanism</td></tr>
+  <tr><td><strong>Invariant</strong></td><td>a falsifiable product claim</td></tr>
+  <tr><td><strong>Surface</strong></td><td>a documented capability/interface a flow uses (flows↔surfaces are many-to-many)</td></tr>
+  <tr><td><strong>Actor topology</strong></td><td>roles, identities, trust relationships (NOT scale)</td></tr>
+  <tr><td><strong>Access channel</strong></td><td>the route in: SDK/CLI/HTTP/UI/direct-library</td></tr>
+  <tr><td><strong>Modality</strong></td><td>execution semantics: sync/async/threaded/multi-process/background</td></tr>
+  <tr><td><strong>Mechanism</strong></td><td>the hypothesized way an invariant breaks</td></tr>
+  <tr><td><strong>Event</strong></td><td>a time-local world occurrence, placed at a declared checkpoint</td></tr>
+  <tr><td><strong>State context</strong></td><td>a meaningful precondition (generated: precondition negation or flow prefix)</td></tr>
+  <tr><td><strong>Load profile</strong></td><td>scale: actors, rate, duration, volume, skew</td></tr>
+  <tr><td><strong>Environment profile</strong></td><td>platform/dependency/version context</td></tr>
+  <tr><td><strong>Scenario / Run / Finding</strong></td><td>one executable composition / one execution with concrete values / a minimized, reviewed, replayable failure</td></tr>
+</table></div>
+
+<!-- ============================================================ -->
+<h2><span class="num">1</span>The language at a glance</h2>
+
+<pre><code><span class="cm">-- a scenario is bindings wrapped around one structure; structure depth ≤ 3</span>
+scenario   := binding* structure
+
+structure  := flow(KEY)
+            | sequence(structure, structure+)     <span class="cm">-- B after A, outputs feed inputs</span>
+            | parallel(structure, structure)      <span class="cm">-- overlap, compatible flows</span>
+            | race(structure, structure+)         <span class="cm">-- contend on a SHARED Resource</span>
+            | repeat(structure, N)                <span class="cm">-- N times, same actor</span>
+            | interrupt(structure, EVENT, CHECKPOINT)  <span class="cm">-- world event at a declared point</span>
+
+binding    := with_actors(TOPOLOGY)   | with_channel(CHANNEL)
+            | with_modality(MODALITY) | with_state(STATE)
+            | with_load(PROFILE)      | with_environment(PROFILE)</span></code></pre>
+
+<p style="font-family: system-ui, sans-serif; font-size: 0.82rem;">Six <span style="color:var(--op); font-weight:700;">structural/adversarial operators</span> build the tree; six <span style="color:var(--gen); font-weight:700;">binding operators</span> pin its coordinates. Terminals are always <span style="color:var(--atom); font-weight:700;">flows (atoms)</span>. The generator (a script, never an agent) enumerates only trees whose every node validates.</p>
+
+<div class="callout">
+  <span class="label">Why depth ≤ 3 — and why that is not "hundreds of users left to chance"</span>
+  <p>Depth caps <strong>distinct flow types</strong> per designed scenario, not actors — "hundreds of users" is the <code>with_load</code> dimension (geometric ladder to 1,000 workers), fully in the space. The 2–3 bound rests on the strongest empirical base rate in testing (NIST combinatorial studies: ~70–95% of field failures are 2-factor, ~99% by 4–6; high-order failures usually shrink to a low-order core — both our real findings are 2-operator). The tail is covered non-silently: emergent high-order interleaving inside load/soak cells (designed depth ≠ experienced depth) · the 15% open-exploration lane (budgeted randomness, starvation-checked) · depth escalation on evidence · and the bound itself is policy — raising it for one coupled subspace is a ladder-cheap experiment.</p>
+</div>
+
+<div class="callout">
+  <span class="label">Anatomy — every operator lives four lives</span>
+  <p><strong>1 · node schema</strong> (a dataclass in the tree — pure data, what the scenario doc serializes) → <strong>2 · validity predicate</strong> (static check against the manifest; the bonding rules) → <strong>3 · lowering rule</strong> (how it becomes the flat actor-plan the runner executes — runners never see operators) → <strong>4 · peel rule</strong> (how the shrinker removes it). One class per operator, ~40–80 lines, all four testable in isolation. All twelve live in <code>engine/operators.py</code> in the harness extension — never in the model, the SDK, or the skill. The catalog is closed: #13 requires logged run evidence + an engine PR (📜 item 03).</p>
+</div>
+
+<!-- ============================================================ -->
+<div class="contract" id="c-operators" data-dec="pending">
+  <span class="c-tag">contract · awaiting DEC</span>
+  <p><strong>Operator set &amp; nesting (ex-📜 item 03).</strong> The twelve operators of §1, verbatim, and no others — the catalog is <strong>closed at twelve</strong>. Structure depth ≤ 3; <code>interrupt</code> only at declared checkpoints; <code>race</code> only on shared declared Resources; <code>sequence</code> requires each step's inputs/preconditions established by prior outputs ∪ prior effects ∪ setup. Operator #13 requires logged inexpressible-composition evidence + an engine PR implementing all four lives + tests + the ladder.</p>
+</div>
+
+<!-- ============================================================ -->
+<h2><span class="num">2</span>Operator reference</h2>
+
+<div class="opref">
+  <div class="o-head"><span class="o-sig">flow(key)</span><span class="o-what">the terminal — one atom, run once</span></div>
+  <div class="o-body">
+    <div class="o-row"><span class="o-k">valid</span><span>key exists in the manifest; its preconditions establishable in context</span></div>
+    <div class="o-row"><span class="o-k">lowers</span><span>one actor step: run the atom with bound inputs; emit its checkpoints/observations</span></div>
+    <div class="o-row"><span class="o-k">peels</span><span>—（terminals don't peel; their declared <code>shrink</code> values do)</span></div>
+  </div>
+</div>
+
+<div class="opref">
+  <div class="o-head"><span class="o-sig">sequence(A, B, …)</span><span class="o-what">ordered composition — lifecycle &amp; cross-flow state</span></div>
+  <div class="o-body">
+    <div class="o-row"><span class="o-k">valid</span><span>each step's <b>inputs AND preconditions satisfiable by three fuels: prior outputs</b> (typed piping — the explicit lifecycle) <b>∪ prior effects</b> (state left in the world — how <code>sequence(fork-children, gc)</code> is legal with zero piping) <b>∪ scenario setup</b> (provisionable). No earlier effect may make a later precondition impossible. Order matters: <code>sequence(schedule-tick, gc)</code> is valid (tick's <em>workflow-created</em> effect feeds gc), the reverse isn't. Pairs sharing <em>nothing</em> are never emitted — their verdict factorizes into the solo cells', paying no unique debt</span></div>
+    <div class="o-row"><span class="o-k">lowers</span><span>steps in order on one actor (or declared hand-off); outputs piped as downstream inputs</span></div>
+    <div class="o-row"><span class="o-k">peels</span><span>drop trailing/leading steps one at a time</span></div>
+    <div class="o-row"><span class="o-k">example</span><span><code>sequence(fork-children-and-await, garbage-collect)</code> — legal because both touch the workflow-rows Resource</span></div>
+  </div>
+</div>
+
+<div class="opref">
+  <div class="o-head"><span class="o-sig">parallel(A, B)</span><span class="o-what">overlap without required contention — non-interference</span></div>
+  <div class="o-body">
+    <div class="o-row"><span class="o-k">valid</span><span>flows compatible (no effect conflict that makes either impossible); shared resources <em>allowed</em> and recorded, not required</span></div>
+    <div class="o-row"><span class="o-k">lowers</span><span>two actors, interleaved schedules (schedule search inside the cell — <code>interleave.py</code> lineage)</span></div>
+    <div class="o-row"><span class="o-k">peels</span><span>collapse to the child whose invariant fired</span></div>
+  </div>
+</div>
+
+<div class="opref">
+  <div class="o-head"><span class="o-sig">race(A, A′, …)</span><span class="o-what">forced contention — ownership, claims, idempotency</span></div>
+  <div class="o-body">
+    <div class="o-row"><span class="o-k">valid</span><span>children share ≥1 declared <b>Resource</b>; lowering binds them to the <b>same instance</b> (that identity is what makes the race real)</span></div>
+    <div class="o-row"><span class="o-k">lowers</span><span>N actors, same Resource instances, schedule sweep around the contended operations</span></div>
+    <div class="o-row"><span class="o-k">peels</span><span>collapse to one actor</span></div>
+    <div class="o-row"><span class="o-k">example</span><span><code>race(enqueue-and-complete, enqueue-and-complete)</code> on one <code>Queue</code></span></div>
+  </div>
+</div>
+
+<div class="opref">
+  <div class="o-head"><span class="o-sig">repeat(A, N)</span><span class="o-what">repetition — lifecycle churn, exhaustion, leak horizons</span></div>
+  <div class="o-body">
+    <div class="o-row"><span class="o-k">valid</span><span>A's postcondition re-establishes its own precondition (or teardown declared between iterations)</span></div>
+    <div class="o-row"><span class="o-k">lowers</span><span>loop on one actor; N comes from the load profile's ladder, never hand-picked</span></div>
+    <div class="o-row"><span class="o-k">peels</span><span>N → smaller rungs down the geometric ladder</span></div>
+  </div>
+</div>
+
+<div class="opref">
+  <div class="o-head"><span class="o-sig">interrupt(A, event, checkpoint)</span><span class="o-what">adversity — fault timing made first-class</span></div>
+  <div class="o-body">
+    <div class="o-row"><span class="o-k">valid</span><span><code>checkpoint</code> ∈ A's reachable checkpoint set; <code>event</code> applicable to A's flows/environment (both from the manifest)</span></div>
+    <div class="o-row"><span class="o-k">lowers</span><span>arm the injector: when the observation stream emits the checkpoint, fire the event (<code>crashclock.py</code> lineage); the within-cell sweep walks every declared checkpoint mechanically</span></div>
+    <div class="o-row"><span class="o-k">peels</span><span>drop the event (the auto-generated control is exactly this peel)</span></div>
+  </div>
+</div>
+
+<div class="callout">
+  <span class="label">Faults: two lowering shapes, and the registry that prices the bench roadmap</span>
+  <p><strong>Two shapes, because the bench has two.</strong> POINT events (process-crash · service-restart-window · client-abandons) lower through <code>interrupt(A, event, checkpoint)</code> — armed at a checkpoint/I/O boundary. AMBIENT fault profiles (latency distribution · partition windows · bandwidth caps · packet drop/reorder) are seed-planned over a whole run, so they lower through a NEW binding <code>with_faults(profile)</code> — the profile's canonical config hash joins the cell coordinate, the network seed joins the sweep. This matches the bench's existing contract verbatim ("user config defines the space; a restore-time seed samples the concrete plan; replay fails closed") — we only name the profile as a coordinate.</p>
+  <p><strong>The event registry carries capability status, and planned faults are blocked cells TODAY.</strong> Each event maps to a bench capability with a status: green (crash/kill·restart EXP-077·latency/partition EXP-056-057·seeded scheduling EXP-089-099), pending (per-packet drop/reorder, EXP-057 remainder), planned (disk faults EXP-058-060·mocked external deps EXP-064). <code>client-abandons</code> is harness-side — no bench work, free everywhere. The compiler enumerates planned-fault cells NOW and marks them <code>blocked</code> with the EXP number as the named infrastructure obligation — so the coverage ledger and the bench roadmap become one accounting: the day EXP-058 lands, its cells flip blocked→owed with no model change. In reverse, the debt ledger PRICES each pending EXP by the severity-weighted cell mass it unblocks ("EXP-058 unblocks Σw 61, mostly durability") — the harness tells the bench team what to build next. (Turso census: ~⅓ of harm-weight is WAL/checkpoint/disk-lifecycle — exactly the EXP-058-060 territory.)</p>
+</div>
+
+<h3 style="color: var(--gen);">Binding operators (coordinates, not structure)</h3>
+
+<div class="opref bind">
+  <div class="o-head"><span class="o-sig">with_actors(topology)</span><span class="o-what">who — roles, identities, trust boundaries</span></div>
+  <div class="o-body"><div class="o-row"><span class="o-k">valid/lowers</span><span>topology declared valid for these flows; lowering assigns actor identities/credentials (two same-tenant workers · operator+worker · two tenants). Peel: → solo.</span></div></div>
+</div>
+
+<div class="opref bind">
+  <div class="o-head"><span class="o-sig">with_channel(channel)</span><span class="o-what">route — which SDK/API/CLI drives the calls</span></div>
+  <div class="o-body"><div class="o-row"><span class="o-k">valid/lowers</span><span>every flow in the tree supports the channel; lowering selects the client the actors use (python-sdk vs typescript-sdk = differential dimension). Peel: → default channel.</span></div></div>
+</div>
+
+<div class="opref bind">
+  <div class="o-head"><span class="o-sig">with_modality(modality)</span><span class="o-what">execution form — sync · async · threaded · process-parallel</span></div>
+  <div class="o-body"><div class="o-row"><span class="o-k">valid/lowers</span><span>modality ∈ each flow's declared set; lowering selects the atom's driver form. The modality floor (compiler-gated) is what makes async parity permanent. Peel: → sync.</span></div></div>
+</div>
+
+<div class="opref bind">
+  <div class="o-head"><span class="o-sig">with_state(state)</span><span class="o-what">precondition — generated, never imagined (§7)</span></div>
+  <div class="o-body"><div class="o-row"><span class="o-k">valid/lowers</span><span>state is a misuse negation applicable to a typed input, OR a reachable flow prefix; lowering prepends the setup (mint fresh id · run create-then-destroy · run the prefix). Peel: → fresh state.</span></div></div>
+</div>
+
+<div class="opref bind">
+  <div class="o-head"><span class="o-sig">with_load(profile)</span><span class="o-what">scale — actors, rate, duration, volume, skew</span></div>
+  <div class="o-body"><div class="o-row"><span class="o-k">valid/lowers</span><span>semantic prerequisites green first (gate); rungs from the geometric ladder × environment capacity. Peel: down the ladder toward the control.</span></div></div>
+</div>
+
+<div class="opref bind">
+  <div class="o-head"><span class="o-sig">with_environment(profile)</span><span class="o-what">substrate — platform, services, versions</span></div>
+  <div class="o-body"><div class="o-row"><span class="o-k">valid/lowers</span><span>profile applicable to these flows AND bench-reachable (else the cell is <em>blocked</em> infra debt, never silently covered); lowering = the bench provisions via the profile's recipe; same tree + seed across profiles arms the differential oracle. Peel: → default profile (red survives ⇒ not env-specific).</span></div></div>
+</div>
+
+<!-- ============================================================ -->
+<h2><span class="num">3</span>The atom-authoring rules</h2>
+
+<pre><code><span class="k">@flow</span>(
+    key=<span class="s">"enqueue-and-complete"</span>,                 <span class="cm"># R1: kebab-case, unique, addressed by key never path</span>
+    resources=(QUEUE_STATE, EXECUTOR_OWNERSHIP), <span class="cm"># R2: EVERY shared state touched — under-declaring hides</span>
+                                                 <span class="cm">#     couplings from race(); lint checks vs code reads/writes.</span>
+                                                 <span class="cm">#     R2b: declare at the ROW-CLASS grain (workflow-rows,</span>
+                                                 <span class="cm">#     queue-entries), NEVER "the database" — coarse grains make</span>
+                                                 <span class="cm">#     everything couple with everything, inflating the lattice</span>
+                                                 <span class="cm">#     AND destroying the coupling prior. Granularity is the dial</span>
+                                                 <span class="cm">#     that decides whether gate 1 prunes 350× or not at all</span>
+    invariants=(EXACTLY_ONCE, ACK_NOT_LOST),     <span class="cm"># R3: ≥1; falsifiable; ratified as text by the user</span>
+    modalities=(<span class="s">"sync"</span>, <span class="s">"async"</span>),                <span class="cm"># R4: only forms the code actually implements</span>
+)
+<span class="k">def</span> <span class="g">enqueue_and_complete</span>(ctx, queue: Queue, task: Task) -&gt; Result:
+    <span class="cm"># R5: inputs = typed params (Resource/Value classes only); outputs = return annotation</span>
+    wf = ctx.client.enqueue(queue, task)
+    ctx.checkpoint(AFTER_CLAIM)                  <span class="cm"># R6: a checkpoint at EVERY await/state-transition</span>
+    <span class="k">return</span> ctx.await_result(wf)                  <span class="cm">#     boundary — granularity here decides which fault</span>
+                                                 <span class="cm">#     windows exist (the gc-strand lesson)</span></code></pre>
+
+<ul style="font-family: system-ui, sans-serif; font-size: 0.82rem;">
+  <li><strong>R7 — goal, not subsystem:</strong> an atom is a user-meaningful journey; "the queue module" is not an atom, "enqueue work and observe completion" is.</li>
+  <li><strong>R8 — no hard-coded coordinates:</strong> no actor counts, environments, events, or loads inside the atom unless intrinsic to the goal — those are the generator's dimensions.</li>
+  <li><strong>R9 — cite everything:</strong> every invariant and applicability claim carries a doc/code citation (critic-checked).</li>
+  <li><strong>R10 — deterministic body:</strong> no wall-clock, no ambient randomness; time and randomness come through <code>ctx</code>.</li>
+</ul>
+
+<div class="callout">
+  <span class="label">Reaching INTERNAL state (checkpoint/WAL/MVCC-class bugs) from user-behavior atoms</span>
+  <p>Internal state is always (external history × timing) — both ours. Four ladders: <strong>(1) amplifier configs</strong> — an environment profile that tightens internal thresholds (tiny WAL, aggressive GC) so internal transitions fire every few operations; declared, legitimate, vendors do it themselves. <strong>(2) Sub-API timing sweeps</strong> — the bench controls I/O and scheduling, so every I/O boundary is a fault/abandonment site inside any internal process, no state ever named (crashclock heritage); for pure in-memory races, instruction-granularity preemption (hypervisor: instr-preemption, seed-interleaving). Three checkpoint grains: atom-declared (semantic) · I/O boundaries (free, sweepable) · instruction preemption (heavy artillery). <strong>(3) SUT-side markers</strong> — opt-in: matched product log/trace lines join the observation stream as fault-arming checkpoints. <strong>(4) Probe atoms</strong> — operator-persona flows (integrity_check, close-reopen-read) sequenced after adversity turn the product's own checkers into oracles. Never manipulated: internal state directly — a state reachable only by teleport isn't a bug users can hit; if it's reachable, some history×timing produces it.</p>
+</div>
+
+<!-- ============================================================ -->
+<div class="contract" id="c-atom-schema" data-dec="pending">
+  <span class="c-tag">contract · awaiting DEC</span>
+  <p><strong>Flow-atom schema &amp; interface (ex-📜 item 01).</strong> Code-native atoms, no sidecar YAML: one file per atom in the product's language; the decorator carries only <code>resources</code>, <code>invariants</code>, <code>modalities</code>; inputs/outputs derive from the typed signature; checkpoints are emitted constants (declaration = emission). <code>Resource</code>/<code>Value</code> classes per product (~8–15) with <code>provision/teardown</code> + <code>generate/shrink</code>. YAML survives only as a machine-extracted review projection, never authored.</p>
+</div>
+
+<!-- ============================================================ -->
+<h2><span class="num">4</span>Resource &amp; Value API</h2>
+
+<pre><code><span class="k">class</span> <span class="g">Queue</span>(Resource):                      <span class="cm"># provisionable, stateful, contended-on</span>
+    <span class="k">def</span> provision(ctx) -&gt; <span class="s">"Queue"</span>: ...       <span class="cm"># create one when no upstream flow provides it</span>
+    <span class="k">def</span> teardown(ctx, q): ...                <span class="cm"># cleanup; enables repeat() re-establishment</span>
+    <span class="cm"># identity matters: race() binds children to the SAME instance</span>
+
+<span class="k">class</span> <span class="g">Task</span>(Value):                          <span class="cm"># data: produced, consumed, generated</span>
+    <span class="k">@staticmethod</span>
+    <span class="k">def</span> generate(rng) -&gt; <span class="s">"Task"</span>: ...         <span class="cm"># property-based sampling within a cell (Arbitrary)</span>
+    shrink = [<span class="s">"payload_size"</span>, <span class="s">"key_skew"</span>]    <span class="cm"># value-shrink dimensions for a red</span>
+    <span class="cm"># reference-shaped Values (WorkflowId) get the misuse negations automatically (§7)</span></code></pre>
+
+<p style="font-family: system-ui, sans-serif; font-size: 0.82rem;">Rule of thumb: <strong>Resource</strong> if the product holds state about it between calls (queue, database, subscription); <strong>Value</strong> if it's data that moves through calls (task, id, payload). Both are the type vocabulary <code>sequence</code>/<code>race</code> match on; ~8–15 per product, all in <code>model/resources.py</code>.</p>
+
+<!-- ============================================================ -->
+<h2><span class="num">5</span>ctx and the observation vocabulary</h2>
+
+<div class="table-scroll"><table>
+  <tr><th>ctx member</th><th>Purpose</th></tr>
+  <tr><td><code>ctx.client</code></td><td>the product handle, pre-bound to the scenario's channel + environment + actor identity</td></tr>
+  <tr><td><code>ctx.checkpoint(C)</code></td><td>emit a declared checkpoint constant — the only legal <code>interrupt</code> landing sites; declaration IS emission</td></tr>
+  <tr><td><code>ctx.observe(event)</code></td><td>emit an explicit effect observation (most observations are emitted automatically by the SDK)</td></tr>
+  <tr><td><code>ctx.rng · ctx.now()</code></td><td>seeded randomness · virtual time — the determinism rule R10</td></tr>
+  <tr><td><code>ctx.await_result / unique_name / …</code></td><td>bounded-wait helpers that keep liveness observable (never bare sleeps)</td></tr>
+</table></div>
+
+<p style="font-family: system-ui, sans-serif; font-size: 0.82rem;"><strong>The observation stream</strong> (frozen format #3) carries five event kinds, each stamped with actor + virtual time: <code>checkpoint(name)</code> · <code>effect(kind, key)</code> · <code>error(type)</code> · <code>terminal(state)</code> · <code>resource(metric, value)</code>. The oracle plane consumes only this stream — the universal tier (liveness · terminal-legality · undeclared-error · bounds) needs nothing else; declared invariants bind to effect/terminal patterns.</p>
+
+<!-- ============================================================ -->
+<div class="contract" id="c-oracles" data-dec="pending">
+  <span class="c-tag">contract · awaiting DEC</span>
+  <p><strong>Universal invariant/oracle families (ex-📜 item 02).</strong> Ten families as vocabulary (safety · liveness · durability · conservation · ordering · isolation · authorization · idempotency · compatibility · bounded-resource), evaluated in <strong>two tiers</strong>: the <em>universal plane</em> — liveness horizon, terminal-state legality, undeclared-error (incl. the differential sibling mode), resource bounds — runs on <em>every</em> scenario with zero declarations; <em>declared bindings</em> sharpen it per flow. Executable at v3.0: the universal four + conservation ledger (row-proven modules: <code>wallclock</code>, <code>errorcontract</code>, <code>personaledger</code>). An applicable invariant with no executable oracle = <strong>oracle debt</strong>: blocks coverage claims, never silently dropped. Oracles evaluate engine-side over the observation stream. An oracle is never weakened to make a workload pass.</p>
+</div>
+
+<!-- ============================================================ -->
+<h2><span class="num">6a</span>Within-cell search: seeds are not blind sampling</h2>
+
+<p style="font-family: system-ui, sans-serif; font-size: 0.84rem;">The lattice aims at a situation; the within-cell search finds the values and timing that trigger the bug <em>inside</em> that aimed situation. Random sequential seeds would be a weak way to do this — so three of the four sub-dimensions are searched smartly, not sampled:</p>
+
+<div class="table-scroll"><table>
+  <tr><th>Sub-dimension</th><th>Method</th><th>Guarantee</th></tr>
+  <tr><td>fault timing</td><td>exhaustive sweep over declared checkpoints + I/O boundaries (a finite set)</td><td><strong>covered</strong> — not a gamble</td></tr>
+  <tr><td>interleaving</td><td>partial-order reduction (distinct schedules only) + PCT depth bounds — systematic, not random seeds</td><td>bounded for shallow (most bugs); a computable probability curve for deep</td></tr>
+  <tr><td>data values</td><td>boundary-biased <code>Arbitrary</code> generators + coverage-guided selection (the AFL/Antithesis move: next seed maximizes new coverage)</td><td>probability mass concentrated on edges, not uniform over infinity</td></tr>
+  <tr><td><strong>rare-value × deep-schedule</strong></td><td>the genuine residual — budgeted seeds, escalated on near-miss evidence</td><td><strong>none — conceded</strong> (the thesis's "rare values / deep sequences" tail)</td></tr>
+</table></div>
+
+<p style="font-family: system-ui, sans-serif; font-size: 0.84rem;">Honesty rules: a cell records <strong>"attacked with N seeds," never "proven safe"</strong> — green-with-a-seed-budget, budget visible as a policy dial. <strong>Depth escalation</strong> multiplies a cell's seed budget on a near-miss/divergence (bounded, decaying) — the unbounded budget is spent reactively on signals, not uniformly on hope. Going deep is cheap where it matters: seeds in a hot cell share the build key (~¼s restore), so 1,000 seeds in one suspicious cell is minutes. <strong>Two distinct seeds per run</strong> — scheduler seed (interleaving) and network/fault seed (ambient plan) — stamped separately so shrink can hold one fixed while varying the other. The seed cannot guarantee finding a rare bug; nothing can. What changed vs rows 1–8: seeds now fire inside an <em>aimed</em> cell, timing is exhaustive, interleavings are systematic, values are biased+guided — so the residual gamble is confined to one dimension, budgeted, and logged as debt rather than hidden as green.</p>
+
+<!-- ============================================================ -->
+<h2><span class="num">6b</span>The state grammar</h2>
+
+<pre><code>STATE := negation(typed-input)      <span class="cm"># engine-owned library, applies to every reference type:</span>
+         | prefix(flow-steps)       <span class="cm">#   nonexistent · stale · wrong-lifecycle-state ·</span>
+                                    <span class="cm">#   foreign · malformed · reused</span>
+                                    <span class="cm"># prefix: reachable state = effect-set of running part</span>
+                                    <span class="cm"># of another flow — with_state(A, stale-id) compiles to</span>
+                                    <span class="cm"># sequence(create, destroy, A)</span></code></pre>
+
+<div class="contract" id="c-misuse" data-dec="pending">
+  <span class="c-tag">contract · awaiting DEC</span>
+  <p><strong>Misuse negation library &amp; state generation.</strong> The library is <strong>engine-owned and fixed</strong> — it applies to every typed reference input in every product: <code>nonexistent</code> · <code>stale</code> · <code>wrong-lifecycle-state</code> · <code>foreign</code> · <code>malformed</code> · <code>reused</code>. State contexts are <strong>generated, never authored</strong>: <code>with_state</code> = a negation from this library, or a flow prefix (reachable state = the effect-set of running part of another flow). Misuse floor = every flow × every typed input × each applicable negation. New negations are engine PRs, retroactive to every product. The error-contract oracle's <strong>differential mode</strong> needs zero declarations: same invalid input class across all sibling verbs sharing the type → an outlier error type is a wrong-error finding (exactly how fork-nonexistent is caught).</p>
+</div>
+
+<!-- ============================================================ -->
+<h2><span class="num">6c</span>The search contract: applicability, floors, budget, stop</h2>
+
+<div class="contract" id="c-applicability" data-dec="pending">
+  <span class="c-tag">contract · awaiting DEC</span>
+  <p><strong>Applicability: authored vs inferred (ex-📜 item 04).</strong> Everything is agent-inferred with citations; <code>unknown</code> is the default cell class, not <code>plan</code>. Every park/blocked carries evidence and faces critic refutation. The user sees applicability only via the digest's flagged list.</p>
+</div>
+
+<div class="contract" id="c-floors" data-dec="pending">
+  <span class="c-tag">contract · awaiting DEC</span><span class="c-tag flag">flagged 05 — your call</span>
+  <p><strong>Minimum mandatory breadth.</strong> Per flow: every declared modality baseline+attack (compiler-gated — DEC-018 async parity made permanent); ≥1 non-solo topology where declared. Product-wide: every applicable mechanism family attacks ≥1 invariant; the misuse-persona floor; every modeled event fires; the documented-surface census floor. All are Stage-A eligibility gates, never score inputs.</p>
+</div>
+
+<div class="contract" id="c-budget-stop" data-dec="pending">
+  <span class="c-tag">contract · awaiting DEC</span><span class="c-tag flag">flagged 06 — your call</span>
+  <p><strong>Budget &amp; stop semantics.</strong> Lanes: coverage 60 · evidence-depth 25 · exploration 15; mechanical per-flow/per-cell caps; exploration starvation-checked. <strong>Cell states:</strong> <code>plan</code> (required, creates debt) · <code>covered</code> (qualifying evidence) · <code>blocked</code> (valid, unreachable, named infra obligation) · <code>park</code> (inapplicable, evidence + audit) · <code>explore</code> (eligible, not mandatory) · <code>unknown</code> (default). <strong>Twelve debt ledgers</strong>, each independently stop-blocking: mapping · oracle · baseline · attack · actor-topology · channel · modality · mechanism · event/state · load · environment · exploration; a blocked obligation stays debt, an attempted-but-blocked run pays nothing. <strong>Stops:</strong> budget-exhausted or zero-debt only. <strong>Model exhaustion</strong> may be claimed only at: no uncrystallized red · zero mandatory debt across all twelve · no unaudited park · no required candidate hidden behind a score · exploration honored · integrity checks pass. A budget/wall-clock rail stop reports remaining debt and never claims exhaustion.</p>
+</div>
+
+<div class="contract" id="c-load-env" data-dec="pending">
+  <span class="c-tag">contract · awaiting DEC</span>
+  <p><strong>Load &amp; environment safety (ex-📜 item 07).</strong> Geometric ladder from the attributable control; steps from a capacity probe + declared product limits; load eligible only after semantic prerequisites are green; every large profile declares shrink dimensions; wall-clock/resource rails versioned in policy.</p>
+</div>
+
+<!-- ============================================================ -->
+<h2><span class="num">7</span>A scenario document, complete</h2>
+
+<pre><code>{ <span class="cm">// frozen format #2 — generated by the materializer, executed by any runner</span>
+  <span class="s">"key"</span>: <span class="s">"race-enqueue-crash-after-claim-pg"</span>,
+  <span class="s">"stamps"</span>: { <span class="s">"model"</span>: <span class="s">"m14"</span>, <span class="s">"generator"</span>: <span class="s">"g3"</span>, <span class="s">"policy"</span>: <span class="s">"p7"</span>, <span class="s">"seed"</span>: 17 },
+  <span class="s">"tree"</span>: { <span class="s">"op"</span>: <span class="s">"with_environment"</span>, <span class="s">"profile"</span>: <span class="s">"postgres-16"</span>, <span class="s">"child"</span>:
+          { <span class="s">"op"</span>: <span class="s">"interrupt"</span>, <span class="s">"event"</span>: <span class="s">"process-crash"</span>, <span class="s">"checkpoint"</span>: <span class="s">"after-claim"</span>, <span class="s">"child"</span>:
+          { <span class="s">"op"</span>: <span class="s">"race"</span>, <span class="s">"children"</span>: [ {<span class="s">"op"</span>:<span class="s">"flow"</span>,<span class="s">"key"</span>:<span class="s">"enqueue-and-complete"</span>},
+                                        {<span class="s">"op"</span>:<span class="s">"flow"</span>,<span class="s">"key"</span>:<span class="s">"enqueue-and-complete"</span>} ] } } },
+  <span class="s">"cast"</span>: { <span class="s">"worker"</span>: 2 },  <span class="s">"topology"</span>: <span class="s">"same-role-contention"</span>,
+  <span class="s">"channel"</span>: <span class="s">"python-sdk"</span>,  <span class="s">"modality"</span>: <span class="s">"process-parallel"</span>,
+  <span class="s">"invariants"</span>: [<span class="s">"task-body-executes-exactly-once"</span>, <span class="s">"acknowledged-task-not-lost"</span>],
+  <span class="s">"control"</span>: <span class="s">"same-tree-minus-interrupt"</span>,        <span class="cm">// auto-peeled</span>
+  <span class="s">"sweep"</span>: { <span class="s">"seeds"</span>: 20, <span class="s">"fault_offsets"</span>: <span class="s">"jitter-around:after-claim"</span> },  <span class="cm">// other checkpoints = sibling cells, not this sweep</span>
+  <span class="s">"shrink_plan"</span>: [<span class="s">"peel:environment"</span>, <span class="s">"peel:interrupt"</span>, <span class="s">"collapse:race"</span>, <span class="s">"values:task"</span>],
+  <span class="s">"promotion"</span>: <span class="s">"draft"</span> }</code></pre>
+
+<!-- ============================================================ -->
+<h2><span class="num">8</span>Engine internals: the three loops, and where a doc's fields come from</h2>
+
+<p style="font-family: system-ui, sans-serif; font-size: 0.84rem;">The engine iterates the space in three nested loops, in three places, with three termination guarantees:</p>
+
+<pre><code><span class="cm"># LOOP 1 — enumerate (compiler; milliseconds; the ONLY loop that visits the ENTIRE space)</span>
+<span class="k">def</span> <span class="g">compile</span>(manifest, policy):
+    <span class="k">for</span> tree <span class="k">in</span> valid_compositions(manifest, policy.bounds):   <span class="cm"># typed walk, depth ≤ 3</span>
+        <span class="k">for</span> coord <span class="k">in</span> applicable_bindings(tree, manifest):      <span class="cm"># env × modality × topology × state…</span>
+            cells[cell_id(tree, coord)] = classify(...)        <span class="cm"># owed/covered/blocked/parked</span>
+    <span class="k">return</span> lattice, debt_ledgers                               <span class="cm"># always completes; re-runs free</span>
+
+<span class="cm"># LOOP 2 — drain (wio harness run; the execution loop over OWED cells)</span>
+<span class="k">def</span> <span class="g">run</span>(budget):
+    <span class="k">while</span> budget.remaining() <span class="k">and</span> (cell := frontier.next(lattice, evidence)):  <span class="cm"># gate, then rank</span>
+        doc = materialize(cell, next_seed(cell))
+        verdicts = bench.execute(doc)                <span class="cm"># → wio; the metered part</span>
+        ledger.append(envelopes(verdicts))           <span class="cm"># evidence, on disk</span>
+        lattice.update(cell, verdicts)               <span class="cm"># owed → covered / red / blocked</span>
+        <span class="k">if</span> verdicts.red: shrink_and_pause(...)       <span class="cm"># reds preempt</span>
+
+<span class="cm"># LOOP 3 — sweep (runner, inside one scenario): for seed → for fault-offset → execute</span></code></pre>
+
+<div class="callout">
+  <span class="label">the drain's key property — loop position lives on disk</span>
+  <p>Loop 2 holds no state of its own: "where we are in the space" IS the lattice + evidence ledger. Kill it mid-loop, run it tomorrow — the frontier recomputes from disk and continues exactly where reality left off. That's why it can be driven by anything (the skill's EXECUTE episodes in budget chunks, cron on main, CI) with no long-lived search process, and why <code>frontier.next() → nothing</code> is the computable "zero debt" that replaced feeling-based stops. Completeness lives in loop 1; progress in loop 2; depth in loop 3.</p>
+</div>
+
+<div class="callout">
+  <span class="label">shrink &amp; neighbors — one mutation operator, two directions</span>
+  <p><strong>Shrink (inward):</strong> on a confirmed red, execute the doc's <code>shrink_plan</code> as delta-debugging — apply the next peel, re-run with the <em>pinned</em> recipe (determinism ⇒ one run answers each question; nondeterministic systems need N statistical reruns per step), still-red keeps the smaller tree, green restores the essential element; then value bisection along declared <code>shrink</code> dimensions. Cost ≈ plan-steps + log₂(value ranges) ≈ 10–30 runs, same build key. Output: minimal tree · the <strong>peel log</strong> (each verdict is a fact about the bug: not-env-specific, crash-essential…) · the control (the last green, one peel away) · replay recipe — assembled before any agent looks. <strong>Neighbors (outward):</strong> mutate the minimal cell's coordinate one axis at a time (next checkpoint · other modality · sibling env · swapped resource-sharing flow · adjacent state). Neighbors are ordinary cells: they receive the §9 rank <em>boost</em>, never a gate exemption; one-coordinate keeps verdicts attributable (the red/green frontier maps the bug's extent, into the finding doc); spread is one evidence-driven hop at a time, so neighborhoods can't explode.</p>
+</div>
+
+<p style="font-family: system-ui, sans-serif; font-size: 0.84rem;"><strong>Field provenance</strong> — every field of the §7 document, traced to its source. Nothing is authored; the nearest thing to an author is the atom's declarations:</p>
+
+<div class="table-scroll"><table>
+  <tr><th>Field</th><th>Derived from</th></tr>
+  <tr><td><code>key</code></td><td>slug composed from the cell coordinate's components</td></tr>
+  <tr><td><code>stamps</code></td><td><code>model.lock</code> + engine version + policy version + the cell's deterministic seed sequence</td></tr>
+  <tr><td><code>tree</code></td><td>the cell's composition assembled bottom-up; structure-affecting bindings stay tree nodes, coordinate-only bindings flatten into fields</td></tr>
+  <tr><td><code>cast</code></td><td>topology × composition arity (race of 2, same-role → worker: 2)</td></tr>
+  <tr><td><code>topology / channel / modality</code></td><td>the cell coordinate, flattened</td></tr>
+  <tr><td><code>invariants</code></td><td>union of the atoms' declared invariants applicable at this coordinate (universal plane implicit, always on)</td></tr>
+  <tr><td><code>control</code></td><td>the adversity operator's peel rule, applied once; engine references the already-green control or schedules it first (controls-before-attacks gate)</td></tr>
+  <tr><td><code>sweep</code></td><td>policy: per-cell depth cap × fault jitter around the pinned checkpoint (sibling checkpoints = sibling cells)</td></tr>
+  <tr><td><code>shrink_plan</code></td><td>read mechanically off the tree: outermost binding → adversity → structure collapse → declared value shrinks</td></tr>
+  <tr><td><code>promotion</code></td><td>constant <code>draft</code> — only the gates promote</td></tr>
+</table></div>
+
+<!-- ============================================================ -->
+<h2><span class="num">9</span>Stage B: ranking, done well</h2>
+
+<p style="font-family: system-ui, sans-serif; font-size: 0.84rem;">Ranking is the only component with a failed track record (two attention formulas, both dead), so it gets explicit doctrine. First, its failure is <strong>bounded by design</strong>: Stage A owns coverage, so the worst ranking is random order with identical final coverage — ranking only decides time-to-first-finding, value captured under a budget cut, and how fast red-neighborhoods open. That bound is the license to <em>learn</em> ranking rather than solve it a priori.</p>
+
+<div class="callout">
+  <span class="label">the autopsy both failures share</span>
+  <p>Signals derived from the past decay — historical issue density concentrates spend on territory the vendor already fixed (the DEC-027 retrodiction REJECT said exactly this), and one frozen formula is a monoculture that starves whole classes. Doctrine: never THE formula; a measured portfolio with decaying memory.</p>
+</div>
+
+<div class="table-scroll"><table>
+  <tr><th>Signal</th><th>Nature</th><th>Decay handling</th></tr>
+  <tr><td>severity of threatened invariant (w4 &gt; w1)</td><td>intrinsic</td><td>stable</td></tr>
+  <tr><td>state-coupling strength (shared row-classes, static)</td><td>intrinsic</td><td>stable</td></tr>
+  <tr><td>cost / reachability</td><td>operational</td><td>stable</td></tr>
+  <tr><td>vendor-test deficit for the exact situation</td><td>present-tense</td><td>recompute per target release</td></tr>
+  <tr><td>code churn near the surfaces</td><td>present-tense</td><td>fresh by construction</td></tr>
+  <tr><td>novelty vs completed cells</td><td>self-updating</td><td>cannot go stale</td></tr>
+  <tr><td><strong>historical issue density</strong></td><td>past-tense</td><td><strong>capped, dated, discounted — the DEC-027 trap</strong></td></tr>
+</table></div>
+
+<ul style="font-family: system-ui, sans-serif; font-size: 0.83rem;">
+  <li><strong>Portfolio, not formula:</strong> several rankers run round-robin across the budget lanes (severity-first · coupling-first · vendor-deficit-first · novelty-first · <em>random as the control lane</em>) — no monoculture, and the random lane is the always-on baseline every ranker must beat.</li>
+  <li><strong>Online reweighting (the bandit layer):</strong> a red/near-miss multiplies its neighborhood's rank (bounded, decaying); hollow-green regions decay. All policy data; the exploration lane is the forced-explore arm.</li>
+  <li><strong>Metrics, per run:</strong> time-to-first-confirmed-red · weighted-findings-vs-budget-fraction curve (area under) · retrodiction regret (holdout found at K=20/40 vs perfect order). Rankers compete on a scoreboard, not in arguments.</li>
+  <li><strong>The ladder rule, hard:</strong> a candidate ranker ships only after beating random AND the incumbent on retrodiction, on two answer keys (the overfitting guard), one change at a time. Ranking is pure ordering with zero execution — there is never an excuse to test a ranking idea with a row.</li>
+</ul>
+
+<p style="font-family: system-ui, sans-serif; font-size: 0.84rem;"><strong>Determinism is law here too:</strong> ranking is a pure function of (lattice, evidence state, policy, seed) — signals are mechanical counts, weights are frozen policy data, the bandit multipliers are fixed decaying rules, even the random lane is a seeded PRNG. <strong>No agent ever touches the ordering</strong> — agent influence reaches the queue only through disk (new atoms → recompile; triaged evidence → neighborhood boosts). This isn't hygiene: a ranker must be a pure function to be retrodictable, and retrodictability is what makes the portfolio improvable at all.</p>
+
+<p style="font-family: system-ui, sans-serif; font-size: 0.84rem;"><strong>One-line doctrine: coverage is guaranteed by floors; ranking is a continuously-audited bet on order, run as a measured portfolio with decaying memory — never a single clever formula.</strong></p>
+
+<!-- ============================================================ -->
+<h2><span class="num">10</span>Worked example: gc-strand, end to end in the language</h2>
+
+<div class="ctree">
+  <div class="cnode op"><span class="cn-label">interrupt</span> <span class="cn-note">— process-crash @ before-parent-completes (valid: checkpoint declared by the fork atom, R6)</span>
+    <div class="cnest">
+      <div class="cnode op"><span class="cn-label">sequence</span> <span class="cn-note">— valid: both atoms declare the workflow-rows Resource (R2) → coupled pair → interaction-floor debt</span>
+        <div class="cnest">
+          <div class="cnode atomn"><span class="cn-label">flow(fork-children-and-await)</span></div>
+          <div class="cnode atomn"><span class="cn-label">flow(garbage-collect)</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<p style="font-family: system-ui, sans-serif; font-size: 0.82rem; margin-top: 0.6rem;"><strong>Lowering:</strong> one actor forks children and awaits · gc runs · injector armed on the checkpoint · crash · recovery driver restarts. <strong>Oracle:</strong> the universal liveness tier fires (parent never terminal) — no declared invariant needed. <strong>Shrink:</strong> peel environment (still red) → peel interrupt (green — crash essential) → collapse nothing more → minimal. <strong>Control:</strong> the interrupt-peel, auto-generated. Every step of the real finding, expressed by the reference above.</p>
+
+<!-- ============================================================ -->
+<h2><span class="num">11</span>Versioning &amp; extension rules</h2>
+
+<ul style="font-family: system-ui, sans-serif; font-size: 0.84rem;">
+  <li><strong>Operator catalog:</strong> closed at twelve; #13 = logged inexpressible-composition evidence + engine PR implementing all four lives + tests + ladder (c-operators, §1).</li>
+  <li><strong>SDK surface</strong> (decorator params, <code>ctx</code>, base classes): green-zone contract — additive only, defaults required, <code>wio harness migrate</code> for semantic growth.</li>
+  <li><strong>Misuse library:</strong> engine-owned; new negations are engine PRs, apply to every product retroactively for free.</li>
+  <li><strong>Formats</strong> (manifest · scenario doc · observations · envelope): versioned, additive-only — the real public API.</li>
+  <li><strong>This page:</strong> updates to match built code after each prototype job lands; divergence between page and code is a build bug, resolved toward the contract block's ruling (queue: 📜).</li>
+</ul>
+
+<!-- ============================================================ -->
+<h2><span class="num">12</span>The wire formats &amp; the CLI surface</h2>
+
+<div class="table-scroll"><table>
+  <tr><th>Format</th><th>Producer → consumer</th><th>Carries</th></tr>
+  <tr><td><strong>1 · Manifest</strong></td><td>extractor → compiler (and platform digest)</td><td>every atom's declarations, normalized JSON, language-neutral</td></tr>
+  <tr><td><strong>2 · Scenario doc</strong></td><td>materializer → runner (any language runtime)</td><td>composition tree + bindings + control + shrink plan + model/generator/policy/seed stamps (§7)</td></tr>
+  <tr><td><strong>3 · Observation stream</strong></td><td>SDK emitter → oracle plane</td><td>checkpoint-reached · effect · typed-error · terminal-state · resource counts, timestamped in virtual time (§5)</td></tr>
+  <tr><td><strong>4 · Evidence envelope</strong></td><td>runner → ledger (local + platform)</td><td>full semantic coordinate · target commit SHA + product version · all stamps · promotion state + gate evidence · verdict</td></tr>
+  <tr><td><strong>5 · Explain response</strong></td><td>explain endpoint → any caller</td><td>cell id + state (<code>owed · covered · blocked · parked</code>) or invalid-with-reason; reasons are citation-grade (bonding rule / named obligation / park evidence) — never the computing rule, never rank, sweep, or seed budgets</td></tr>
+</table></div>
+
+<div class="contract" id="c-formats" data-dec="pending">
+  <span class="c-tag">contract · awaiting DEC</span>
+  <p><strong>Storage, versioning &amp; the wire contracts (ex-📜 item 09).</strong> The five formats above are the frozen public API family: versioned, <strong>additive-only</strong>, frozen more carefully than any UI or folder. Scenarios are generated artifacts stamped model+generator+policy+seed, fully regenerable; findings/evidence immutable, written once with their full coordinate + versions + SHA + promotion state. Oracles evaluate engine-side over the observation stream → a new language SDK costs registration + <code>ctx</code> + emitter (Python + TypeScript first). Local SQLite index is a compiled view; Convex = evidence tables + rebuildable projections; no external service in the search loop.</p>
+</div>
+
+<p style="font-family: system-ui, sans-serif; font-size: 0.84rem;"><strong>The CLI surface</strong> — one front door, two execution places (the openness boundary, 🏛):</p>
+
+<div class="table-scroll"><table>
+  <tr><th>Verb</th><th>Runs</th><th>Does</th></tr>
+  <tr><td><code>wio run · hosts · project · auth · publish · init</code></td><td>platform</td><td>the substrate: execute on the bench, manage projects, upload evidence, scaffold <code>.workers/</code></td></tr>
+  <tr><td><code>wio harness atoms export</code></td><td>client, local</td><td>extractor → manifest (format 1)</td></tr>
+  <tr><td><code>wio harness compile</code></td><td>service</td><td>manifest × policy → lattice + debt report</td></tr>
+  <tr><td><code>wio harness explain &lt;tree&gt;</code></td><td>service</td><td>format-5 answer for any composition in the public language</td></tr>
+  <tr><td><code>wio harness digest</code></td><td>client + service</td><td>the ratification digest (what I think you promise · what I'll attack · what I parked · N flagged)</td></tr>
+  <tr><td><code>wio harness verdict &lt;sha&gt; · status · debt · findings · scenario &lt;key&gt; · compare</code></td><td>mixed</td><td>CI mode + the CLI twins of the pages; replay is client-local and deterministic</td></tr>
+  <tr><td><code>wio harness migrate</code></td><td>client</td><td>schema upgrades: deterministic where mechanical, agent-drafted diff where semantic, hard-fail otherwise</td></tr>
+</table></div>
+
+<!-- ============================================================ -->
+<h2><span class="num">13</span>The measurement contract</h2>
+
+<div class="contract" id="c-evaluation" data-dec="pending">
+  <span class="c-tag">contract · awaiting DEC</span>
+  <p><strong>Evaluation law.</strong> One treatment per measurement (taxonomy → generation with current ranking → frontier; any attention formula separate). Freeze before keyed evaluation. Retrodiction decomposes attribution between rows. Blessed instruments (grade-row, transcript-audit) are untouched by the loop they measure. <strong>Severity weights</strong> (the north star's): data-loss 4 · correctness 3 · availability 2 · wrong-error 1 · cosmetic 0. <strong>Precedence (Turso census):</strong> corruption of committed state dominates the crash that revealed it; inaccessible-but-intact committed data ("bricked") classifies as data-loss. Rater convention: setup inside the repro = plain-input; only pre-existing cross-session state = state-context.</p>
+</div>
+
+<p class="foot">Reference appendix to the set (🧭 index) · briefs for J1/J4 compile from here · CONTRACT blocks on this page are normative and win over prose (queue + block index: 📜) · method narrative: ⚗️ · workers.io internal.</p>
+
+</div>

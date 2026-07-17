@@ -2,6 +2,19 @@
 
 All notable changes to `@workersio/skills` are tracked here.
 
+## 0.2.0
+
+- Rebuilt `workload-harness` as a thin model-authoring skill over the public
+  WIO SDK and CLI contracts. It now authors cited Python or TypeScript atoms,
+  requires explicit operation-local `creates`/`consumes`/`plain` roles, and
+  asks for human ratification before execution.
+- Added an idempotent three-zone `.workers/` scaffold and a deterministic,
+  fail-closed format-1 manifest checker. Removed the embedded scenario
+  generator, ranker, oracle library, recipes, dispatcher, and stop logic; those
+  responsibilities belong to the installed deterministic product.
+- Added Codex skill UI metadata, aligned Codex and Claude plugin metadata on
+  the 0.2 release line, and removed the unsupported Codex plugin hook field.
+
 ## 0.1.3
 
 - workload-harness: **build-first doctrine** (the headline; graded-row

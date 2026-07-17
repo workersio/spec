@@ -1,7 +1,7 @@
 {
   "name": "wio",
-  "version": "0.1.3",
-  "description": "Testing workflow skill for high-value test discovery, strategy selection, focused implementation, realistic workload generation, strict review, and suite health diagnostics.",
+  "version": "0.2.0+codex.20260717000119",
+  "description": "Testing workflows plus deterministic, code-native workload model authoring for the WIO local harness.",
   "author": {
     "name": "workers.io",
     "url": "https://github.com/workersio"
@@ -17,11 +17,10 @@
     "skills"
   ],
   "skills": "./skills/",
-  "hooks": "./hooks/hooks.json",
   "interface": {
     "displayName": "@workersio/skills",
     "shortDescription": "Write better tests, not more tests.",
-    "longDescription": "@workersio/skills gives coding agents a rigorous testing workflow for discovering valuable test candidates, choosing the right strategy, writing focused tests, generating realistic replayable workloads, reviewing test value with KEEP/REDO/REMOVE decisions, and diagnosing suite health.",
+    "longDescription": "@workersio/skills gives coding agents a rigorous testing workflow and a cited, code-native workload model authoring layer over the deterministic WIO local harness.",
     "developerName": "workers.io",
     "category": "Productivity",
     "capabilities": [
@@ -32,8 +31,7 @@
     "defaultPrompt": [
       "$wio scan checkout",
       "$wio test billing eligibility regression",
-      "$wio workload onboarding session",
-      "$wio doctor API test suite"
+      "$workload-harness author and ratify a local workload model"
     ],
     "brandColor": "#2563EB"
   }

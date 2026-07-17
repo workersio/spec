@@ -1,0 +1,4 @@
+interface:
+  display_name: "WIO Workload Harness"
+  short_description: "Author and ratify deterministic workload models"
+  default_prompt: "$workload-harness author and ratify a local workload model"

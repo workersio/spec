@@ -19,7 +19,7 @@ mock away the real risk, and pass even when the product breaks.
 question: will this test catch a real regression that users, operators,
 reviewers, or maintainers care about?
 
-`@workersio/skills` is one skill with five command modes:
+`@workersio/skills` provides the general testing skill with five command modes:
 
 ```text
 $wio scan      # Find high-value tests to add next.
@@ -28,6 +28,12 @@ $wio workload  # Generate realistic, replayable workloads with new bug-finding v
 $wio review    # Judge whether a test should be kept, redone, or removed.
 $wio doctor    # Audit suite health, weak assertions, flakes, mocks, and CI blind spots.
 ```
+
+It also includes `$workload-harness`, a separate model-authoring skill for the
+deterministic WIO interception pipeline. It cites repository contracts, authors
+code-native Python or TypeScript atoms, requires human ratification, and then
+drives the public local SDK/CLI loop. The skill does not embed its own ranker,
+runner, policy, evidence rules, or stop logic.
 
 ## Works With
 
@@ -93,6 +99,7 @@ codex plugin marketplace add .
 | Strategy selection | Chooses the right level: unit, component, integration, contract, E2E, workload, fuzz, property, mutation, resilience, or monitoring. |
 | Test writing | Adds focused tests using the repository's own framework, naming, fixtures, helpers, and runner conventions. |
 | Workload generation | Creates realistic, adversarial, seeded, replayable sessions or traffic that add coverage beyond wrappers and parameter sweeps. |
+| Workload model authoring | Authors and ratifies cited code-native atoms, then delegates deterministic generation, execution, evidence, and explanation to WIO. |
 | Test review | Applies a strict value gate: `KEEP`, `REDO`, or `REMOVE`. Coverage alone is not enough. |
 | Suite health | Finds weak assertions, over-mocking, broad snapshots, flakes, skipped tests, slow feedback loops, and CI blind spots. |
 
@@ -140,6 +147,7 @@ replace the main workflow.
 | --- | --- |
 | `plugins/wio/skills/wio/SKILL.md` | Source of truth for the skill workflow. |
 | `plugins/wio/skills/wio/references/` | Detailed testing guidance loaded only when relevant. |
+| `plugins/wio/skills/workload-harness/` | Thin authoring workflow, scaffold, checker, and SDK references for the deterministic harness. |
 | `plugins/wio/agents/` | Claude Code plugin subagents. |
 | `.codex/agents/` | Codex custom-agent TOML files for project or user installs. |
 | `plugins/wio/hooks/hooks.json` | Shared plugin hook config. |
@@ -149,9 +157,8 @@ replace the main workflow.
 
 ## Codex Agents And Hooks
 
-Codex plugin installs include the skill and plugin hook config. Codex custom
-agents are a separate native surface loaded from `.codex/agents/` in a project
-or `~/.codex/agents/` for the user.
+Codex plugin installs include the skills. Codex custom agents and hooks are
+separate native surfaces loaded from project or user configuration.
 
 Enable the Codex agents globally:
 
@@ -191,8 +198,9 @@ regression selection.
 
 ## Contributing
 
-Keep the public surface area small: one skill, `wio`, with command modes
-`scan`, `test`, `workload`, `review`, and `doctor`.
+Keep the public surface area small: the general `wio` skill with command modes
+`scan`, `test`, `workload`, `review`, and `doctor`, plus the thin
+`workload-harness` model-authoring skill.
 
 Detailed testing guidance belongs in
 `plugins/wio/skills/wio/references/`, not duplicated inside cloud folders,

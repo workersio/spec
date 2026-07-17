@@ -39,9 +39,10 @@ export const createRecord = flow({
 );
 ```
 
-Use `Consumes<T, {...}>` with all six engine misuse keys for an existing
-identity. Use `Plain<T>` for non-reference inputs. Keep expected error maps on
-the function parameter type, never on the `Value` subclass.
+Use `Consumes<T, {...}>` with the documented subset of engine misuse keys for
+an existing identity; the checker emits named debt for omitted negations. Use
+`Plain<T>` for non-reference inputs. Keep expected error maps on the function
+parameter type, never on the `Value` subclass.
 
 Run the installed extractor command from the TypeScript SDK package and write
 its canonical format-1 JSON to `.workers/generated/manifest.json`. Consult the

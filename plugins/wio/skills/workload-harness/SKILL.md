@@ -42,9 +42,10 @@ is replaceable output, `.workers/evidence/` is immutable run evidence, and
 
    - `CREATES`: this operation makes the supplied identity live. Absence before
      entry is normal. Only `malformed` and `reused` are applicable.
-   - `CONSUMES`: the identity must already be live on entry. Declare all six
-     engine negations: `foreign`, `malformed`, `nonexistent`, `reused`, `stale`,
-     and `wrong-lifecycle-state`.
+   - `CONSUMES`: the identity must already be live on entry. Declare only the
+     documented subset of `foreign`, `malformed`, `nonexistent`, `reused`,
+     `stale`, and `wrong-lifecycle-state`; the checker reports each omitted
+     engine negation as named debt.
    - `PLAIN`: the input is not a lifecycle reference and has no misuse errors.
 
    Classify the operation's use of the input, never the value type by itself.
@@ -52,7 +53,8 @@ is replaceable output, `.workers/evidence/` is immutable run evidence, and
    If one proposed atom creates and later consumes the same identity, split it
    into separately observable operations.
 5. Use real public error type names. Do not invent a mapping merely to satisfy
-   the checker; stop and report an undocumented contract instead.
+   the checker; omitted consumer mappings remain named debt until a public
+   contract supports them.
 
 ## Validate and ratify
 

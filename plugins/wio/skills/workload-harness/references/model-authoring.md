@@ -28,12 +28,16 @@ allows the engine to generate the correct negations without guessing history.
 | Role | Entry condition | Applicable expected errors |
 |---|---|---|
 | `creates` | Supplied identity need not exist; operation makes it live | Any documented subset of `malformed`, `reused` |
-| `consumes` | Supplied identity must already be live | Exactly `foreign`, `malformed`, `nonexistent`, `reused`, `stale`, `wrong-lifecycle-state` |
+| `consumes` | Supplied identity must already be live | Any documented subset of `foreign`, `malformed`, `nonexistent`, `reused`, `stale`, `wrong-lifecycle-state`; omissions become named debt |
 | `plain` | Not a lifecycle reference | None |
 
 The same value class can be `creates` in one atom and `consumes` in another.
 Expected errors therefore belong to the atom input annotation, not the value
 class. Use the target's public error names as values.
+
+Never fill an undocumented mapping to make the checker green. The checker
+accepts a documented subset for a consuming input and emits one
+`misuse-contract` debt row for each omitted engine negation.
 
 ## Citation
 

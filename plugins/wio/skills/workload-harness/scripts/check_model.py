@@ -9,16 +9,16 @@ from pathlib import Path
 from typing import Any
 
 
-ROLES = {"creates", "consumes", "plain"}
-CREATE_ERRORS = {"malformed", "reused"}
-CONSUME_ERRORS = {
+ROLES = frozenset({"creates", "consumes", "plain"})
+CREATE_ERRORS = frozenset({"malformed", "reused"})
+CONSUME_ERRORS = frozenset({
     "foreign",
     "malformed",
     "nonexistent",
     "reused",
     "stale",
     "wrong-lifecycle-state",
-}
+})
 SOURCE_SUFFIXES = (".py", ".ts", ".tsx")
 
 
@@ -43,6 +43,7 @@ def check_manifest(manifest: Any, atoms_dir: Path) -> dict[str, Any]:
     require(atoms_dir.is_dir(), f"atom source directory does not exist: {atoms_dir}")
 
     roles: Counter[str] = Counter()
+    debt: list[dict[str, str]] = []
     module_atoms: dict[str, int] = defaultdict(int)
     for key in sorted(atoms):
         atom = atoms[key]
@@ -110,10 +111,24 @@ def check_manifest(manifest: Any, atoms_dir: Path) -> dict[str, Any]:
                     f"atom {key!r} creates input {name!r} permits only malformed/reused",
                 )
             else:
+                unknown = error_keys - CONSUME_ERRORS
                 require(
-                    error_keys == CONSUME_ERRORS,
-                    f"atom {key!r} consumes input {name!r} requires all six engine negations",
+                    not unknown,
+                    f"atom {key!r} consumes input {name!r} has unknown engine negations: {sorted(unknown)!r}",
                 )
+                for misuse in sorted(CONSUME_ERRORS - error_keys):
+                    debt.append(
+                        {
+                            "atom": key,
+                            "class": "misuse-contract",
+                            "detail": (
+                                f"consumes input {key}.{name} has no cited "
+                                f"expected error for engine negation {misuse}"
+                            ),
+                            "input": name,
+                            "misuse": misuse,
+                        }
+                    )
             roles[role] += 1
 
         module = atom.get("module")
@@ -135,6 +150,10 @@ def check_manifest(manifest: Any, atoms_dir: Path) -> dict[str, Any]:
 
     return {
         "atoms": len(atoms),
+        "debt": sorted(
+            debt,
+            key=lambda item: (item["atom"], item["input"], item["misuse"]),
+        ),
         "format": "model-check",
         "roles": {role: roles[role] for role in sorted(roles)},
         "version": 1,

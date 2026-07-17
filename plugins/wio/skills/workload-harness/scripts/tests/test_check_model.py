@@ -48,6 +48,7 @@ class ModelCheckTests(unittest.TestCase):
             (atoms / "records.py").write_text("# wio-source: docs/api.md#create\n")
             summary = check_manifest(manifest(), atoms)
             self.assertEqual(summary["roles"], {"creates": 1})
+            self.assertEqual(summary["debt"], [])
 
     def test_rejects_implicit_role(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -58,13 +59,45 @@ class ModelCheckTests(unittest.TestCase):
             with self.assertRaisesRegex(ModelError, "explicit input_roles"):
                 check_manifest(candidate, atoms)
 
-    def test_rejects_incomplete_consumer_negations(self) -> None:
+    def test_incomplete_consumer_negations_emit_named_debt(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             atoms = Path(directory)
             (atoms / "records.py").write_text("# wio-source: docs/api.md#read\n")
             candidate = manifest("consumes")
             del candidate["atoms"]["create-record"]["expected_errors"]["record_id"]["stale"]  # type: ignore[index]
-            with self.assertRaisesRegex(ModelError, "all six"):
+            summary = check_manifest(candidate, atoms)
+            self.assertEqual(
+                summary["debt"],
+                [
+                    {
+                        "atom": "create-record",
+                        "class": "misuse-contract",
+                        "detail": (
+                            "consumes input create-record.record_id has no cited "
+                            "expected error for engine negation stale"
+                        ),
+                        "input": "record_id",
+                        "misuse": "stale",
+                    }
+                ],
+            )
+
+    def test_empty_consumer_mapping_emits_all_six_debts(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            atoms = Path(directory)
+            (atoms / "records.py").write_text("# wio-source: docs/api.md#read\n")
+            candidate = manifest("consumes")
+            candidate["atoms"]["create-record"]["expected_errors"]["record_id"] = {}  # type: ignore[index]
+            summary = check_manifest(candidate, atoms)
+            self.assertEqual(len(summary["debt"]), 6)
+
+    def test_rejects_unknown_consumer_negation(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            atoms = Path(directory)
+            (atoms / "records.py").write_text("# wio-source: docs/api.md#read\n")
+            candidate = manifest("consumes")
+            candidate["atoms"]["create-record"]["expected_errors"]["record_id"]["teleported"] = "Impossible"  # type: ignore[index]
+            with self.assertRaisesRegex(ModelError, "unknown engine negations"):
                 check_manifest(candidate, atoms)
 
     def test_rejects_uncited_atom(self) -> None:

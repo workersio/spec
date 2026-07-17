@@ -51,9 +51,10 @@ def create(
     return bool(ctx and record_id and body)
 ```
 
-For a consuming input, use `CONSUMES` and map all six misuse names to real
-public errors. Do not set `Value.expected_errors`; it cannot express an
-operation-local role.
+For a consuming input, use `CONSUMES` and map only misuse names backed by real
+public errors. The checker records every omitted engine negation as named
+debt. Do not set `Value.expected_errors`; it cannot express an operation-local
+role.
 
 Extract without importing target application code beyond the atom package:
 

@@ -66,9 +66,14 @@ is replaceable output, `.workers/evidence/` is immutable run evidence, and
    <repo>/.workers/model/atoms`. Fix every failure at the declaration or cited
    source. `<this-skill>` means the directory containing this `SKILL.md`, not a
    `scripts/` directory in the target.
-3. Generate the human digest with the public CLI. Show the user the cited model
+3. Follow [references/model-critic.md](references/model-critic.md). Review the
+   complete atom tree against this skill's model laws and BUILD's frozen
+   gotchas, fix every finding, and commit the current clean report as
+   `.workers/model/critic.json`. A future MODEL gate must verify that report
+   with `--require-clean` before it may ask for ratification.
+4. Generate the human digest with the public CLI. Show the user the cited model
    diff and digest. Do not execute cells until the user ratifies the model.
-4. Commit the ratified model separately from generated output and evidence when
+5. Commit the ratified model separately from generated output and evidence when
    the user's repository policy permits it. Never push without explicit user
    authorization.
 

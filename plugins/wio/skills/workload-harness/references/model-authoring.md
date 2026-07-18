@@ -55,5 +55,7 @@ the human ratification verifies truth.
 
 Present the model as a product contract, not generated test inventory. For each
 atom show its citation, invariant, modalities, input roles, expected errors,
-and any unsupported local control. Ask the user to approve that diff before
-materializing or running cells.
+and any unsupported local control. Before asking the user to approve that diff,
+follow the independent [model critic](model-critic.md) review and commit its
+current clean report. Ask for approval only after the MODEL gate verifies that
+report; never materialize or run cells before ratification.

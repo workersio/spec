@@ -4,6 +4,10 @@ All notable changes to `@workersio/skills` are tracked here.
 
 ## 0.2.0
 
+- Added a deterministic, fail-closed model critic and made its current clean,
+  content-stamped report a required boundary before future model ratification.
+  The first mechanical rule flags entry-state assertions or raises before an
+  atom's first checkpoint; findings have no waiver path.
 - Rebuilt `workload-harness` as a thin model-authoring skill over the public
   WIO SDK and CLI contracts. It now authors cited Python or TypeScript atoms,
   requires explicit operation-local `creates`/`consumes`/`plain` roles, and
